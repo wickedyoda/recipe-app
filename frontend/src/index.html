@@ -129,6 +129,7 @@
           <div class="row">
             <input id="recipeServings" type="number" min="0" placeholder="Servings" />
             <input id="recipeDifficulty" placeholder="Difficulty" />
+            <input id="recipeCategory" placeholder="Category / cuisine" />
           </div>
           <div>
             <input id="recipeTags" placeholder="Tags (comma separated)" />
@@ -146,11 +147,13 @@
           <div id="detailBody"></div>
           <div id="detailMetaExtra" class="meta" style="margin-top:8px;"></div>
           <div class="row" style="margin-top:10px;">
+            <input type="file" id="recipePhotoInput" accept="image/*" style="font-size:13px;" onchange="uploadRecipePhoto()" />
             <button class="secondary" onclick="addNoteFromDetail()">Add note</button>
             <button class="secondary" onclick="addToMealPlan()">Add to meal plan</button>
             <button class="secondary" onclick="createGroceryFromRecipe()">Grocery list</button>
             <button onclick="startCooking()">Cook</button>
           </div>
+          <div id="detailPhotos" class="row" style="margin-top:10px;"></div>
           <h3 style="margin-top:16px;">Notes</h3>
           <div id="detailNotes"></div>
         </div>
@@ -468,6 +471,7 @@ function openRecipeForm(id) {
       document.getElementById('recipeCook').value = data.cook_time_minutes ?? '';
       document.getElementById('recipeServings').value = data.servings ?? '';
       document.getElementById('recipeDifficulty').value = data.difficulty || '';
+      document.getElementById('recipeCategory').value = data.category || '';
       document.getElementById('recipeTags').value = (data.tags||[]).join(', ');
     });
   } else {
@@ -481,6 +485,7 @@ function openRecipeForm(id) {
     document.getElementById('recipeCook').value='';
     document.getElementById('recipeServings').value='';
     document.getElementById('recipeDifficulty').value='';
+    document.getElementById('recipeCategory').value='';
     document.getElementById('recipeTags').value='';
   }
   document.getElementById('recipeForm').classList.remove('hidden');
@@ -506,7 +511,7 @@ async function saveRecipe() {
     return existing ? existing.id : null;
   }).filter(Boolean);
 
-  const payload = { title, description, ingredients, instructions, source_url, rating, prep_time_minutes: prepTime, cook_time_minutes: cookTime, servings, difficulty, tag_ids: tagIds.length ? tagIds : undefined };
+  const payload = { title, description, ingredients, instructions, source_url, rating, prep_time_minutes: prepTime, cook_time_minutes: cookTime, servings, difficulty, category: document.getElementById('recipeCategory')?.value?.trim() || null, tag_ids: tagIds.length ? tagIds : undefined };
   const url = editingRecipeId ? API + '/recipes/' + editingRecipeId : API + '/recipes';
   const method = editingRecipeId ? 'PATCH' : 'POST';
   const res = await fetch(url, { method, headers: authHeaders(), body: JSON.stringify(payload) });
@@ -528,9 +533,24 @@ async function openRecipeDetail(id) {
   if (r.cook_time_minutes) metaExtra.push('Cook ' + r.cook_time_minutes + ' min');
   if (r.servings) metaExtra.push('Serves ' + r.servings);
   if (r.difficulty) metaExtra.push(r.difficulty);
+  if (r.category) metaExtra.push(r.category);
   document.getElementById('detailMetaExtra').textContent = metaExtra.join(' • ');
   document.getElementById('recipeDetail').classList.remove('hidden');
   renderNotes(id);
+  const photoBox = document.getElementById('detailPhotos');
+  photoBox.innerHTML = (r.photos || []).map(p => '<img src="/media/' + p + '" style="max-height:120px;border-radius:8px;margin-right:8px;" />').join('');
+}
+async function uploadRecipePhoto() {
+  const input = document.getElementById('recipePhotoInput');
+  const file = input.files[0];
+  if (!file || !currentRecipeId) return;
+  const form = new FormData();
+  form.append('file', file);
+  const res = await fetch(API + '/recipes/' + currentRecipeId + '/photos', { method:'POST', headers: authHeaders(), body: form });
+  const data = await res.json();
+  if (!res.ok) return alert('Photo upload failed');
+  input.value = '';
+  openRecipeDetail(currentRecipeId);
 }
 function closeRecipeDetail() {
   document.getElementById('recipeDetail').classList.add('hidden');

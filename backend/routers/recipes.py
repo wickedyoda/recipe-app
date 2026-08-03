@@ -1,8 +1,12 @@
-from fastapi import APIRouter, Depends, HTTPException
+import os
+import time
+import uuid
+
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from sqlalchemy.orm import Session
 
 from backend.database import get_db
-from backend.models import Recipe, RecipeTag, Store, Tag, User
+from backend.models import Recipe, RecipePhoto, RecipeTag, Store, Tag, User
 from backend.schemas import RecipeCreate, RecipeOut
 from backend.services.auth import get_current_user
 
@@ -25,6 +29,7 @@ def create_recipe(payload: RecipeCreate, db: Session = Depends(get_db), current_
         cook_time_minutes=payload.cook_time_minutes,
         servings=payload.servings,
         difficulty=payload.difficulty,
+        category=payload.category,
     )
     db.add(recipe)
     db.commit()
@@ -49,6 +54,7 @@ def list_recipes(db: Session = Depends(get_db), current_user: User = Depends(get
     for r in rows:
         data = RecipeOut.model_validate(r).model_dump()
         data["tags"] = [t.name for t in db.query(Tag).join(RecipeTag, RecipeTag.tag_id==Tag.id).filter(RecipeTag.recipe_id==r.id).all()]
+        data["photos"] = [p.path for p in db.query(RecipePhoto).filter(RecipePhoto.recipe_id==r.id).order_by(RecipePhoto.id.asc()).all()]
         out.append(data)
     return out
 
@@ -59,6 +65,7 @@ def get_recipe(recipe_id: int, db: Session = Depends(get_db), current_user: User
         raise HTTPException(status_code=404, detail="Recipe not found")
     data = RecipeOut.model_validate(r).model_dump()
     data["tags"] = [t.name for t in db.query(Tag).join(RecipeTag, RecipeTag.tag_id==Tag.id).filter(RecipeTag.recipe_id==r.id).all()]
+    data["photos"] = [p.path for p in db.query(RecipePhoto).filter(RecipePhoto.recipe_id==r.id).order_by(RecipePhoto.id.asc()).all()]
     return data
 
 @router.patch("/{recipe_id}", response_model=RecipeOut)
@@ -80,6 +87,7 @@ def update_recipe(recipe_id: int, payload: RecipeCreate, db: Session = Depends(g
     r.cook_time_minutes = payload.cook_time_minutes
     r.servings = payload.servings
     r.difficulty = payload.difficulty
+    r.category = payload.category
     db.query(RecipeTag).filter(RecipeTag.recipe_id==r.id).delete()
     if payload.tag_ids:
         for tag_id in payload.tag_ids:
@@ -92,6 +100,7 @@ def update_recipe(recipe_id: int, payload: RecipeCreate, db: Session = Depends(g
     db.refresh(r)
     data = RecipeOut.model_validate(r).model_dump()
     data["tags"] = [t.name for t in db.query(Tag).join(RecipeTag, RecipeTag.tag_id==Tag.id).filter(RecipeTag.recipe_id==r.id).all()]
+    data["photos"] = [p.path for p in db.query(RecipePhoto).filter(RecipePhoto.recipe_id==r.id).order_by(RecipePhoto.id.asc()).all()]
     return data
 
 @router.delete("/{recipe_id}")
@@ -100,6 +109,7 @@ def delete_recipe(recipe_id: int, db: Session = Depends(get_db), current_user: U
     if not r:
         raise HTTPException(status_code=404, detail="Recipe not found")
     db.query(RecipeTag).filter(RecipeTag.recipe_id==r.id).delete()
+    db.query(RecipePhoto).filter(RecipePhoto.recipe_id==r.id).delete()
     db.delete(r)
     db.commit()
     return {"deleted": True}
@@ -119,3 +129,22 @@ def start_cooking(recipe_id: int, db: Session = Depends(get_db), current_user: U
         "cook_time_minutes": r.cook_time_minutes,
         "difficulty": r.difficulty,
     }
+
+@router.post("/{recipe_id}/photos")
+def upload_recipe_photo(recipe_id: int, file: UploadFile = File(...), db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    r = db.query(Recipe).filter(Recipe.id==recipe_id, Recipe.owner_id==current_user.id).first()
+    if not r:
+        raise HTTPException(status_code=404, detail="Recipe not found")
+    dest_dir = os.path.join("backend", "media", "recipes", str(r.id))
+    os.makedirs(dest_dir, exist_ok=True)
+    ext = os.path.splitext(file.filename or "")[1].lower() or ".bin"
+    if ext not in {".png", ".jpg", ".jpeg", ".webp"}:
+        raise HTTPException(status_code=400, detail="Unsupported photo type")
+    name = f"{int(time.time())}_{uuid.uuid4().hex}{ext}"
+    path = os.path.join(dest_dir, name)
+    with open(path, "wb") as f:
+        f.write(file.file.read())
+    rel = os.path.relpath(path, "backend")
+    db.add(RecipePhoto(recipe_id=r.id, owner_id=current_user.id, path=rel))
+    db.commit()
+    return {"photo": rel}
