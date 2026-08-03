@@ -56,6 +56,10 @@ class Recipe(Base):
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     cookbook_id = Column(Integer, ForeignKey("cookbooks.id"), nullable=True)
     rating = Column(Float, nullable=True)
+    prep_time_minutes = Column(Integer, nullable=True)
+    cook_time_minutes = Column(Integer, nullable=True)
+    servings = Column(Integer, nullable=True)
+    difficulty = Column(String(50), nullable=True)
     embedding = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
