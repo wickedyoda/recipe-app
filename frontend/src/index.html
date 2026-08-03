@@ -33,6 +33,12 @@
   .empty { color:#888; font-size:13px; padding:10px 0; }
   .pill { display:inline-block; padding:2px 8px; background:#e5e7eb; color:#111; border-radius:999px; font-size:12px; margin:2px; }
   .search { padding:12px; position:sticky; top:0; background:#f5f5f7; z-index:5; }
+  @media print {
+    body { background:#fff; }
+    .nav, .fab, .search, button { display:none !important; }
+    .card { box-shadow:none; border:1px solid #ddd; }
+    #cookingMode { display:block !important; }
+  }
 </style>
 </head>
 <body>
@@ -154,14 +160,28 @@
             <h2 style="margin:0;font-size:20px;" id="cookingTitle">Cooking Mode</h2>
             <button class="secondary" onclick="exitCooking()" style="width:auto;padding:8px 10px;font-size:13px;">Exit</button>
           </div>
+          <div class="row" style="margin-bottom:10px;">
+            <select id="cookScale" onchange="startCooking()">
+              <option value="1">1×</option>
+              <option value="2">2×</option>
+              <option value="3">3×</option>
+              <option value="0.5">½×</option>
+            </select>
+            <button class="secondary" onclick="window.print()" style="width:auto;padding:8px 10px;font-size:13px;">Print</button>
+          </div>
           <div id="cookingMeta" class="meta" style="margin-bottom:10px;"></div>
           <div class="card" style="background:#fff;border-radius:12px;padding:16px;margin-bottom:12px;">
             <h3 style="margin-top:0;">Ingredients</h3>
             <div id="cookingIngredients" style="white-space:pre-wrap;font-size:16px;"></div>
           </div>
           <div class="card" style="background:#fff;border-radius:12px;padding:16px;margin-bottom:12px;">
-            <h3 style="margin-top:0;">Instructions</h3>
+            <div class="top" style="margin-bottom:8px;">
+              <h3 style="margin:0;">Instructions</h3>
+              <button class="secondary" onclick="startStepTimer()" style="width:auto;padding:8px 10px;font-size:12px;">Start timer</button>
+            </div>
             <div id="cookingInstructions" style="white-space:pre-wrap;font-size:16px;"></div>
+            <div id="cookingSteps" style="margin-top:12px;"></div>
+            <div id="cookingTimer" class="meta" style="margin-top:8px;"></div>
           </div>
         </div>
       </div>
@@ -756,6 +776,28 @@ async function approveUser(id, active) {
   if (!res.ok) return alert('Action failed: ' + (data.detail || 'unknown'));
   loadPending(); loadUsers();
 }
+let timerInterval = null;
+function startStepTimer() {
+  const mins = prompt('Timer minutes:');
+  if (!mins || isNaN(mins)) return;
+  const total = parseInt(mins, 10) * 60;
+  const box = document.getElementById('cookingTimer');
+  clearInterval(timerInterval);
+  box.textContent = 'Timer: ' + mins + ':00';
+  let remaining = total;
+  timerInterval = setInterval(() => {
+    remaining--;
+    if (remaining <= 0) {
+      clearInterval(timerInterval);
+      box.textContent = 'Timer done';
+      alert('Timer done');
+      return;
+    }
+    const m = Math.floor(remaining / 60);
+    const s = remaining % 60;
+    box.textContent = 'Timer: ' + m + ':' + (s < 10 ? '0' : '') + s;
+  }, 1000);
+}
 async function startCooking() {
   if (!currentRecipeId) return;
   const res = await fetch(API + '/recipes/' + currentRecipeId + '/cook', { method:'POST', headers: authHeaders() });
@@ -763,15 +805,30 @@ async function startCooking() {
   if (!res.ok) return alert('Failed: ' + (data.detail || 'unknown'));
   cookingRecipe = data;
   document.getElementById('cookingTitle').textContent = data.title || 'Cooking Mode';
-  document.getElementById('cookingMeta').textContent = [data.servings ? 'Serves ' + data.servings : '', data.difficulty ? data.difficulty : '', data.prep_time_minutes ? 'Prep ' + data.prep_time_minutes + ' min' : '', data.cook_time_minutes ? 'Cook ' + data.cook_time_minutes + ' min' : ''].filter(Boolean).join(' • ');
-  document.getElementById('cookingIngredients').textContent = data.ingredients || '';
+  document.getElementById('cookingMeta').innerHTML = '<div class="meta">' + [data.servings ? 'Serves ' + data.servings : '', data.difficulty ? data.difficulty : '', data.prep_time_minutes ? 'Prep ' + data.prep_time_minutes + ' min' : '', data.cook_time_minutes ? 'Cook ' + data.cook_time_minutes + ' min' : ''].filter(Boolean).join(' • ') + '</div>';
+  document.getElementById('cookingIngredients').textContent = (data.ingredients || '').split('\n').map(line => {
+    const match = line.match(/^(.+?)\s*[xX×]\s*([\d./]+)(.*)$/);
+    if (!match) return line;
+    const scaled = (parseFloat(match[2]) * (parseInt(document.getElementById('cookScale')?.value || '1', 10) || 1)).toString();
+    return match[1].trim() + ' × ' + scaled + match[3];
+  }).join('\n');
   document.getElementById('cookingInstructions').textContent = data.instructions || '';
+  const steps = (data.instructions || '').split('\n').filter(Boolean).map(s => s.trim());
+  const stepsBox = document.getElementById('cookingSteps');
+  stepsBox.innerHTML = steps.map((s, i) => '<label style="display:flex;align-items:center;gap:8px;margin:6px 0;font-size:15px;"><input type="checkbox" onchange="completeStep(this)" /> <span>' + escapeHtml(s) + '</span></label>').join('');
   document.getElementById('recipeDetail').classList.add('hidden');
   document.getElementById('cookingMode').classList.remove('hidden');
 }
 function exitCooking() {
+  clearInterval(timerInterval);
   document.getElementById('cookingMode').classList.add('hidden');
   document.getElementById('recipeDetail').classList.remove('hidden');
+}
+function completeStep(cb) {
+  const label = cb.closest('label');
+  if (!label) return;
+  if (cb.checked) label.style.opacity = '0.6';
+  else label.style.opacity = '1';
 }
 </script>
 </body>
