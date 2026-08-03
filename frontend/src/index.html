@@ -44,9 +44,9 @@
   .search { padding:12px; position:sticky; top:0; background:#f5f5f7; z-index:5; }
   @media print {
     body { background:#fff; }
-    .nav, .fab, .search, button { display:none !important; }
+    .nav, .fab, .search, button, .row input[type="file"], select { display:none !important; }
     .card { box-shadow:none; border:1px solid #ddd; }
-    #cookingMode { display:block !important; }
+    #recipeDetail, #cookingMode { display:block !important; }
   }
 </style>
 </head>
@@ -152,6 +152,9 @@
           <input id="recipeSource" placeholder="Source URL" />
           <input id="recipeRating" type="number" step="0.5" min="0" max="5" placeholder="Rating 0-5" />
           <div class="row">
+            <input id="recipeFlavorRating" type="number" step="0.5" min="0" max="5" placeholder="Flavor rating 0-5" />
+            <input id="recipeEffortRating" type="number" step="0.5" min="0" max="5" placeholder="Effort/time rating 0-5" />
+          </div>
             <input id="recipePrep" type="number" min="0" placeholder="Prep time (min)" />
             <input id="recipeCook" type="number" min="0" placeholder="Cook time (min)" />
           </div>
@@ -178,6 +181,13 @@
           <div id="detailBody"></div>
           <div id="detailMetaExtra" class="meta" style="margin-top:8px;"></div>
           <div class="row" style="margin-top:10px;">
+            <select id="recipeScale" onchange="scaleIngredients()">
+              <option value="0.5">½×</option>
+              <option value="1" selected>1×</option>
+              <option value="1.5">1.5×</option>
+              <option value="2">2×</option>
+              <option value="3">3×</option>
+            </select>
             <input type="file" id="recipePhotoInput" accept="image/*" style="font-size:13px;" onchange="uploadRecipePhoto()" />
             <input type="file" id="stepPhotoInput" accept="image/*" style="font-size:13px;" onchange="uploadStepPhoto()" />
             <button class="secondary" onclick="addNoteFromDetail()">Add note</button>
@@ -351,6 +361,19 @@ function authHeadersNoJson() {
 function escapeHtml(text) {
   return String(text||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
+function scaleIngredientLine(line, scale) {
+  if (!scale || scale === 1) return line;
+  const m = line.match(/^(.+?)\s*[xX×]\s*([\d./]+)(.*)$/);
+  if (!m) return line;
+  const val = parseFloat(m[2]);
+  if (!Number.isFinite(val)) return line;
+  const scaled = val * scale;
+  return m[1].trim() + ' × ' + (Number.isInteger(scaled) ? String(scaled) : scaled.toFixed(2).replace(/0$/, '').replace(/\.$/, '')) + m[3];
+}
+function scaleIngredients() {
+  if (!currentRecipeId) return;
+  openRecipeDetail(currentRecipeId);
+}
 
 function switchTab(name) {
   document.querySelectorAll('.tab').forEach(el => el.classList.add('hidden'));
@@ -515,7 +538,11 @@ async function renderRecipes() {
     const el = document.createElement('div');
     el.className = 'item';
     const heart = favs.has(String(r.id)) ? '❤' : '🤍';
-    const meta = [r.difficulty ? r.difficulty : '', r.category ? r.category : '', r.rating ? '★'.repeat(Math.round(r.rating)) : ''].filter(Boolean).join(' • ');
+    const stars = r.rating ? '★'.repeat(Math.round(r.rating)) : '';
+    const flavorStars = r.flavor_rating ? ' Flavor:' + '★'.repeat(Math.round(r.flavor_rating)) : '';
+    const effortStars = r.effort_rating ? ' Effort:' + '★'.repeat(Math.round(r.effort_rating)) : '';
+    const timeMeta = [r.prep_time_minutes ? 'Prep ' + r.prep_time_minutes + ' min' : '', r.cook_time_minutes ? 'Cook ' + r.cook_time_minutes + ' min' : '', r.servings ? 'Serves ' + r.servings : ''].filter(Boolean).join(' • ');
+    const meta = [r.difficulty ? r.difficulty : '', r.category ? r.category : '', timeMeta, stars + flavorStars + effortStars].filter(Boolean).join(' • ');
     el.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;"><div><div style="font-weight:600;">' + escapeHtml(r.title || 'Untitled') + '</div><div class="meta">' + escapeHtml(meta) + '</div></div><div style="display:flex;align-items:center;gap:8px;"><button class="secondary" onclick="toggleFavorite(' + r.id + ')" style="width:auto;padding:8px 10px;font-size:13px;">' + heart + '</button><button class="secondary" onclick="openRecipeDetail(' + r.id + ')" style="width:auto;padding:8px 10px;font-size:13px;">Open</button></div></div>';
     box.appendChild(el);
   }
@@ -608,6 +635,8 @@ function openRecipeForm(id) {
       document.getElementById('recipeInstructions').value = data.instructions||'';
       document.getElementById('recipeSource').value = data.source_url||'';
       document.getElementById('recipeRating').value = data.rating ?? '';
+      document.getElementById('recipeFlavorRating').value = data.flavor_rating ?? '';
+      document.getElementById('recipeEffortRating').value = data.effort_rating ?? '';
       document.getElementById('recipePrep').value = data.prep_time_minutes ?? '';
       document.getElementById('recipeCook').value = data.cook_time_minutes ?? '';
       document.getElementById('recipeServings').value = data.servings ?? '';
@@ -623,6 +652,8 @@ function openRecipeForm(id) {
     document.getElementById('recipeInstructions').value='';
     document.getElementById('recipeSource').value='';
     document.getElementById('recipeRating').value='';
+    document.getElementById('recipeFlavorRating').value='';
+    document.getElementById('recipeEffortRating').value='';
     document.getElementById('recipePrep').value='';
     document.getElementById('recipeCook').value='';
     document.getElementById('recipeServings').value='';
@@ -643,6 +674,8 @@ async function saveRecipe() {
   const instructions = document.getElementById('recipeInstructions').value.trim();
   const source_url = document.getElementById('recipeSource').value.trim();
   const rating = parseFloat(document.getElementById('recipeRating').value || '0') || 0;
+  const flavorRating = parseFloat(document.getElementById('recipeFlavorRating').value || '0') || 0;
+  const effortRating = parseFloat(document.getElementById('recipeEffortRating').value || '0') || 0;
   const prepTime = parseInt(document.getElementById('recipePrep').value || '0', 10) || null;
   const cookTime = parseInt(document.getElementById('recipeCook').value || '0', 10) || null;
   const servings = parseInt(document.getElementById('recipeServings').value || '0', 10) || null;
@@ -653,7 +686,7 @@ async function saveRecipe() {
     return existing ? existing.id : null;
   }).filter(Boolean);
 
-  const payload = { title, description, ingredients, instructions, source_url, rating, prep_time_minutes: prepTime, cook_time_minutes: cookTime, servings, difficulty, category: document.getElementById('recipeCategory')?.value?.trim() || null, subcategory: document.getElementById('recipeSubcategory')?.value?.trim() || null, tag_ids: tagIds.length ? tagIds : undefined };
+  const payload = { title, description, ingredients, instructions, source_url, rating, flavor_rating: flavorRating || null, effort_rating: effortRating || null, prep_time_minutes: prepTime, cook_time_minutes: cookTime, servings, difficulty, category: document.getElementById('recipeCategory')?.value?.trim() || null, subcategory: document.getElementById('recipeSubcategory')?.value?.trim() || null, tag_ids: tagIds.length ? tagIds : undefined };
   const url = editingRecipeId ? API + '/recipes/' + editingRecipeId : API + '/recipes';
   const method = editingRecipeId ? 'PATCH' : 'POST';
   const res = await fetch(url, { method, headers: authHeaders(), body: JSON.stringify(payload) });
@@ -668,8 +701,9 @@ async function openRecipeDetail(id) {
   if (!res.ok) return alert('Recipe not found');
   const r = await res.json();
   document.getElementById('detailTitle').textContent = r.title || 'Untitled';
-  document.getElementById('detailMeta').innerHTML = '<div class="meta">' + escapeHtml(r.description||'') + '</div>' + (r.rating ? '<div class="stars">' + '★'.repeat(Math.round(r.rating)) + '</div>' : '') + '<div class="meta">' + (r.tags||[]).map(t=>'<span class="pill">'+escapeHtml(t)+'</span>').join(' ') + '</div>';
-  document.getElementById('detailBody').innerHTML = '<div style="display:flex;flex-direction:column;gap:8px;"><div>' + (r.ingredients||'').split('\n').filter(Boolean).map(line => '<label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" onchange="toggleIngredientCheck(this)" /> <span style="white-space:pre-wrap;">' + escapeHtml(line) + '</span></label>').join('') + '</div><div style="white-space:pre-wrap;font-size:14px;margin-top:8px;">' + escapeHtml(r.instructions||'') + '</div></div><div id="ingredientActions" class="row" style="margin-top:8px;"><button class="secondary" onclick="addAllIngredientsToGrocery()">Add ingredients to grocery list</button></div>';
+  document.getElementById('detailMeta').innerHTML = '<div class="meta">' + escapeHtml(r.description||'') + '</div>' + (r.rating ? '<div class="stars">' + '★'.repeat(Math.round(r.rating)) + '</div>' : '') + (r.flavor_rating ? '<div class="meta">Flavor: ' + '★'.repeat(Math.round(r.flavor_rating)) + '</div>' : '') + (r.effort_rating ? '<div class="meta">Effort: ' + '★'.repeat(Math.round(r.effort_rating)) + '</div>' : '') + '<div class="meta">' + (r.tags||[]).map(t=>'<span class="pill">'+escapeHtml(t)+'</span>').join(' ') + '</div>';
+  const scaleVal = parseFloat(document.getElementById('recipeScale')?.value || '1') || 1;
+  document.getElementById('detailBody').innerHTML = '<div style="display:flex;flex-direction:column;gap:8px;"><div>' + (r.ingredients||'').split('\n').filter(Boolean).map(line => '<label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" onchange="toggleIngredientCheck(this)" /> <span style="white-space:pre-wrap;">' + scaleIngredientLine(escapeHtml(line), scaleVal) + '</span></label>').join('') + '</div><div style="white-space:pre-wrap;font-size:14px;margin-top:8px;">' + escapeHtml(r.instructions||'') + '</div></div><div id="ingredientActions" class="row" style="margin-top:8px;"><button class="secondary" onclick="addAllIngredientsToGrocery()">Add ingredients to grocery list</button></div>';
   const metaExtra = [];
   if (r.prep_time_minutes) metaExtra.push('Prep ' + r.prep_time_minutes + ' min');
   if (r.cook_time_minutes) metaExtra.push('Cook ' + r.cook_time_minutes + ' min');
