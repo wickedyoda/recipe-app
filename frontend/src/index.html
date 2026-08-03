@@ -357,7 +357,14 @@ function scaleIngredientLine(line, scale) {
   if (!scale || scale === 1) return line;
   const m = line.match(/^(.+?)\s*[xX×]\s*([\d./]+)(.*)$/);
   if (!m) return line;
-  const val = parseFloat(m[2]);
+  const raw = m[2];
+  let val = parseFloat(raw);
+  if (raw.includes('/')) {
+    const [numStr, denStr] = raw.split('/');
+    const num = parseFloat(numStr);
+    const den = parseFloat(denStr);
+    val = den ? (num / den) : NaN;
+  }
   if (!Number.isFinite(val)) return line;
   const scaled = val * scale;
   return m[1].trim() + ' × ' + (Number.isInteger(scaled) ? String(scaled) : scaled.toFixed(2).replace(/0$/, '').replace(/\.$/, '')) + m[3];
