@@ -1,5 +1,4 @@
-version: "3.8"
-
+---
 services:
   mysql:
     image: mysql:8.0
@@ -21,8 +20,8 @@ services:
       start_period: 30s
 
   backend:
-    image: ${BACKEND_IMAGE:-}
-    pull_policy: ${BACKEND_PULL_POLICY:-never}
+    image: ghcr.io/${GITHUB_REPOSITORY:-wickedyoda/recipe-app}-backend:latest
+    pull_policy: always
     restart: unless-stopped
     environment:
       DATABASE_URL: ${DATABASE_URL}
@@ -41,8 +40,8 @@ services:
       - backend_media:/app/backend/media
 
   frontend:
-    image: ${FRONTEND_IMAGE:-}
-    pull_policy: ${FRONTEND_PULL_POLICY:-never}
+    image: ghcr.io/${GITHUB_REPOSITORY:-wickedyoda/recipe-app}-frontend:latest
+    pull_policy: always
     restart: unless-stopped
     ports:
       - "3000:3000"

@@ -61,6 +61,7 @@ class Recipe(Base):
     servings = Column(Integer, nullable=True)
     difficulty = Column(String(50), nullable=True)
     category = Column(String(100), nullable=True)
+    subcategory = Column(String(100), nullable=True)
     embedding = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
@@ -76,6 +77,16 @@ class RecipePhoto(Base):
     recipe_id = Column(Integer, ForeignKey("recipes.id"), nullable=False)
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     path = Column(String(1024), nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+class RecipeStepPhoto(Base):
+    __tablename__ = "recipe_step_photos"
+    id = Column(Integer, primary_key=True, index=True)
+    recipe_id = Column(Integer, ForeignKey("recipes.id"), nullable=False)
+    owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    step_index = Column(Integer, nullable=False)
+    path = Column(String(1024), nullable=False)
+    caption = Column(String(255), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 class Note(Base):
