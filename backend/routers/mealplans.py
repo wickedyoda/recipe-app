@@ -1,9 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+
 from backend.database import get_db
-from backend.models import User, MealPlan, MealPlanEntry, Recipe
+from backend.models import MealPlan, MealPlanEntry, Recipe, User
+from backend.schemas import (
+    MealPlanCreate,
+    MealPlanEntryCreate,
+    MealPlanEntryOut,
+    MealPlanOut,
+)
 from backend.services.auth import get_current_user
-from backend.schemas import MealPlanCreate, MealPlanOut, MealPlanEntryCreate, MealPlanEntryOut
 
 router = APIRouter(prefix="/meal-plans", tags=["meal-plans"])
 

@@ -1,7 +1,10 @@
-from sqlalchemy import Column, Integer, String, Text, ForeignKey, DateTime, Enum, Float
-from sqlalchemy.sql import func
 import enum
+
+from sqlalchemy import Column, DateTime, Enum, Float, ForeignKey, Integer, String, Text
+from sqlalchemy.sql import func
+
 from backend.database import Base
+
 
 class Store(str, enum.Enum):
     local = "local"
@@ -53,6 +56,11 @@ class Recipe(Base):
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     cookbook_id = Column(Integer, ForeignKey("cookbooks.id"), nullable=True)
     rating = Column(Float, nullable=True)
+    prep_time_minutes = Column(Integer, nullable=True)
+    cook_time_minutes = Column(Integer, nullable=True)
+    servings = Column(Integer, nullable=True)
+    difficulty = Column(String(50), nullable=True)
+    category = Column(String(100), nullable=True)
     embedding = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
@@ -61,6 +69,14 @@ class RecipeTag(Base):
     id = Column(Integer, primary_key=True, index=True)
     recipe_id = Column(Integer, ForeignKey("recipes.id"), nullable=False)
     tag_id = Column(Integer, ForeignKey("tags.id"), nullable=False)
+
+class RecipePhoto(Base):
+    __tablename__ = "recipe_photos"
+    id = Column(Integer, primary_key=True, index=True)
+    recipe_id = Column(Integer, ForeignKey("recipes.id"), nullable=False)
+    owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    path = Column(String(1024), nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 class Note(Base):
     __tablename__ = "notes"
@@ -92,6 +108,7 @@ class GroceryList(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(255), nullable=False)
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    share_token = Column(String(255), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 class GroceryItem(Base):

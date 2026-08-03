@@ -19,9 +19,22 @@ docker compose build
 docker compose up
 ```
 
+## Runtime dependencies
+
+- `ffmpeg`
+- `yt-dlp`
+- `yt-dlp` is invoked via its Python package in the backend container
+- audio/subtitle extraction depends on `ffmpeg` binaries being present in the backend image
+
+## Media storage
+
+Use named volumes for media to preserve uploads across rebuilds:
+- `mysql_data`
+- `backend_media`
+
 ## Production notes
 
 - Set `restart: unless-stopped`
 - Use named volumes for media storage
 - Consider a reverse proxy with TLS
-- Ensure `ffmpeg`, `yt-dlp`, and `whisper` are available in the runtime container
+- Ensure `ffmpeg` and `yt-dlp` are available in the runtime container

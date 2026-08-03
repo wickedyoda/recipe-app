@@ -1,0 +1,26 @@
+[tool.ruff]
+line-length = 160
+
+[tool.ruff.lint]
+select = [
+  "E",   # pycodestyle errors
+  "F",   # pyflakes
+  "I",   # isort
+  "UP",  # pyupgrade
+  "B",   # flake8-bugbear
+  "PIE", # flake8-pie
+  "PL",  # pylint
+  "BLE", # flake8-blind-except
+  "DTZ", # flake8-datetimez
+]
+ignore = [
+  "E501", # line length is intentionally relaxed for FastAPI route signatures
+  "B008", # FastAPI Depends(...) defaults are idiomatic here
+  "DTZ003", # utcnow() usage is acceptable for this app
+  "BLE001", # auth token handling intentionally broad-caught
+  "B904", # re-raised auth exceptions intentionally suppress chaining
+  "UP045", # Optional kept for compatibility in this module
+  "PLW1510", # subprocess.run handled explicitly via returncode checks below
+  "PLR2004", # small magic numbers in parser are acceptable
+  "PIE810", # startswith tuple optimization not applied in parser for clarity
+]

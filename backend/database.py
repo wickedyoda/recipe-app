@@ -1,7 +1,8 @@
-from sqlalchemy import create_engine
+import os
+
+from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-import os
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./recipes.db")
 engine = create_engine(DATABASE_URL, pool_pre_ping=True, future=True)
@@ -14,3 +15,26 @@ def get_db():
         yield db
     finally:
         db.close()
+
+def ensure_schema():
+    if not DATABASE_URL.startswith("sqlite"):
+        return
+    insp = inspect(engine)
+    cols = {c["name"] for c in insp.get_columns("recipes")}
+    needed = {
+        "prep_time_minutes": "INTEGER",
+        "cook_time_minutes": "INTEGER",
+        "servings": "INTEGER",
+        "difficulty": "VARCHAR(50)",
+        "category": "VARCHAR(100)",
+    }
+    with engine.begin() as conn:
+        for name, dtype in needed.items():
+            if name not in cols:
+                conn.execute(text(f"ALTER TABLE recipes ADD COLUMN {name} {dtype}"))
+        _recipe_photos_cols = {c["name"] for c in insp.get_columns("recipe_photos")}
+        if "recipe_photos" not in insp.get_table_names():
+            conn.execute(text("CREATE TABLE recipe_photos (id INTEGER PRIMARY KEY AUTOINCREMENT, recipe_id INTEGER NOT NULL, owner_id INTEGER NOT NULL, path VARCHAR(1024) NOT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (recipe_id) REFERENCES recipes(id), FOREIGN KEY (owner_id) REFERENCES users(id))"))
+        grocery_cols = {c["name"] for c in insp.get_columns("grocery_lists")}
+        if "share_token" not in grocery_cols:
+            conn.execute(text("ALTER TABLE grocery_lists ADD COLUMN share_token VARCHAR(255)"))

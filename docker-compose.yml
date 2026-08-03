@@ -1,37 +1,51 @@
 version: "3.8"
+
 services:
   mysql:
     image: mysql:8.0
     restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: recipes
-      MYSQL_USER: recipes
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-recipes}
+      MYSQL_USER: ${MYSQL_USER:-recipes}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     volumes:
       - mysql_data:/var/lib/mysql
     ports:
       - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   backend:
     build:
       context: .
       dockerfile: Dockerfile.backend
+    image: ghcr.io/${GITHUB_REPOSITORY:-wickedyoda/recipe-app}-backend:latest
     restart: unless-stopped
     environment:
-      DATABASE_URL: mysql+mysqlconnector://recipes:${MYSQL_PASSWORD}@mysql:3306/recipes
+      DATABASE_URL: ${DATABASE_URL}
       SECRET_KEY: ${SECRET_KEY}
+      MEDIA_ROOT: ${MEDIA_ROOT:-/media}
+      WHISPER_MODEL: ${WHISPER_MODEL:-tiny}
+      PUBLIC_URL: ${PUBLIC_URL}
     ports:
       - "8000:8000"
     depends_on:
-      - mysql
+      mysql:
+        condition: service_healthy
     volumes:
-      - ./backend:/app/backend
+      - media:/media
+      - backend_media:/app/backend/media
 
   frontend:
     build:
       context: .
       dockerfile: Dockerfile.frontend
+    image: ghcr.io/${GITHUB_REPOSITORY:-wickedyoda/recipe-app}-frontend:latest
     restart: unless-stopped
     ports:
       - "3000:3000"
@@ -40,3 +54,5 @@ services:
 
 volumes:
   mysql_data:
+  media:
+  backend_media:

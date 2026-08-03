@@ -1,27 +1,34 @@
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
-from pydantic import BaseModel, EmailStr
 from datetime import datetime
-from typing import Optional
+
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, EmailStr
+from sqlalchemy.orm import Session
+
 from backend.database import get_db
-from backend.models import User, Role
-from backend.services.auth import hash_password, verify_password, create_access_token, get_current_user, require_role
-from backend.schemas import UserCreate, UserOut, UserUpdate, TokenOut
+from backend.models import Role, User
+from backend.schemas import TokenOut, UserOut
+from backend.services.auth import (
+    create_access_token,
+    get_current_user,
+    hash_password,
+    require_role,
+    verify_password,
+)
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 class RegisterRequest(BaseModel):
     email: EmailStr
     password: str
-    display_name: Optional[str] = None
+    display_name: str | None = None
 
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str
 
 class UpdateProfileRequest(BaseModel):
-    display_name: Optional[str] = None
-    avatar_url: Optional[str] = None
+    display_name: str | None = None
+    avatar_url: str | None = None
 
 class ApproveRequest(BaseModel):
     user_id: int

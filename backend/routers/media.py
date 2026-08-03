@@ -1,10 +1,16 @@
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from pydantic import BaseModel
+from sqlalchemy.orm import Session
+
 from backend.database import get_db
-from backend.models import User, Recipe, Cookbook, Store
-from backend.services.auth import get_current_user, require_role
-from backend.services.ingest import download_media, ingest_upload, extract_recipe_from_url, extract_recipe_from_upload
+from backend.models import Recipe, User
+from backend.services.auth import get_current_user
+from backend.services.ingest import (
+    download_media,
+    extract_recipe_from_upload,
+    extract_recipe_from_url,
+    ingest_upload,
+)
 
 router = APIRouter(prefix="/media", tags=["media"])
 
@@ -38,3 +44,21 @@ def extract_recipe_from_uploaded_file(file: UploadFile = File(...), db: Session 
     if not result.get("ok"):
         raise HTTPException(status_code=400, detail=result.get("error","upload recipe extraction failed"))
     return result
+
+@router.get("/items", response_model=list[dict])
+def list_media(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    items = db.query(Recipe).filter(
+        Recipe.owner_id == current_user.id,
+        Recipe.source_url.is_not(None) | Recipe.source_path.is_not(None),
+    ).order_by(Recipe.created_at.desc()).limit(200).all()
+    out = []
+    for r in items:
+        out.append({
+            "id": r.id,
+            "title": r.title,
+            "source_url": r.source_url,
+            "source_path": r.source_path,
+            "description": r.description,
+            "created_at": r.created_at.isoformat() if r.created_at else None,
+        })
+    return out

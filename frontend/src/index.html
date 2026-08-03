@@ -7,6 +7,8 @@
 <style>
   * { box-sizing: border-box; }
   body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; background: #f5f5f7; color:#111; padding-bottom: 64px; }
+  body.dark { background:#0b0c0f; color:#f3f3f3; }
+  .card.dark { background:#141519; color:#f3f3f3; box-shadow:0 1px 2px rgba(255,255,255,0.04); }
   .container { max-width: 720px; margin: 0 auto; padding: 16px; }
   .card { background:#fff; border-radius:16px; padding:16px; margin-bottom:12px; box-shadow:0 1px 2px rgba(0,0,0,0.06); }
   input, select, textarea { width:100%; padding:10px 12px; border-radius:12px; border:1px solid #d1d5db; font-size:16px; margin-top:6px; font-family: inherit; }
@@ -32,7 +34,20 @@
   .checkbox { width:20px; height:20px; accent-color:#111; }
   .empty { color:#888; font-size:13px; padding:10px 0; }
   .pill { display:inline-block; padding:2px 8px; background:#e5e7eb; color:#111; border-radius:999px; font-size:12px; margin:2px; }
+  body.dark .pill { background:#2a2d35; color:#f3f3f3; }
+  body.dark .card { background:#141519; box-shadow:0 1px 2px rgba(255,255,255,0.04); }
+  body.dark input, body.dark select, body.dark textarea { background:#0f1115; color:#f3f3f3; border-color:#2a2d35; }
+  body.dark button { background:#f3f3f3; color:#0b0c0f; }
+  body.dark button.secondary { background:#2a2d35; color:#f3f3f3; }
+  body.dark .search { background:#0f1115; }
+  .dark .card { background:#141519; color:#f3f3f3; }
   .search { padding:12px; position:sticky; top:0; background:#f5f5f7; z-index:5; }
+  @media print {
+    body { background:#fff; }
+    .nav, .fab, .search, button { display:none !important; }
+    .card { box-shadow:none; border:1px solid #ddd; }
+    #cookingMode { display:block !important; }
+  }
 </style>
 </head>
 <body>
@@ -44,6 +59,7 @@
           <span id="userEmail" style="font-size:12px;color:#555;"></span>
           <button class="secondary" onclick="logout()" style="width:auto;padding:6px 10px;font-size:12px;">Logout</button>
         </div>
+        <button class="secondary" id="themeToggle" onclick="toggleTheme()" style="width:auto;padding:6px 10px;font-size:12px;">🌙</button>
       </div>
     </div>
 
@@ -101,10 +117,20 @@
         <div class="search">
           <input id="recipeSearch" placeholder="Search recipes..." oninput="renderRecipes()" />
         </div>
+        <div class="row" style="padding:8px 12px;gap:8px;flex-wrap:wrap;">
+          <span class="pill" style="cursor:pointer;" onclick="setCategoryFilter('')">All</span>
+          <span id="favPill" class="pill" style="cursor:pointer;" onclick="toggleFavoritesFilter()">❤ Favorites</span>
+        </div>
+        <div id="recipeCategoryFilters" class="row" style="padding:8px 12px;flex-wrap:wrap;gap:8px;"></div>
         <div class="card">
           <div class="top">
             <h2 style="margin-top:0;">Recipes</h2>
             <button class="secondary" onclick="openRecipeForm()" style="width:auto;padding:8px 10px;font-size:13px;">New recipe</button>
+            <button class="secondary" onclick="exportRecipes()" style="width:auto;padding:8px 10px;font-size:13px;">Export</button>
+            <label class="secondary" style="width:auto;padding:8px 10px;font-size:13px;display:inline-flex;align-items:center;cursor:pointer;">
+              Import
+              <input type="file" accept="application/json" style="display:none;" onchange="importRecipes(this)" />
+            </label>
           </div>
           <div id="recipeList"></div>
         </div>
@@ -116,6 +142,15 @@
           <textarea id="recipeInstructions" placeholder="Instructions"></textarea>
           <input id="recipeSource" placeholder="Source URL" />
           <input id="recipeRating" type="number" step="0.5" min="0" max="5" placeholder="Rating 0-5" />
+          <div class="row">
+            <input id="recipePrep" type="number" min="0" placeholder="Prep time (min)" />
+            <input id="recipeCook" type="number" min="0" placeholder="Cook time (min)" />
+          </div>
+          <div class="row">
+            <input id="recipeServings" type="number" min="0" placeholder="Servings" />
+            <input id="recipeDifficulty" placeholder="Difficulty" />
+            <input id="recipeCategory" placeholder="Category / cuisine" />
+          </div>
           <div>
             <input id="recipeTags" placeholder="Tags (comma separated)" />
           </div>
@@ -126,16 +161,52 @@
           <div class="top">
             <h2 style="margin:0;font-size:18px;" id="detailTitle"></h2>
             <button class="secondary" onclick="closeRecipeDetail()" style="width:auto;padding:8px 10px;font-size:13px;">Close</button>
+            <button class="secondary" id="favBtn" onclick="toggleFavoriteFromDetail()" style="width:auto;padding:8px 10px;font-size:13px;">🤍</button>
+            <button class="secondary" onclick="editCurrentRecipe()" style="width:auto;padding:8px 10px;font-size:13px;">Edit</button>
           </div>
           <div id="detailMeta"></div>
           <div id="detailBody"></div>
+          <div id="detailMetaExtra" class="meta" style="margin-top:8px;"></div>
           <div class="row" style="margin-top:10px;">
+            <input type="file" id="recipePhotoInput" accept="image/*" style="font-size:13px;" onchange="uploadRecipePhoto()" />
             <button class="secondary" onclick="addNoteFromDetail()">Add note</button>
             <button class="secondary" onclick="addToMealPlan()">Add to meal plan</button>
             <button class="secondary" onclick="createGroceryFromRecipe()">Grocery list</button>
+            <button onclick="startCooking()">Cook</button>
           </div>
+          <div id="detailPhotos" class="row" style="margin-top:10px;"></div>
           <h3 style="margin-top:16px;">Notes</h3>
           <div id="detailNotes"></div>
+        </div>
+
+        <div id="cookingMode" class="card hidden">
+          <div class="top">
+            <h2 style="margin:0;font-size:20px;" id="cookingTitle">Cooking Mode</h2>
+            <button class="secondary" onclick="exitCooking()" style="width:auto;padding:8px 10px;font-size:13px;">Exit</button>
+          </div>
+          <div class="row" style="margin-bottom:10px;">
+            <select id="cookScale" onchange="startCooking()">
+              <option value="1">1×</option>
+              <option value="2">2×</option>
+              <option value="3">3×</option>
+              <option value="0.5">½×</option>
+            </select>
+            <button class="secondary" onclick="window.print()" style="width:auto;padding:8px 10px;font-size:13px;">Print</button>
+          </div>
+          <div id="cookingMeta" class="meta" style="margin-bottom:10px;"></div>
+          <div class="card" style="background:#fff;border-radius:12px;padding:16px;margin-bottom:12px;">
+            <h3 style="margin-top:0;">Ingredients</h3>
+            <div id="cookingIngredients" style="white-space:pre-wrap;font-size:16px;"></div>
+          </div>
+          <div class="card" style="background:#fff;border-radius:12px;padding:16px;margin-bottom:12px;">
+            <div class="top" style="margin-bottom:8px;">
+              <h3 style="margin:0;">Instructions</h3>
+              <button class="secondary" onclick="startStepTimer()" style="width:auto;padding:8px 10px;font-size:12px;">Start timer</button>
+            </div>
+            <div id="cookingInstructions" style="white-space:pre-wrap;font-size:16px;"></div>
+            <div id="cookingSteps" style="margin-top:12px;"></div>
+            <div id="cookingTimer" class="meta" style="margin-top:8px;"></div>
+          </div>
         </div>
       </div>
 
@@ -199,8 +270,9 @@
         </div>
         <div id="groceryDetail" class="card hidden">
           <div class="top">
-            <h2 style="margin-top:0;" id="groceryDetailTitle"></h2>
+            <h2 style="margin:0;font-size:18px;" id="groceryDetailTitle"></h2>
             <button class="secondary" onclick="closeGroceryDetail()" style="width:auto;padding:8px 10px;font-size:13px;">Close</button>
+            <button class="secondary" id="groceryShareBtn" onclick="openGroceryShare()" style="width:auto;padding:8px 10px;font-size:13px;">Share</button>
           </div>
           <div class="row">
             <input id="groceryItemName" placeholder="Item" />
@@ -209,6 +281,15 @@
           <button onclick="addGroceryItem()">Add item</button>
           <h3 style="margin-top:12px;font-size:15px;color:#444;">Items</h3>
           <div id="groceryItems"></div>
+          <div id="grocerySharePanel" class="hidden" style="margin-top:12px;padding:12px;background:#f5f5f7;border-radius:12px;">
+            <div class="row" style="gap:8px;flex-wrap:wrap;">
+              <button class="secondary" onclick="copyGroceryLink()" style="width:auto;padding:8px 10px;font-size:13px;">Copy link</button>
+              <button class="secondary" onclick="shareGrocerySms()" style="width:auto;padding:8px 10px;font-size:13px;">SMS</button>
+              <button class="secondary" onclick="shareGroceryEmail()" style="width:auto;padding:8px 10px;font-size:13px;">Email</button>
+              <button class="secondary" onclick="copyGroceryText()" style="width:auto;padding:8px 10px;font-size:13px;">Copy text</button>
+            </div>
+            <p id="groceryShareStatus" style="font-size:12px;color:#555;margin-top:8px;"></p>
+          </div>
         </div>
       </div>
 
@@ -264,6 +345,8 @@ function switchTab(name) {
   if (name === 'tabGroceries') renderGroceryLists();
   if (name === 'tabAdmin') { loadPending(); loadUsers(); }
 }
+
+let cookingRecipe = null;
 
 if (token) initApp();
 
@@ -391,18 +474,80 @@ async function renderRecipes() {
   const res = await fetch(API + '/recipes', { headers: authHeaders() });
   if (!res.ok) return;
   const items = await res.json();
+  const favs = new Set(JSON.parse(localStorage.getItem('recipe_favorites') || '[]'));
+  const categories = Array.from(new Set(items.map(r => r.category).filter(Boolean))).slice(0, 20);
+  const filterBox = document.getElementById('recipeCategoryFilters');
+  const activeCategory = filterBox.dataset.active || '';
+  filterBox.innerHTML = '<span class="pill" style="cursor:pointer;" onclick="setCategoryFilter(\'\')">All</span>' + categories.map(c => '<span class="pill" style="cursor:pointer;" onclick="setCategoryFilter(\'' + escapeHtml(c) + '\')">' + escapeHtml(c) + '</span>').join('');
   const box = document.getElementById('recipeList');
   box.innerHTML = '';
-  const filtered = q ? items.filter(r => (r.title||'').toLowerCase().includes(q) || (r.description||'').toLowerCase().includes(q)) : items;
+  const filtered = items.filter(r => {
+    const matchesSearch = !q || (r.title||'').toLowerCase().includes(q) || (r.description||'').toLowerCase().includes(q);
+    const matchesCategory = !activeCategory || r.category === activeCategory;
+    const matchesFav = !filterBox.dataset.favs || favs.has(String(r.id));
+    return matchesSearch && matchesCategory && matchesFav;
+  });
+  const favPill = document.getElementById('favPill');
+  if (favPill) favPill.style.background = filterBox.dataset.favs ? '#111' : '';
+  if (favPill) favPill.style.color = filterBox.dataset.favs ? '#fff' : '';
   if (!filtered.length) box.innerHTML = '<div class="empty">No recipes yet.</div>';
   for (const r of filtered) {
     const el = document.createElement('div');
     el.className = 'item';
-    el.innerHTML = '<div><div><strong>' + escapeHtml(r.title) + '</strong></div><div class="meta">' + escapeHtml(r.description||'') + ' • ' + (r.tags||[]).map(t=>'<span class="pill">'+escapeHtml(t)+'</span>').join(' ') + '</div>' + (r.rating ? '<div class="stars">' + '★'.repeat(Math.round(r.rating)) + '</div>' : '') + '</div>';
-    el.style.cursor = 'pointer';
-    el.onclick = () => openRecipeDetail(r.id);
+    const heart = favs.has(String(r.id)) ? '❤' : '🤍';
+    const meta = [r.difficulty ? r.difficulty : '', r.category ? r.category : '', r.rating ? '★'.repeat(Math.round(r.rating)) : ''].filter(Boolean).join(' • ');
+    el.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;"><div><div style="font-weight:600;">' + escapeHtml(r.title || 'Untitled') + '</div><div class="meta">' + escapeHtml(meta) + '</div></div><div style="display:flex;align-items:center;gap:8px;"><button class="secondary" onclick="toggleFavorite(' + r.id + ')" style="width:auto;padding:8px 10px;font-size:13px;">' + heart + '</button><button class="secondary" onclick="openRecipeDetail(' + r.id + ')" style="width:auto;padding:8px 10px;font-size:13px;">Open</button></div></div>';
     box.appendChild(el);
   }
+}
+window.setCategoryFilter = function(category) {
+  const filterBox = document.getElementById('recipeCategoryFilters');
+  filterBox.dataset.active = category || '';
+  filterBox.dataset.favs = '';
+  renderRecipes();
+};
+window.toggleFavoritesFilter = function() {
+  const filterBox = document.getElementById('recipeCategoryFilters');
+  filterBox.dataset.favs = filterBox.dataset.favs ? '' : '1';
+  renderRecipes();
+};
+window.toggleFavorite = function(id) {
+  const favs = new Set(JSON.parse(localStorage.getItem('recipe_favorites') || '[]'));
+  if (favs.has(String(id))) favs.delete(String(id)); else favs.add(String(id));
+  localStorage.setItem('recipe_favorites', JSON.stringify([...favs]));
+  renderRecipes();
+};
+window.toggleFavoriteFromDetail = function() {
+  if (!currentRecipeId) return;
+  const favs = new Set(JSON.parse(localStorage.getItem('recipe_favorites') || '[]'));
+  const favBtn = document.getElementById('favBtn');
+  if (favs.has(String(currentRecipeId))) favs.delete(String(currentRecipeId)); else favs.add(String(currentRecipeId));
+  localStorage.setItem('recipe_favorites', JSON.stringify([...favs]));
+  if (favBtn) favBtn.textContent = favs.has(String(currentRecipeId)) ? '❤' : '🤍';
+  renderRecipes();
+};
+async function exportRecipes() {
+  const res = await fetch(API + '/recipes/export', { headers: authHeaders() });
+  if (!res.ok) return alert('Export failed');
+  const blob = await res.blob();
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'recipes.json';
+  a.click();
+  window.URL.revokeObjectURL(url);
+}
+async function importRecipes(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const form = new FormData();
+  form.append('file', file);
+  const res = await fetch(API + '/recipes/import', { method:'POST', headers: authHeaders(), body: form });
+  const data = await res.json();
+  if (!res.ok) return alert('Import failed: ' + (data.detail || 'unknown'));
+  alert('Imported ' + (data.imported || 0) + ' recipes');
+  input.value = '';
+  renderRecipes();
 }
 function openRecipeForm(id) {
   editingRecipeId = id || null;
@@ -415,6 +560,11 @@ function openRecipeForm(id) {
       document.getElementById('recipeInstructions').value = data.instructions||'';
       document.getElementById('recipeSource').value = data.source_url||'';
       document.getElementById('recipeRating').value = data.rating ?? '';
+      document.getElementById('recipePrep').value = data.prep_time_minutes ?? '';
+      document.getElementById('recipeCook').value = data.cook_time_minutes ?? '';
+      document.getElementById('recipeServings').value = data.servings ?? '';
+      document.getElementById('recipeDifficulty').value = data.difficulty || '';
+      document.getElementById('recipeCategory').value = data.category || '';
       document.getElementById('recipeTags').value = (data.tags||[]).join(', ');
     });
   } else {
@@ -424,6 +574,11 @@ function openRecipeForm(id) {
     document.getElementById('recipeInstructions').value='';
     document.getElementById('recipeSource').value='';
     document.getElementById('recipeRating').value='';
+    document.getElementById('recipePrep').value='';
+    document.getElementById('recipeCook').value='';
+    document.getElementById('recipeServings').value='';
+    document.getElementById('recipeDifficulty').value='';
+    document.getElementById('recipeCategory').value='';
     document.getElementById('recipeTags').value='';
   }
   document.getElementById('recipeForm').classList.remove('hidden');
@@ -439,13 +594,17 @@ async function saveRecipe() {
   const instructions = document.getElementById('recipeInstructions').value.trim();
   const source_url = document.getElementById('recipeSource').value.trim();
   const rating = parseFloat(document.getElementById('recipeRating').value || '0') || 0;
+  const prepTime = parseInt(document.getElementById('recipePrep').value || '0', 10) || null;
+  const cookTime = parseInt(document.getElementById('recipeCook').value || '0', 10) || null;
+  const servings = parseInt(document.getElementById('recipeServings').value || '0', 10) || null;
+  const difficulty = document.getElementById('recipeDifficulty').value.trim() || null;
   const tagNames = document.getElementById('recipeTags').value.split(',').map(s=>s.trim()).filter(Boolean);
   const tagIds = tagNames.map(name => {
     const existing = tags.find(t => t.name.toLowerCase() === name.toLowerCase());
     return existing ? existing.id : null;
   }).filter(Boolean);
 
-  const payload = { title, description, ingredients, instructions, source_url, rating, tag_ids: tagIds.length ? tagIds : undefined };
+  const payload = { title, description, ingredients, instructions, source_url, rating, prep_time_minutes: prepTime, cook_time_minutes: cookTime, servings, difficulty, category: document.getElementById('recipeCategory')?.value?.trim() || null, tag_ids: tagIds.length ? tagIds : undefined };
   const url = editingRecipeId ? API + '/recipes/' + editingRecipeId : API + '/recipes';
   const method = editingRecipeId ? 'PATCH' : 'POST';
   const res = await fetch(url, { method, headers: authHeaders(), body: JSON.stringify(payload) });
@@ -461,13 +620,85 @@ async function openRecipeDetail(id) {
   const r = await res.json();
   document.getElementById('detailTitle').textContent = r.title || 'Untitled';
   document.getElementById('detailMeta').innerHTML = '<div class="meta">' + escapeHtml(r.description||'') + '</div>' + (r.rating ? '<div class="stars">' + '★'.repeat(Math.round(r.rating)) + '</div>' : '') + '<div class="meta">' + (r.tags||[]).map(t=>'<span class="pill">'+escapeHtml(t)+'</span>').join(' ') + '</div>';
-  document.getElementById('detailBody').innerHTML = '<div style="white-space:pre-wrap;font-size:14px;">' + escapeHtml(r.ingredients||'') + '\n\n' + escapeHtml(r.instructions||'') + '</div>';
+  document.getElementById('detailBody').innerHTML = '<div style="white-space:pre-wrap;font-size:14px;">' + escapeHtml(r.ingredients||'') + '\n\n' + escapeHtml(r.instructions||'') + '</div><div id="ingredientActions" class="row" style="margin-top:8px;"><button class="secondary" onclick="addAllIngredientsToGrocery()">Add ingredients to grocery list</button></div>';
+  const metaExtra = [];
+  if (r.prep_time_minutes) metaExtra.push('Prep ' + r.prep_time_minutes + ' min');
+  if (r.cook_time_minutes) metaExtra.push('Cook ' + r.cook_time_minutes + ' min');
+  if (r.servings) metaExtra.push('Serves ' + r.servings);
+  if (r.difficulty) metaExtra.push(r.difficulty);
+  if (r.category) metaExtra.push(r.category);
+  document.getElementById('detailMetaExtra').textContent = metaExtra.join(' • ');
   document.getElementById('recipeDetail').classList.remove('hidden');
+  const favs = new Set(JSON.parse(localStorage.getItem('recipe_favorites') || '[]'));
+  const favBtn = document.getElementById('favBtn');
+  if (favBtn) favBtn.textContent = favs.has(String(id)) ? '❤' : '🤍';
   renderNotes(id);
+  const photoBox = document.getElementById('detailPhotos');
+  photoBox.innerHTML = (r.photos || []).map(p => '<img src="/media/' + p + '" style="max-height:120px;border-radius:8px;margin-right:8px;" />').join('');
+}
+async function uploadRecipePhoto() {
+  const input = document.getElementById('recipePhotoInput');
+  const file = input.files[0];
+  if (!file || !currentRecipeId) return;
+  const form = new FormData();
+  form.append('file', file);
+  const res = await fetch(API + '/recipes/' + currentRecipeId + '/photos', { method:'POST', headers: authHeaders(), body: form });
+  const data = await res.json();
+  if (!res.ok) return alert('Photo upload failed');
+  input.value = '';
+  openRecipeDetail(currentRecipeId);
+}
+async function addIngredientToGrocery(name) {
+  if (!currentRecipeId) return;
+  const listName = prompt('Add to grocery list:', (document.getElementById('recipeTitle').value || '') + ' groceries');
+  if (!listName) return;
+  const res = await fetch(API + '/grocery-lists', { method:'POST', headers: authHeaders(), body: JSON.stringify({name: listName}) });
+  const data = await res.json();
+  if (!res.ok) return alert('Failed: ' + (data.detail || 'unknown'));
+  await fetch(API + '/grocery-lists/' + data.id + '/items', { method:'POST', headers: authHeaders(), body: JSON.stringify({name, list_id: data.id, recipe_id: currentRecipeId}) });
+  alert('Added to grocery list');
+}
+async function addAllIngredientsToGrocery() {
+  if (!currentRecipeId) return;
+  const r = await (await fetch(API + '/recipes/' + currentRecipeId, { headers: authHeaders() })).json();
+  const lines = (r.ingredients || '').split('\n').filter(Boolean).slice(0, 30);
+  if (!lines.length) return alert('No ingredients to add');
+  const listName = prompt('Grocery list name:', (document.getElementById('recipeTitle').value || '') + ' groceries');
+  if (!listName) return;
+  const listRes = await fetch(API + '/grocery-lists', { method:'POST', headers: authHeaders(), body: JSON.stringify({name: listName}) });
+  const list = await listRes.json();
+  if (!listRes.ok) return alert('Failed: ' + (list.detail || 'unknown'));
+  for (const line of lines) {
+    await fetch(API + '/grocery-lists/' + list.id + '/items', { method:'POST', headers: authHeaders(), body: JSON.stringify({name: line, list_id: list.id, recipe_id: currentRecipeId}) });
+  }
+  alert('Created list from recipe');
+  openGroceryDetail(list.id);
+  switchTab('tabGroceries');
 }
 function closeRecipeDetail() {
   document.getElementById('recipeDetail').classList.add('hidden');
   currentRecipeId = null;
+}
+function editCurrentRecipe() {
+  if (!currentRecipeId) return;
+  closeRecipeDetail();
+  openRecipeForm(currentRecipeId);
+}
+async function extractRecipeFromUpload() {
+  const fileInput = document.getElementById('recipeFile');
+  const status = document.getElementById('recipeUploadStatus');
+  const file = fileInput.files[0];
+  if (!file) return;
+  status.textContent = 'Uploading & extracting...';
+  const form = new FormData(); form.append('file', file);
+  try {
+    const res = await fetch(API + '/media/recipe/upload', { method:'POST', headers: authHeadersNoJson(), body: form });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || data.error || 'unknown');
+    status.textContent = 'Done. Saved recipe: ' + (data.title || data.recipe_id);
+    if (data.recipe_id) openRecipeDetail(data.recipe_id);
+    fileInput.value='';
+  } catch (err) { status.textContent = 'Error: ' + err.message; }
 }
 async function renderNotes(recipeId) {
   const res = await fetch(API + '/notes?recipe_id=' + recipeId, { headers: authHeaders() });
@@ -589,12 +820,44 @@ async function openGroceryDetail(id) {
   if (!res.ok) return alert('List not found');
   const data = await res.json();
   document.getElementById('groceryDetailTitle').textContent = data.name;
+  document.getElementById('grocerySharePanel').classList.add('hidden');
+  document.getElementById('groceryShareStatus').textContent = '';
   await loadGroceryItems(id);
   document.getElementById('groceryDetail').classList.remove('hidden');
 }
 function closeGroceryDetail() {
   document.getElementById('groceryDetail').classList.add('hidden');
   currentGroceryId = null;
+}
+let groceryShareData = null;
+async function openGroceryShare() {
+  if (!currentGroceryId) return;
+  const res = await fetch(API + '/grocery-lists/' + currentGroceryId + '/share', { method:'POST', headers: authHeaders() });
+  const data = await res.json();
+  if (!res.ok) return alert('Share failed');
+  groceryShareData = data;
+  document.getElementById('grocerySharePanel').classList.remove('hidden');
+  document.getElementById('groceryShareStatus').textContent = 'Share ready. Use one of the options below.';
+}
+function copyGroceryLink() {
+  if (!groceryShareData) return;
+  const link = location.origin + groceryShareData.link;
+  navigator.clipboard.writeText(link).then(() => setShareStatus('Link copied'));
+}
+function shareGrocerySms() {
+  if (!groceryShareData) return;
+  window.location.href = groceryShareData.sms;
+}
+function shareGroceryEmail() {
+  if (!groceryShareData) return;
+  window.location.href = groceryShareData.mailto;
+}
+function copyGroceryText() {
+  if (!groceryShareData) return;
+  navigator.clipboard.writeText(groceryShareData.text).then(() => setShareStatus('Text copied'));
+}
+function setShareStatus(msg) {
+  document.getElementById('groceryShareStatus').textContent = msg;
 }
 async function loadGroceryItems(listId) {
   const res = await fetch(API + '/grocery-lists/' + listId + '/items', { headers: authHeaders() });
@@ -687,6 +950,60 @@ async function approveUser(id, active) {
   const data = await res.json();
   if (!res.ok) return alert('Action failed: ' + (data.detail || 'unknown'));
   loadPending(); loadUsers();
+}
+let timerInterval = null;
+function startStepTimer() {
+  const mins = prompt('Timer minutes:');
+  if (!mins || isNaN(mins)) return;
+  const total = parseInt(mins, 10) * 60;
+  const box = document.getElementById('cookingTimer');
+  clearInterval(timerInterval);
+  box.textContent = 'Timer: ' + mins + ':00';
+  let remaining = total;
+  timerInterval = setInterval(() => {
+    remaining--;
+    if (remaining <= 0) {
+      clearInterval(timerInterval);
+      box.textContent = 'Timer done';
+      alert('Timer done');
+      return;
+    }
+    const m = Math.floor(remaining / 60);
+    const s = remaining % 60;
+    box.textContent = 'Timer: ' + m + ':' + (s < 10 ? '0' : '') + s;
+  }, 1000);
+}
+async function startCooking() {
+  if (!currentRecipeId) return;
+  const res = await fetch(API + '/recipes/' + currentRecipeId + '/cook', { method:'POST', headers: authHeaders() });
+  const data = await res.json();
+  if (!res.ok) return alert('Failed: ' + (data.detail || 'unknown'));
+  cookingRecipe = data;
+  document.getElementById('cookingTitle').textContent = data.title || 'Cooking Mode';
+  document.getElementById('cookingMeta').innerHTML = '<div class="meta">' + [data.servings ? 'Serves ' + data.servings : '', data.difficulty ? data.difficulty : '', data.prep_time_minutes ? 'Prep ' + data.prep_time_minutes + ' min' : '', data.cook_time_minutes ? 'Cook ' + data.cook_time_minutes + ' min' : ''].filter(Boolean).join(' • ') + '</div>';
+  document.getElementById('cookingIngredients').textContent = (data.ingredients || '').split('\n').map(line => {
+    const match = line.match(/^(.+?)\s*[xX×]\s*([\d./]+)(.*)$/);
+    if (!match) return line;
+    const scaled = (parseFloat(match[2]) * (parseInt(document.getElementById('cookScale')?.value || '1', 10) || 1)).toString();
+    return match[1].trim() + ' × ' + scaled + match[3];
+  }).join('\n');
+  document.getElementById('cookingInstructions').textContent = data.instructions || '';
+  const steps = (data.instructions || '').split('\n').filter(Boolean).map(s => s.trim());
+  const stepsBox = document.getElementById('cookingSteps');
+  stepsBox.innerHTML = steps.map((s, i) => '<label style="display:flex;align-items:center;gap:8px;margin:6px 0;font-size:15px;"><input type="checkbox" onchange="completeStep(this)" /> <span>' + escapeHtml(s) + '</span></label>').join('');
+  document.getElementById('recipeDetail').classList.add('hidden');
+  document.getElementById('cookingMode').classList.remove('hidden');
+}
+function exitCooking() {
+  clearInterval(timerInterval);
+  document.getElementById('cookingMode').classList.add('hidden');
+  document.getElementById('recipeDetail').classList.remove('hidden');
+}
+function completeStep(cb) {
+  const label = cb.closest('label');
+  if (!label) return;
+  if (cb.checked) label.style.opacity = '0.6';
+  else label.style.opacity = '1';
 }
 </script>
 </body>
