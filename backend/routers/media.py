@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from backend.database import get_db
 from backend.models import User, Recipe, Cookbook, Store
 from backend.services.auth import get_current_user, require_role
-from backend.services.ingest import download_media, ingest_upload, extract_recipe_from_url
+from backend.services.ingest import download_media, ingest_upload, extract_recipe_from_url, extract_recipe_from_upload
 
 router = APIRouter(prefix="/media", tags=["media"])
 
@@ -30,4 +30,11 @@ def extract_recipe(payload: IngestRequest, db: Session = Depends(get_db), curren
     result = extract_recipe_from_url(payload.url, current_user.id)
     if not result.get("ok"):
         raise HTTPException(status_code=400, detail=result.get("error","recipe extraction failed"))
+    return result
+
+@router.post("/recipe/upload")
+def extract_recipe_from_uploaded_file(file: UploadFile = File(...), db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    result = extract_recipe_from_upload(file, current_user.id)
+    if not result.get("ok"):
+        raise HTTPException(status_code=400, detail=result.get("error","upload recipe extraction failed"))
     return result

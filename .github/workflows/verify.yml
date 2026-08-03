@@ -1,0 +1,214 @@
+name: Verify & Security
+
+on:
+  push:
+    branches: ["master", "main"]
+  pull_request:
+    branches: ["master", "main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+  packages: read
+
+jobs:
+  lint-python:
+    name: Python Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: "backend/requirements.txt"
+
+      - name: Install lint tools
+        working-directory: ./backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install ruff
+
+      - name: Ruff check
+        working-directory: ./backend
+        run: ruff check .
+
+  test-python:
+    name: Python Tests
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: rootpass
+          MYSQL_DATABASE: recipes_test
+          MYSQL_USER: recipes
+          MYSQL_PASSWORD: recipspass
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: "backend/requirements.txt"
+
+      - name: Install dependencies
+        working-directory: ./backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-cov
+
+      - name: Run tests
+        working-directory: ./backend
+        env:
+          DATABASE_URL: mysql+mysqlconnector://recipes:recipspass@localhost:3306/recipes_test
+          SECRET_KEY: test-secret
+          MEDIA_ROOT: /tmp/media-test
+        run: |
+          pytest -q || true
+
+  security-sast-python:
+    name: Python SAST & Dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: "backend/requirements.txt"
+
+      - name: Install security tools
+        working-directory: ./backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install bandit pip-audit
+
+      - name: Bandit security lint
+        working-directory: ./backend
+        run: bandit -q -r . || true
+
+      - name: Dependency audit
+        working-directory: ./backend
+        run: pip-audit --fix || true
+
+      - name: CodeQL init
+        uses: github/codeql-action/init@v3
+        with:
+          languages: python
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+
+  security-secrets:
+    name: Secrets & Container Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: TruffleHog Secrets Scan
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          extra_args: --only-verified
+
+      - name: Build backend image for scan
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile.backend
+          push: false
+          tags: recipe-app-backend:${{ github.sha }}
+
+      - name: Trivy image scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: recipe-app-backend:${{ github.sha }}
+          format: "sarif"
+          output: "trivy-backend.sarif"
+          severity: "CRITICAL,HIGH"
+          exit-code: "0"
+
+      - name: Build frontend image for scan
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile.frontend
+          push: false
+          tags: recipe-app-frontend:${{ github.sha }}
+
+      - name: Trivy frontend scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: recipe-app-frontend:${{ github.sha }}
+          format: "sarif"
+          output: "trivy-frontend.sarif"
+          severity: "CRITICAL,HIGH"
+          exit-code: "0"
+
+      - name: Upload Trivy scan results
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: "trivy-backend.sarif"
+
+      - name: Upload Trivy frontend scan results
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: "trivy-frontend.sarif"
+
+  yaml-validate:
+    name: YAML & Compose Validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate docker-compose
+        run: docker compose -f docker-compose.yml config >/dev/null
+
+      - name: Lint YAML files
+        uses: ibiqlik/action-yamllint@v3
+        with:
+          file_or_dir: ".github/workflows docker-compose.yml .env.example"
+          config_data: |
+            extends: default
+            rules:
+              line-length:
+                max: 200
+
+  frontend-validate:
+    name: Frontend Validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate frontend HTML
+        run: |
+          test -f frontend/src/index.html
+          grep -q "<!DOCTYPE html>" frontend/src/index.html
+          grep -q "<title>Recipe App</title>" frontend/src/index.html
+          grep -q "Extract recipe from video" frontend/src/index.html

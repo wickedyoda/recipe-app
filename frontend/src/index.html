@@ -82,8 +82,14 @@
         <div class="card">
           <h2 style="margin-top:0;">Extract recipe from video</h2>
           <input id="recipeUrl" placeholder="Paste TikTok / YouTube / Reels URL" />
-          <button onclick="extractRecipe()">Extract recipe</button>
+          <button onclick="extractRecipe()">Extract recipe from URL</button>
           <p id="recipeStatus" style="font-size:13px;color:#555;margin-top:8px;"></p>
+          <div style="margin-top:12px; padding-top:12px; border-top:1px solid #eee;">
+            <p style="font-size:13px;color:#555;margin-top:0;margin-bottom:8px;">Or upload a video file:</p>
+            <input id="recipeFile" type="file" accept="video/*" />
+            <button onclick="extractRecipeFromUpload()">Extract recipe from file</button>
+            <p id="recipeUploadStatus" style="font-size:13px;color:#555;margin-top:8px;"></p>
+          </div>
         </div>
         <div class="card">
           <h2 style="margin-top:0;">My media</h2>
