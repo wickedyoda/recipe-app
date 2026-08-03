@@ -876,6 +876,7 @@ function closePlanDetail() {
 async function renderPlanner(plan) {
   const view = window._plannerView || plan.period || 'weekly';
   const entriesRes = await fetch(API + '/meal-plans/' + plan.id + '/entries', { headers: authHeaders() });
+  if (!entriesRes.ok) return alert('Failed to load plan entries');
   const entries = await entriesRes.json();
   const recipes = window._plannerRecipes || [];
   const recipeMap = {};
