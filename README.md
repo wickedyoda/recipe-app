@@ -31,6 +31,7 @@ The app is mobile-first and uses warm minimalist styling. Key screens:
 ![Home screen](docs/screenshots/home.png)
 ![Recipe detail](docs/screenshots/detail.png)
 ![Cooking mode](docs/screenshots/cooking-mode.png)
+![Grocery export](docs/screenshots/grocery-export.png)
 
 ## Quick start
 

@@ -163,3 +163,19 @@ def public_list(share_token: str, db: Session = Depends(get_db)):
     items = db.query(GroceryItem).filter(GroceryItem.list_id==gl.id).order_by(GroceryItem.id).all()
     text = _list_text(gl.name, items)
     return Response(content=text, media_type="text/plain; charset=utf-8")
+
+@router.get("/{list_id}/export")
+def export_list(list_id: int, fmt: str = "text", db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    gl = db.query(GroceryList).filter(GroceryList.id==list_id, GroceryList.owner_id==current_user.id).first()
+    if not gl:
+        raise HTTPException(status_code=404, detail="Grocery list not found")
+    items = db.query(GroceryItem).filter(GroceryItem.list_id==list_id).order_by(GroceryItem.id).all()
+    if fmt == "html":
+        content = _html(gl.name, items)
+        media_type = "text/html; charset=utf-8"
+        filename = (gl.name or "grocery-list") + ".html"
+    else:
+        content = _list_text(gl.name, items)
+        media_type = "text/plain; charset=utf-8"
+        filename = (gl.name or "grocery-list") + ".txt"
+    return Response(content=content, media_type=media_type, headers={"Content-Disposition": f"attachment; filename=\"{filename}\""})
