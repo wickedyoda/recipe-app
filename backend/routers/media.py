@@ -49,7 +49,7 @@ def extract_recipe_from_uploaded_file(file: UploadFile = File(...), db: Session 
 def list_media(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     items = db.query(Recipe).filter(
         Recipe.owner_id == current_user.id,
-        (Recipe.source_url != None) | (Recipe.source_path != None)
+        Recipe.source_url.is_not(None) | Recipe.source_path.is_not(None),
     ).order_by(Recipe.created_at.desc()).limit(200).all()
     out = []
     for r in items:
