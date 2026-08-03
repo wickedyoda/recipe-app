@@ -882,7 +882,8 @@ async function renderPlanner(plan) {
   for (const r of recipes) recipeMap[r.id] = r.title;
 
   const today = new Date();
-  const todayStr = today.toISOString().slice(0,10);
+  const dateKey = (dt) => dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStart(2, '0') + '-' + String(dt.getDate()).padStart(2, '0');
+  const todayStr = dateKey(today);
   let days = [];
   if (view === 'weekly') {
     const start = new Date(today);
@@ -891,14 +892,16 @@ async function renderPlanner(plan) {
     for (let i=0;i<7;i++) {
       const d = new Date(start);
       d.setDate(start.getDate()+i);
-      days.push({ key: d.toISOString().slice(0,10), label: d.toLocaleDateString(undefined, {weekday:'short', day:'numeric'}) });
+      days.push({ key: dateKey(d), label: d.toLocaleDateString(undefined, {weekday:'short', day:'numeric'}) });
     }
   } else if (view === 'monthly') {
     const start = new Date(today.getFullYear(), today.getMonth(), 1);
-    for (let i=0;i<30;i++) {
+    const end = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    const totalDays = end.getDate();
+    for (let i=0;i<totalDays;i++) {
       const d = new Date(start);
       d.setDate(start.getDate()+i);
-      days.push({ key: d.toISOString().slice(0,10), label: d.toLocaleDateString(undefined, {month:'short', day:'numeric'}) });
+      days.push({ key: dateKey(d), label: d.toLocaleDateString(undefined, {month:'short', day:'numeric'}) });
     }
   } else {
     days = [{ key: todayStr, label: 'Today' }];
