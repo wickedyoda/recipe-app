@@ -1,13 +1,14 @@
 import os
-import subprocess
 import re
+import subprocess
 import uuid
-from pathlib import Path
 from datetime import datetime
-from typing import Optional
+from pathlib import Path
+
+from backend.models import Cookbook, Recipe, Store
 from sqlalchemy.orm import Session
+
 from .database import SessionLocal
-from backend.models import Recipe, Cookbook, Store, Tag, RecipeTag
 
 MEDIA_ROOT = Path(os.getenv("MEDIA_ROOT", "/media"))
 MEDIA_ROOT.mkdir(parents=True, exist_ok=True)
@@ -120,7 +121,7 @@ def _extract_recipe_from_text(text: str) -> dict:
     }
 
 
-def _extract_from_transcript(transcript_path: Optional[Path], fallback_audio: Optional[Path], workdir: Path) -> dict:
+def _extract_from_transcript(transcript_path: Path | None, fallback_audio: Path | None, workdir: Path) -> dict:
     if transcript_path and transcript_path.exists():
         raw_text = _clean_srt_text(transcript_path.read_text(errors="ignore") or "")
         return _extract_recipe_from_text(raw_text)

@@ -1,9 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+
 from backend.database import get_db
-from backend.models import User, GroceryList, GroceryItem, Recipe
+from backend.models import GroceryItem, GroceryList, Recipe, User
+from backend.schemas import (
+    GroceryItemCreate,
+    GroceryItemOut,
+    GroceryListCreate,
+    GroceryListOut,
+)
 from backend.services.auth import get_current_user
-from backend.schemas import GroceryListCreate, GroceryListOut, GroceryItemCreate, GroceryItemOut
 
 router = APIRouter(prefix="/grocery-lists", tags=["grocery-lists"])
 
@@ -48,10 +54,9 @@ def list_items(list_id: int, db: Session = Depends(get_db), current_user: User =
         raise HTTPException(status_code=404, detail="Grocery list not found")
     return db.query(GroceryItem).filter(GroceryItem.list_id==list_id).order_by(GroceryItem.id).all()
 
-from typing import Optional
-...
+
 @router.patch("/items/{item_id}", response_model=GroceryItemOut)
-def update_item(item_id: int, checked: Optional[bool] = None, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def update_item(item_id: int, checked: bool | None = None, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     item = db.query(GroceryItem).filter(GroceryItem.id==item_id, GroceryItem.owner_id==current_user.id).first()
     if not item:
         raise HTTPException(status_code=404, detail="Item not found")
