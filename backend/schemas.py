@@ -61,7 +61,6 @@ class RecipeCreate(BaseModel):
     servings: int | None = None
     difficulty: str | None = None
     category: str | None = None
-    subcategory: str | None = None
     tag_ids: list[int] | None = None
 
 class RecipeOut(RecipeCreate):
@@ -70,7 +69,6 @@ class RecipeOut(RecipeCreate):
     created_at: datetime
     tags: list[str] = []
     photos: list[str] = []
-    step_photos: list[dict] = []
     class Config:
         from_attributes = True
 

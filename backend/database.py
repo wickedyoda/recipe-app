@@ -27,7 +27,6 @@ def ensure_schema():
         "servings": "INTEGER",
         "difficulty": "VARCHAR(50)",
         "category": "VARCHAR(100)",
-        "subcategory": "VARCHAR(100)",
     }
     with engine.begin() as conn:
         for name, dtype in needed.items():
@@ -39,5 +38,3 @@ def ensure_schema():
         grocery_cols = {c["name"] for c in insp.get_columns("grocery_lists")}
         if "share_token" not in grocery_cols:
             conn.execute(text("ALTER TABLE grocery_lists ADD COLUMN share_token VARCHAR(255)"))
-        if "recipe_step_photos" not in insp.get_table_names():
-            conn.execute(text("CREATE TABLE recipe_step_photos (id INTEGER PRIMARY KEY AUTOINCREMENT, recipe_id INTEGER NOT NULL, owner_id INTEGER NOT NULL, step_index INTEGER NOT NULL, path VARCHAR(1024) NOT NULL, caption VARCHAR(255), created_at DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (recipe_id) REFERENCES recipes(id), FOREIGN KEY (owner_id) REFERENCES users(id))"))
