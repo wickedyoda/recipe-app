@@ -80,6 +80,7 @@ class MediaItem(BaseModel):
 
 class NoteCreate(BaseModel):
     body: str
+    recipe_id: int
 
 class NoteOut(NoteCreate):
     id: int

@@ -35,8 +35,11 @@ def create_recipe(payload: RecipeCreate, db: Session = Depends(get_db), current_
     return RecipeOut.model_validate(recipe)
 
 @router.get("", response_model=list[RecipeOut])
-def list_recipes(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    rows = db.query(Recipe).filter(Recipe.owner_id==current_user.id).order_by(Recipe.created_at.desc()).limit(200).all()
+def list_recipes(db: Session = Depends(get_db), current_user: User = Depends(get_current_user), q: str = ""):
+    rows = db.query(Recipe).filter(Recipe.owner_id==current_user.id)
+    if q:
+        rows = rows.filter(Recipe.title.ilike(f"%{q}%"))
+    rows = rows.order_by(Recipe.created_at.desc()).limit(200).all()
     out = []
     for r in rows:
         data = RecipeOut.model_validate(r).model_dump()

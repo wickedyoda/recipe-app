@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from backend.database import get_db
 from backend.models import User, Note, Recipe
@@ -8,8 +8,8 @@ from backend.schemas import NoteCreate, NoteOut
 router = APIRouter(prefix="/notes", tags=["notes"])
 
 @router.post("", response_model=NoteOut)
-def create_note(payload: NoteCreate, recipe_id: int = Query(...), db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    recipe = db.query(Recipe).filter(Recipe.id==recipe_id, Recipe.owner_id==current_user.id).first()
+def create_note(payload: NoteCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    recipe = db.query(Recipe).filter(Recipe.id==payload.recipe_id, Recipe.owner_id==current_user.id).first()
     if not recipe:
         raise HTTPException(status_code=404, detail="Recipe not found")
     note = Note(recipe_id=recipe.id, owner_id=current_user.id, body=payload.body)
