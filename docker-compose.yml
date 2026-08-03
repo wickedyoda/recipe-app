@@ -38,6 +38,7 @@ services:
         condition: service_healthy
     volumes:
       - media:/media
+      - backend_media:/app/backend/media
 
   frontend:
     build:
@@ -53,3 +54,4 @@ services:
 volumes:
   mysql_data:
   media:
+  backend_media:

@@ -60,6 +60,7 @@ class Recipe(Base):
     cook_time_minutes = Column(Integer, nullable=True)
     servings = Column(Integer, nullable=True)
     difficulty = Column(String(50), nullable=True)
+    category = Column(String(100), nullable=True)
     embedding = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
@@ -68,6 +69,14 @@ class RecipeTag(Base):
     id = Column(Integer, primary_key=True, index=True)
     recipe_id = Column(Integer, ForeignKey("recipes.id"), nullable=False)
     tag_id = Column(Integer, ForeignKey("tags.id"), nullable=False)
+
+class RecipePhoto(Base):
+    __tablename__ = "recipe_photos"
+    id = Column(Integer, primary_key=True, index=True)
+    recipe_id = Column(Integer, ForeignKey("recipes.id"), nullable=False)
+    owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    path = Column(String(1024), nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 class Note(Base):
     __tablename__ = "notes"

@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
+from fastapi.staticfiles import StaticFiles
 from backend.database import engine, Base, ensure_schema
 from backend.routers import router as api_router
 
@@ -21,6 +22,7 @@ app.add_middleware(
     TrustedHostMiddleware,
     allowed_hosts=["localhost", "127.0.0.1", "*.example.com"],
 )
+app.mount("/media", StaticFiles(directory="backend/media"), name="backend-media")
 
 @app.middleware("http")
 async def security_headers(request, call_next):
