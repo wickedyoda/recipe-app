@@ -6,4 +6,16 @@ class Settings(BaseSettings):
     SECRET_KEY: str = "change-me"
     MEDIA_ROOT: str = "/media"
 
+    SMTP_HOST: str = ""
+    SMTP_PORT: int = 587
+    SMTP_USERNAME: str = ""
+    SMTP_PASSWORD: str = ""
+    SMTP_FROM_EMAIL: str = ""
+    SMTP_USE_TLS: bool = True
+
+    DEFAULT_ADMIN_EMAIL: str = "admin@example.com"
+    DEFAULT_ADMIN_PASSWORD: str = "ChangeMe123!"
+    DEFAULT_ADMIN_DISPLAY_NAME: str = "Admin"
+
+
 settings = Settings()

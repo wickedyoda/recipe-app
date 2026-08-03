@@ -4,11 +4,37 @@ from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from backend.database import Base, engine, ensure_schema
+from backend.config import settings
+from backend.database import Base, SessionLocal, engine, ensure_schema
+from backend.models import Role, User
 from backend.routers import router as api_router
+from backend.services.auth import hash_password
+
+
+def _bootstrap_default_admin() -> None:
+    db = SessionLocal()
+    try:
+        existing = db.query(User).filter(User.email == settings.DEFAULT_ADMIN_EMAIL).first()
+        if existing:
+            return
+        admin = User(
+            email=settings.DEFAULT_ADMIN_EMAIL,
+            hashed_password=hash_password(settings.DEFAULT_ADMIN_PASSWORD),
+            display_name=settings.DEFAULT_ADMIN_DISPLAY_NAME,
+            role=Role.admin,
+            is_active=1,
+            is_approved=1,
+            must_change_password=1,
+        )
+        db.add(admin)
+        db.commit()
+    finally:
+        db.close()
+
 
 Base.metadata.create_all(bind=engine)
 ensure_schema()
+_bootstrap_default_admin()
 
 app = FastAPI(title="Recipe App API", version="0.1.0")
 app.add_middleware(GZipMiddleware, minimum_size=1024)
