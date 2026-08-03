@@ -44,9 +44,9 @@
   .search { padding:12px; position:sticky; top:0; background:#f5f5f7; z-index:5; }
   @media print {
     body { background:#fff; }
-    .nav, .fab, .search, button { display:none !important; }
+    .nav, .fab, .search, button, .row input[type="file"], select { display:none !important; }
     .card { box-shadow:none; border:1px solid #ddd; }
-    #cookingMode { display:block !important; }
+    #recipeDetail, #cookingMode { display:block !important; }
   }
 </style>
 </head>
@@ -152,6 +152,10 @@
           <input id="recipeSource" placeholder="Source URL" />
           <input id="recipeRating" type="number" step="0.5" min="0" max="5" placeholder="Rating 0-5" />
           <div class="row">
+            <input id="recipeFlavorRating" type="number" step="0.5" min="0" max="5" placeholder="Flavor rating 0-5" />
+            <input id="recipeEffortRating" type="number" step="0.5" min="0" max="5" placeholder="Effort/time rating 0-5" />
+          </div>
+          <div class="row">
             <input id="recipePrep" type="number" min="0" placeholder="Prep time (min)" />
             <input id="recipeCook" type="number" min="0" placeholder="Cook time (min)" />
           </div>
@@ -178,6 +182,13 @@
           <div id="detailBody"></div>
           <div id="detailMetaExtra" class="meta" style="margin-top:8px;"></div>
           <div class="row" style="margin-top:10px;">
+            <select id="recipeScale" onchange="scaleIngredients()">
+              <option value="0.5">½×</option>
+              <option value="1" selected>1×</option>
+              <option value="1.5">1.5×</option>
+              <option value="2">2×</option>
+              <option value="3">3×</option>
+            </select>
             <input type="file" id="recipePhotoInput" accept="image/*" style="font-size:13px;" onchange="uploadRecipePhoto()" />
             <input type="file" id="stepPhotoInput" accept="image/*" style="font-size:13px;" onchange="uploadStepPhoto()" />
             <button class="secondary" onclick="addNoteFromDetail()">Add note</button>
@@ -237,7 +248,7 @@
           <input id="planName" placeholder="Plan name" />
           <select id="planPeriod">
             <option value="daily">Daily</option>
-            <option value="weekly">Weekly</option>
+            <option value="weekly" selected>Weekly</option>
             <option value="monthly">Monthly</option>
           </select>
           <button onclick="savePlan()">Save</button>
@@ -245,26 +256,17 @@
         </div>
         <div id="planDetail" class="card hidden">
           <div class="top">
-            <h2 style="margin-top:0;" id="planDetailTitle"></h2>
+            <h2 style="margin:0;font-size:18px;" id="planDetailTitle"></h2>
+            <div class="row" style="gap:6px;flex-wrap:nowrap;">
+              <button class="secondary" onclick="setPlannerView('weekly')" id="plannerWeekBtn" style="width:auto;padding:6px 10px;font-size:12px;">Week</button>
+              <button class="secondary" onclick="setPlannerView('monthly')" id="plannerMonthBtn" style="width:auto;padding:6px 10px;font-size:12px;">Month</button>
+              <button class="secondary" onclick="setPlannerView('daily')" id="plannerDayBtn" style="width:auto;padding:6px 10px;font-size:12px;">Day</button>
+            </div>
             <button class="secondary" onclick="closePlanDetail()" style="width:auto;padding:8px 10px;font-size:13px;">Close</button>
           </div>
-          <div class="row">
-            <select id="entryMeal">
-              <option>Breakfast</option>
-              <option>Lunch</option>
-              <option>Dinner</option>
-              <option>Snack</option>
-            </select>
-            <input id="entryDate" type="date" />
-          </div>
-          <div style="margin-top:8px;">
-            <select id="entryRecipe">
-              <option value="">Select recipe</option>
-            </select>
-            <button onclick="addMealEntry()">Add entry</button>
-          </div>
-          <h3 style="margin-top:12px;font-size:15px;color:#444;">Entries</h3>
-          <div id="entryList"></div>
+          <div id="plannerDayChips" class="row" style="margin-top:8px;overflow-x:auto;gap:8px;"></div>
+          <div id="plannerSlots" style="margin-top:12px;"></div>
+          <div id="plannerSummary" class="meta" style="margin-top:8px;"></div>
         </div>
       </div>
 
@@ -350,6 +352,26 @@ function authHeadersNoJson() {
 }
 function escapeHtml(text) {
   return String(text||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function scaleIngredientLine(line, scale) {
+  if (!scale || scale === 1) return line;
+  const m = line.match(/^(.+?)\s*[xX×]\s*([\d./]+)(.*)$/);
+  if (!m) return line;
+  const raw = m[2];
+  let val = parseFloat(raw);
+  if (raw.includes('/')) {
+    const [numStr, denStr] = raw.split('/');
+    const num = parseFloat(numStr);
+    const den = parseFloat(denStr);
+    val = den ? (num / den) : NaN;
+  }
+  if (!Number.isFinite(val)) return line;
+  const scaled = val * scale;
+  return m[1].trim() + ' × ' + (Number.isInteger(scaled) ? String(scaled) : scaled.toFixed(2).replace(/0$/, '').replace(/\.$/, '')) + m[3];
+}
+function scaleIngredients() {
+  if (!currentRecipeId) return;
+  openRecipeDetail(currentRecipeId);
 }
 
 function switchTab(name) {
@@ -515,7 +537,11 @@ async function renderRecipes() {
     const el = document.createElement('div');
     el.className = 'item';
     const heart = favs.has(String(r.id)) ? '❤' : '🤍';
-    const meta = [r.difficulty ? r.difficulty : '', r.category ? r.category : '', r.rating ? '★'.repeat(Math.round(r.rating)) : ''].filter(Boolean).join(' • ');
+    const stars = r.rating ? '★'.repeat(Math.round(r.rating)) : '';
+    const flavorStars = r.flavor_rating ? ' Flavor:' + '★'.repeat(Math.round(r.flavor_rating)) : '';
+    const effortStars = r.effort_rating ? ' Effort:' + '★'.repeat(Math.round(r.effort_rating)) : '';
+    const timeMeta = [r.prep_time_minutes ? 'Prep ' + r.prep_time_minutes + ' min' : '', r.cook_time_minutes ? 'Cook ' + r.cook_time_minutes + ' min' : '', r.servings ? 'Serves ' + r.servings : ''].filter(Boolean).join(' • ');
+    const meta = [r.difficulty ? r.difficulty : '', r.category ? r.category : '', timeMeta, stars + flavorStars + effortStars].filter(Boolean).join(' • ');
     el.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;"><div><div style="font-weight:600;">' + escapeHtml(r.title || 'Untitled') + '</div><div class="meta">' + escapeHtml(meta) + '</div></div><div style="display:flex;align-items:center;gap:8px;"><button class="secondary" onclick="toggleFavorite(' + r.id + ')" style="width:auto;padding:8px 10px;font-size:13px;">' + heart + '</button><button class="secondary" onclick="openRecipeDetail(' + r.id + ')" style="width:auto;padding:8px 10px;font-size:13px;">Open</button></div></div>';
     box.appendChild(el);
   }
@@ -608,6 +634,8 @@ function openRecipeForm(id) {
       document.getElementById('recipeInstructions').value = data.instructions||'';
       document.getElementById('recipeSource').value = data.source_url||'';
       document.getElementById('recipeRating').value = data.rating ?? '';
+      document.getElementById('recipeFlavorRating').value = data.flavor_rating ?? '';
+      document.getElementById('recipeEffortRating').value = data.effort_rating ?? '';
       document.getElementById('recipePrep').value = data.prep_time_minutes ?? '';
       document.getElementById('recipeCook').value = data.cook_time_minutes ?? '';
       document.getElementById('recipeServings').value = data.servings ?? '';
@@ -623,6 +651,8 @@ function openRecipeForm(id) {
     document.getElementById('recipeInstructions').value='';
     document.getElementById('recipeSource').value='';
     document.getElementById('recipeRating').value='';
+    document.getElementById('recipeFlavorRating').value='';
+    document.getElementById('recipeEffortRating').value='';
     document.getElementById('recipePrep').value='';
     document.getElementById('recipeCook').value='';
     document.getElementById('recipeServings').value='';
@@ -643,6 +673,8 @@ async function saveRecipe() {
   const instructions = document.getElementById('recipeInstructions').value.trim();
   const source_url = document.getElementById('recipeSource').value.trim();
   const rating = parseFloat(document.getElementById('recipeRating').value || '0') || 0;
+  const flavorRating = parseFloat(document.getElementById('recipeFlavorRating').value || '0') || 0;
+  const effortRating = parseFloat(document.getElementById('recipeEffortRating').value || '0') || 0;
   const prepTime = parseInt(document.getElementById('recipePrep').value || '0', 10) || null;
   const cookTime = parseInt(document.getElementById('recipeCook').value || '0', 10) || null;
   const servings = parseInt(document.getElementById('recipeServings').value || '0', 10) || null;
@@ -653,7 +685,7 @@ async function saveRecipe() {
     return existing ? existing.id : null;
   }).filter(Boolean);
 
-  const payload = { title, description, ingredients, instructions, source_url, rating, prep_time_minutes: prepTime, cook_time_minutes: cookTime, servings, difficulty, category: document.getElementById('recipeCategory')?.value?.trim() || null, subcategory: document.getElementById('recipeSubcategory')?.value?.trim() || null, tag_ids: tagIds.length ? tagIds : undefined };
+  const payload = { title, description, ingredients, instructions, source_url, rating, flavor_rating: flavorRating || null, effort_rating: effortRating || null, prep_time_minutes: prepTime, cook_time_minutes: cookTime, servings, difficulty, category: document.getElementById('recipeCategory')?.value?.trim() || null, subcategory: document.getElementById('recipeSubcategory')?.value?.trim() || null, tag_ids: tagIds.length ? tagIds : undefined };
   const url = editingRecipeId ? API + '/recipes/' + editingRecipeId : API + '/recipes';
   const method = editingRecipeId ? 'PATCH' : 'POST';
   const res = await fetch(url, { method, headers: authHeaders(), body: JSON.stringify(payload) });
@@ -668,8 +700,9 @@ async function openRecipeDetail(id) {
   if (!res.ok) return alert('Recipe not found');
   const r = await res.json();
   document.getElementById('detailTitle').textContent = r.title || 'Untitled';
-  document.getElementById('detailMeta').innerHTML = '<div class="meta">' + escapeHtml(r.description||'') + '</div>' + (r.rating ? '<div class="stars">' + '★'.repeat(Math.round(r.rating)) + '</div>' : '') + '<div class="meta">' + (r.tags||[]).map(t=>'<span class="pill">'+escapeHtml(t)+'</span>').join(' ') + '</div>';
-  document.getElementById('detailBody').innerHTML = '<div style="display:flex;flex-direction:column;gap:8px;"><div>' + (r.ingredients||'').split('\n').filter(Boolean).map(line => '<label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" onchange="toggleIngredientCheck(this)" /> <span style="white-space:pre-wrap;">' + escapeHtml(line) + '</span></label>').join('') + '</div><div style="white-space:pre-wrap;font-size:14px;margin-top:8px;">' + escapeHtml(r.instructions||'') + '</div></div><div id="ingredientActions" class="row" style="margin-top:8px;"><button class="secondary" onclick="addAllIngredientsToGrocery()">Add ingredients to grocery list</button></div>';
+  document.getElementById('detailMeta').innerHTML = '<div class="meta">' + escapeHtml(r.description||'') + '</div>' + (r.rating ? '<div class="stars">' + '★'.repeat(Math.round(r.rating)) + '</div>' : '') + (r.flavor_rating ? '<div class="meta">Flavor: ' + '★'.repeat(Math.round(r.flavor_rating)) + '</div>' : '') + (r.effort_rating ? '<div class="meta">Effort: ' + '★'.repeat(Math.round(r.effort_rating)) + '</div>' : '') + '<div class="meta">' + (r.tags||[]).map(t=>'<span class="pill">'+escapeHtml(t)+'</span>').join(' ') + '</div>';
+  const scaleVal = parseFloat(document.getElementById('recipeScale')?.value || '1') || 1;
+  document.getElementById('detailBody').innerHTML = '<div style="display:flex;flex-direction:column;gap:8px;"><div>' + (r.ingredients||'').split('\n').filter(Boolean).map(line => '<label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" onchange="toggleIngredientCheck(this)" /> <span style="white-space:pre-wrap;">' + scaleIngredientLine(escapeHtml(line), scaleVal) + '</span></label>').join('') + '</div><div style="white-space:pre-wrap;font-size:14px;margin-top:8px;">' + escapeHtml(r.instructions||'') + '</div></div><div id="ingredientActions" class="row" style="margin-top:8px;"><button class="secondary" onclick="addAllIngredientsToGrocery()">Add ingredients to grocery list</button></div>';
   const metaExtra = [];
   if (r.prep_time_minutes) metaExtra.push('Prep ' + r.prep_time_minutes + ' min');
   if (r.cook_time_minutes) metaExtra.push('Cook ' + r.cook_time_minutes + ' min');
@@ -826,47 +859,174 @@ async function savePlan() {
 }
 async function openPlanDetail(id) {
   currentPlanId = id;
-  const res = await fetch(API + '/meal-plans/' + id, { headers: authHeaders() });
-  if (!res.ok) return alert('Plan not found');
-  const plan = await res.json();
+  const planRes = await fetch(API + '/meal-plans/' + id, { headers: authHeaders() });
+  if (!planRes.ok) return alert('Plan not found');
+  const plan = await planRes.json();
   document.getElementById('planDetailTitle').textContent = plan.name + ' (' + plan.period + ')';
   const recipeRes = await fetch(API + '/recipes', { headers: authHeaders() });
   const recipes = await recipeRes.json();
-  const sel = document.getElementById('entryRecipe');
-  sel.innerHTML = '<option value="">Select recipe</option>' + recipes.map(r => '<option value="' + r.id + '">' + escapeHtml(r.title) + '</option>').join('');
-  await loadPlanEntries(id);
+  window._plannerRecipes = recipes;
+  await renderPlanner(plan);
   document.getElementById('planDetail').classList.remove('hidden');
 }
 function closePlanDetail() {
   document.getElementById('planDetail').classList.add('hidden');
   currentPlanId = null;
 }
-async function loadPlanEntries(planId) {
-  const res = await fetch(API + '/meal-plans/' + planId + '/entries', { headers: authHeaders() });
-  const items = await res.json();
-  const box = document.getElementById('entryList');
-  box.innerHTML = '';
-  for (const e of items) {
-    const el = document.createElement('div');
-    el.className = 'item';
-    el.innerHTML = '<div><div><strong>' + escapeHtml(e.meal) + '</strong></div><div class="meta">' + escapeHtml(e.date||'') + ' • recipe_id=' + e.recipe_id + '</div></div><button class="danger" onclick="deleteMealEntry(' + e.id + ')" style="width:auto;padding:8px 10px;font-size:12px;">Delete</button>';
-    box.appendChild(el);
+async function renderPlanner(plan) {
+  const view = window._plannerView || plan.period || 'weekly';
+  const entriesRes = await fetch(API + '/meal-plans/' + plan.id + '/entries', { headers: authHeaders() });
+  if (!entriesRes.ok) return alert('Failed to load plan entries');
+  const entries = await entriesRes.json();
+  const recipes = window._plannerRecipes || [];
+  const recipeMap = {};
+  for (const r of recipes) recipeMap[r.id] = r.title;
+
+  const today = new Date();
+  const dateKey = (dt) => dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStart(2, '0') + '-' + String(dt.getDate()).padStart(2, '0');
+  const todayStr = dateKey(today);
+  let days = [];
+  if (view === 'weekly') {
+    const start = new Date(today);
+    const dayIdx = start.getDay() || 7;
+    start.setDate(start.getDate() - dayIdx + 1);
+    for (let i=0;i<7;i++) {
+      const d = new Date(start);
+      d.setDate(start.getDate()+i);
+      days.push({ key: dateKey(d), label: d.toLocaleDateString(undefined, {weekday:'short', day:'numeric'}) });
+    }
+  } else if (view === 'monthly') {
+    const start = new Date(today.getFullYear(), today.getMonth(), 1);
+    const end = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    const totalDays = end.getDate();
+    for (let i=0;i<totalDays;i++) {
+      const d = new Date(start);
+      d.setDate(start.getDate()+i);
+      days.push({ key: dateKey(d), label: d.toLocaleDateString(undefined, {month:'short', day:'numeric'}) });
+    }
+  } else {
+    days = [{ key: todayStr, label: 'Today' }];
   }
+  const byDay = {};
+  for (const e of entries) {
+    const k = e.date || todayStr;
+    if (!byDay[k]) byDay[k] = {};
+    byDay[k][e.meal] = e;
+  }
+  let selectedDay = days[0].key;
+  const chipsBox = document.getElementById('plannerDayChips');
+  chipsBox.innerHTML = '';
+  for (const d of days) {
+    const chip = document.createElement('button');
+    chip.className = 'secondary';
+    chip.textContent = d.label;
+    chip.style.cssText = 'width:auto;padding:8px 10px;font-size:13px;border-radius:999px;';
+    chip.onclick = () => { selectedDay = d.key; renderPlannerSlots(selectedDay, byDay, recipeMap); };
+    chipsBox.appendChild(chip);
+  }
+  window._plannerSelectedDay = selectedDay;
+  window._plannerPlan = plan;
+  window._plannerEntriesByDay = byDay;
+  window._plannerRecipeMap = recipeMap;
+  renderPlannerSlots(selectedDay, byDay, recipeMap);
+  updatePlannerViewButtons(view);
 }
-async function addMealEntry() {
-  const meal = document.getElementById('entryMeal').value;
-  const date = document.getElementById('entryDate').value;
-  const recipe_id = parseInt(document.getElementById('entryRecipe').value || '0');
-  if (!recipe_id) return alert('Select a recipe');
-  const res = await fetch(API + '/meal-plans/entries', { method:'POST', headers: authHeaders(), body: JSON.stringify({meal_plan_id: currentPlanId, recipe_id, meal, date}) });
+function updatePlannerViewButtons(view) {
+  ['Week','Month','Day'].forEach(name => {
+    const el = document.getElementById('planner' + name + 'Btn');
+    if (!el) return;
+    const active = name.toLowerCase() === view;
+    el.style.background = active ? '#111' : '';
+    el.style.color = active ? '#fff' : '';
+  });
+}
+function setPlannerView(view) {
+  window._plannerView = view;
+  const plan = window._plannerPlan;
+  if (!plan) return;
+  renderPlanner(plan);
+}
+function renderPlannerSlots(dayKey, byDay, recipeMap) {
+  const slots = ['Breakfast','Lunch','Dinner'];
+  const box = document.getElementById('plannerSlots');
+  box.innerHTML = '';
+  for (const meal of slots) {
+    const entry = (byDay[dayKey] && byDay[dayKey][meal]) || null;
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.style.cssText = 'margin-bottom:10px;';
+    const title = document.createElement('div');
+    title.style.cssText = 'font-weight:600;margin-bottom:6px;';
+    title.textContent = meal;
+    card.appendChild(title);
+    if (entry) {
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex;justify-content:space-between;align-items:center;gap:8px;';
+      row.innerHTML = '<div><div style=\"font-weight:500;\">' + escapeHtml(recipeMap[entry.recipe_id] || ('Recipe #' + entry.recipe_id)) + '</div><div class=\"meta\">' + escapeHtml(entry.date || dayKey) + '</div></div><div style=\"display:flex;gap:8px;\"><button class=\"secondary\" onclick=\"selectPlannerRecipe(' + entry.id + ')\" style=\"width:auto;padding:8px 10px;font-size:12px;\">Change</button><button class=\"danger\" onclick=\"deleteMealEntry(' + entry.id + ')\" style=\"width:auto;padding:8px 10px;font-size:12px;\">Remove</button></div>';
+      card.appendChild(row);
+    } else {
+      const addBtn = document.createElement('button');
+      addBtn.className = 'secondary';
+      addBtn.textContent = '+ Add';
+      addBtn.style.cssText = 'width:auto;padding:8px 10px;font-size:13px;';
+      addBtn.onclick = () => addMealEntry(dayKey, meal);
+      card.appendChild(addBtn);
+    }
+    box.appendChild(card);
+  }
+  updatePlannerSummary(dayKey, byDay);
+}
+function updatePlannerSummary(dayKey, byDay) {
+  const dayEntries = (byDay[dayKey] && Object.keys(byDay[dayKey]).length) || 0;
+  const total = Object.values(byDay).reduce((sum, dayObj) => sum + Object.keys(dayObj).length, 0);
+  document.getElementById('plannerSummary').textContent = dayEntries + ' meal' + (dayEntries !== 1 ? 's' : '') + ' on ' + dayKey + ' • ' + total + ' planned total';
+}
+async function addMealEntry(date, meal) {
+  const recipes = window._plannerRecipes || [];
+  if (!recipes.length) return alert('No recipes available');
+  const names = recipes.map(r => r.title).join('\n');
+  const chosen = prompt('Enter recipe name for ' + meal + ' on ' + date + ':\n' + names);
+  if (!chosen) return;
+  const match = recipes.find(r => r.title.toLowerCase() === chosen.trim().toLowerCase());
+  if (!match) return alert('Recipe not found');
+  const payload = { meal_plan_id: currentPlanId, recipe_id: match.id, meal, date };
+  const res = await fetch(API + '/meal-plans/entries', { method:'POST', headers: authHeaders(), body: JSON.stringify(payload) });
   const data = await res.json();
   if (!res.ok) return alert('Failed: ' + (data.detail || 'unknown'));
-  loadPlanEntries(currentPlanId);
+  const planRes = await fetch(API + '/meal-plans/' + currentPlanId, { headers: authHeaders() });
+  const plan = await planRes.json();
+  await renderPlanner(plan);
+}
+function selectPlannerRecipe(entryId) {
+  const recipes = window._plannerRecipes || [];
+  const names = recipes.map(r => r.title).join('\n');
+  const chosen = prompt('Enter new recipe name:\n' + names);
+  if (!chosen) return;
+  const match = recipes.find(r => r.title.toLowerCase() === chosen.trim().toLowerCase());
+  if (!match) return alert('Recipe not found');
+  const plan = window._plannerPlan;
+  const byDay = window._plannerEntriesByDay;
+  let old = null;
+  for (const k of Object.keys(byDay)) {
+    for (const m of Object.keys(byDay[k])) {
+      if (byDay[k][m].id === entryId) { old = byDay[k][m]; delete byDay[k][m]; break; }
+    }
+    if (old) break;
+  }
+  if (!old) return alert('Entry not found');
+  const payload = { meal_plan_id: plan.id, recipe_id: match.id, meal: old.meal, date: old.date || window._plannerSelectedDay };
+  const res = await fetch(API + '/meal-plans/entries', { method:'POST', headers: authHeaders(), body: JSON.stringify(payload) });
+  if (!res.ok) return alert('Update failed');
+  const planRes = await fetch(API + '/meal-plans/' + currentPlanId, { headers: authHeaders() });
+  const p = await planRes.json();
+  await renderPlanner(p);
 }
 async function deleteMealEntry(id) {
   const res = await fetch(API + '/meal-plans/entries/' + id, { method:'DELETE', headers: authHeaders() });
   if (!res.ok) return alert('Failed');
-  if (currentPlanId) loadPlanEntries(currentPlanId);
+  const planRes = await fetch(API + '/meal-plans/' + currentPlanId, { headers: authHeaders() });
+  const plan = await planRes.json();
+  await renderPlanner(plan);
 }
 
 async function renderGroceryLists() {
