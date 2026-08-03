@@ -21,7 +21,7 @@ class IngestRequest(BaseModel):
 def ingest_media(payload: IngestRequest, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     result = download_media(payload.url, current_user.id)
     if not result.get("ok"):
-        raise HTTPException(status_code=400, detail=result.get("error","ingest failed"))
+        raise HTTPException(status_code=400, detail="ingest failed")
     return result
 
 @router.post("/upload")
@@ -35,14 +35,14 @@ def upload_media(file: UploadFile = File(...), db: Session = Depends(get_db), cu
 def extract_recipe(payload: IngestRequest, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     result = extract_recipe_from_url(payload.url, current_user.id)
     if not result.get("ok"):
-        raise HTTPException(status_code=400, detail=result.get("error","recipe extraction failed"))
+        raise HTTPException(status_code=400, detail="recipe extraction failed")
     return result
 
 @router.post("/recipe/upload")
 def extract_recipe_from_uploaded_file(file: UploadFile = File(...), db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     result = extract_recipe_from_upload(file, current_user.id)
     if not result.get("ok"):
-        raise HTTPException(status_code=400, detail=result.get("error","upload recipe extraction failed"))
+        raise HTTPException(status_code=400, detail="upload recipe extraction failed")
     return result
 
 @router.get("/items", response_model=list[dict])
