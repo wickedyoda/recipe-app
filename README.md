@@ -12,6 +12,25 @@ Self-hosted recipe/media app with:
 - Docker Compose deployment
 - Recipe photos, categories, favorites, print view, scaling
 - Grocery list sharing via link, SMS, email, and text copy
+- Hybrid category taxonomy: Breakfast/Lunch/Dinner + subcategories
+- Per-step photos and ingredient checkoff
+- Dark embedded cooking mode
+
+## GUI examples
+
+The app is mobile-first and uses warm minimalist styling. Key screens:
+
+- **Home / recipe list** — hybrid category pills at top, searchable recipe cards
+- **Recipe detail** — metadata, step photos, ingredient checkoff, actions
+- **Cooking mode** — dark kitchen-friendly UI with large step text
+- **Grocery list** — full-page shareable list with copy/export actions
+- **Create / edit** — form with category, subcategory, tags, servings, difficulty
+
+*(Screenshots and further examples are available in the project wiki.)*
+
+## Disclosure
+
+This project was developed with AI-assisted tooling. Core implementation, design decisions, and review were performed by the repository owner. AI tools were used for iteration, prototyping, and documentation.
 
 ## Quick start
 
