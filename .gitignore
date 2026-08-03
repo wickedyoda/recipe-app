@@ -27,3 +27,5 @@ htmlcov/
 bandit-report.json
 pip-audit-report.json
 trivy-report.sarif
+__pycache__
+--quiet.txt

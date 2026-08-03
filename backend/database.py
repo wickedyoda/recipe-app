@@ -33,7 +33,7 @@ def ensure_schema():
             if name not in cols:
                 conn.execute(text(f"ALTER TABLE recipes ADD COLUMN {name} {dtype}"))
         _recipe_photos_cols = {c["name"] for c in insp.get_columns("recipe_photos")}
-        if "recipe_photos" not in [t["name"] for t in insp.get_table_names()]:
+        if "recipe_photos" not in insp.get_table_names():
             conn.execute(text("CREATE TABLE recipe_photos (id INTEGER PRIMARY KEY AUTOINCREMENT, recipe_id INTEGER NOT NULL, owner_id INTEGER NOT NULL, path VARCHAR(1024) NOT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (recipe_id) REFERENCES recipes(id), FOREIGN KEY (owner_id) REFERENCES users(id))"))
         grocery_cols = {c["name"] for c in insp.get_columns("grocery_lists")}
         if "share_token" not in grocery_cols:
