@@ -9,5 +9,3 @@ passlib[bcrypt]==1.7.4
 mysql-connector-python==8.3.0
 pillow==10.2.0
 requests==2.31.0
-yt-dlp==2025.04.30
-ffmpeg-python==0.2.0
