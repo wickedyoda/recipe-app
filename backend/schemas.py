@@ -1,30 +1,31 @@
-from pydantic import BaseModel, EmailStr
 from datetime import datetime
-from typing import Optional, List
+
+from pydantic import BaseModel, EmailStr
+
 
 class UserCreate(BaseModel):
     email: EmailStr
     password: str
-    display_name: Optional[str] = None
+    display_name: str | None = None
 
 class UserOut(BaseModel):
     id: int
     email: str
     role: str
-    display_name: Optional[str]
-    avatar_url: Optional[str]
+    display_name: str | None
+    avatar_url: str | None
     is_active: bool
     is_approved: bool
-    approved_at: Optional[datetime]
+    approved_at: datetime | None
     created_at: datetime
     class Config:
         from_attributes = True
 
 class UserUpdate(BaseModel):
-    display_name: Optional[str] = None
-    avatar_url: Optional[str] = None
-    is_active: Optional[bool] = None
-    is_approved: Optional[bool] = None
+    display_name: str | None = None
+    avatar_url: str | None = None
+    is_active: bool | None = None
+    is_approved: bool | None = None
 
 class TokenOut(BaseModel):
     access_token: str
@@ -35,8 +36,8 @@ class TokenOut(BaseModel):
 
 class CookbookCreate(BaseModel):
     name: str
-    description: Optional[str] = None
-    store: Optional[str] = "local"
+    description: str | None = None
+    store: str | None = "local"
 
 class CookbookOut(CookbookCreate):
     id: int
@@ -47,21 +48,21 @@ class CookbookOut(CookbookCreate):
 
 class RecipeCreate(BaseModel):
     title: str
-    description: Optional[str] = None
-    ingredients: Optional[str] = None
-    instructions: Optional[str] = None
-    source_url: Optional[str] = None
-    source_path: Optional[str] = None
-    store: Optional[str] = "local"
-    cookbook_id: Optional[int] = None
-    rating: Optional[float] = None
-    tag_ids: Optional[List[int]] = None
+    description: str | None = None
+    ingredients: str | None = None
+    instructions: str | None = None
+    source_url: str | None = None
+    source_path: str | None = None
+    store: str | None = "local"
+    cookbook_id: int | None = None
+    rating: float | None = None
+    tag_ids: list[int] | None = None
 
 class RecipeOut(RecipeCreate):
     id: int
     owner_id: int
     created_at: datetime
-    tags: List[str] = []
+    tags: list[str] = []
     class Config:
         from_attributes = True
 
@@ -71,9 +72,9 @@ class IngestRequest(BaseModel):
 class MediaItem(BaseModel):
     id: int
     title: str
-    source_url: Optional[str]
-    source_path: Optional[str]
-    description: Optional[str]
+    source_url: str | None
+    source_path: str | None
+    description: str | None
     created_at: datetime
     class Config:
         from_attributes = True
@@ -114,7 +115,7 @@ class MealPlanEntryCreate(BaseModel):
     meal_plan_id: int
     recipe_id: int
     meal: str
-    date: Optional[str] = None
+    date: str | None = None
 
 class MealPlanEntryOut(MealPlanEntryCreate):
     id: int
@@ -134,9 +135,9 @@ class GroceryListOut(GroceryListCreate):
 
 class GroceryItemCreate(BaseModel):
     list_id: int
-    recipe_id: Optional[int] = None
+    recipe_id: int | None = None
     name: str
-    quantity: Optional[str] = None
+    quantity: str | None = None
 
 class GroceryItemOut(GroceryItemCreate):
     id: int

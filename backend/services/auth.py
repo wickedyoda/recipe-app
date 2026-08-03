@@ -1,12 +1,12 @@
 import os
 from datetime import datetime, timedelta
-from typing import Optional
+
+from backend.database import SessionLocal
+from backend.models import Role, User
+from fastapi import Depends, Header, HTTPException, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import jwt
 from passlib.context import CryptContext
-from fastapi import Depends, HTTPException, status, Header
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from backend.database import SessionLocal
-from backend.models import User, Role
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 SECRET_KEY = os.getenv("SECRET_KEY", "change-me")
@@ -18,7 +18,7 @@ def hash_password(password: str) -> str:
 def verify_password(plain: str, hashed: str) -> bool:
     return pwd_context.verify(plain, hashed)
 
-def create_access_token(email: str, expires_delta: Optional[timedelta]=None):
+def create_access_token(email: str, expires_delta: timedelta | None=None):
     payload = {"sub": email}
     expire = datetime.utcnow() + (expires_delta or timedelta(minutes=60*24))
     payload["exp"] = expire.isoformat() + "Z"
@@ -31,7 +31,7 @@ def get_db():
     finally:
         db.close()
 
-def get_current_user(authorization: Optional[str] = None):
+def get_current_user(authorization: str | None = None):
     security = HTTPBearer(auto_error=False)
     credentials: HTTPAuthorizationCredentials = Depends(security)
     auth = authorization or (Header("authorization") or "")

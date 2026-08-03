@@ -1,7 +1,10 @@
-from sqlalchemy import Column, Integer, String, Text, ForeignKey, DateTime, Enum, Float
-from sqlalchemy.sql import func
 import enum
+
+from sqlalchemy import Column, DateTime, Enum, Float, ForeignKey, Integer, String, Text
+from sqlalchemy.sql import func
+
 from backend.database import Base
+
 
 class Store(str, enum.Enum):
     local = "local"
