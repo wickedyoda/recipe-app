@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, File, HTTPException, Response, UploadFil
 from sqlalchemy.orm import Session
 
 from backend.database import get_db
-from backend.models import Recipe, RecipePhoto, RecipeTag, Store, Tag, User
+from backend.models import Recipe, RecipePhoto, RecipeStepPhoto, RecipeTag, Store, Tag, User
 from backend.schemas import RecipeCreate, RecipeOut
 from backend.services.auth import get_current_user
 
@@ -31,6 +31,7 @@ def create_recipe(payload: RecipeCreate, db: Session = Depends(get_db), current_
         servings=payload.servings,
         difficulty=payload.difficulty,
         category=payload.category,
+        subcategory=payload.subcategory,
     )
     db.add(recipe)
     db.commit()
@@ -67,6 +68,7 @@ def get_recipe(recipe_id: int, db: Session = Depends(get_db), current_user: User
     data = RecipeOut.model_validate(r).model_dump()
     data["tags"] = [t.name for t in db.query(Tag).join(RecipeTag, RecipeTag.tag_id==Tag.id).filter(RecipeTag.recipe_id==r.id).all()]
     data["photos"] = [p.path for p in db.query(RecipePhoto).filter(RecipePhoto.recipe_id==r.id).order_by(RecipePhoto.id.asc()).all()]
+    data["step_photos"] = [{"step_index": s.step_index, "path": s.path, "caption": s.caption} for s in db.query(RecipeStepPhoto).filter(RecipeStepPhoto.recipe_id==r.id).order_by(RecipeStepPhoto.step_index.asc()).all()]
     return data
 
 @router.patch("/{recipe_id}", response_model=RecipeOut)
@@ -89,6 +91,7 @@ def update_recipe(recipe_id: int, payload: RecipeCreate, db: Session = Depends(g
     r.servings = payload.servings
     r.difficulty = payload.difficulty
     r.category = payload.category
+    r.subcategory = payload.subcategory
     db.query(RecipeTag).filter(RecipeTag.recipe_id==r.id).delete()
     if payload.tag_ids:
         for tag_id in payload.tag_ids:
@@ -150,6 +153,25 @@ def upload_recipe_photo(recipe_id: int, file: UploadFile = File(...), db: Sessio
     db.commit()
     return {"photo": rel}
 
+@router.post("/{recipe_id}/step-photos")
+def upload_step_photo(recipe_id: int, step_index: int = 0, file: UploadFile = File(...), db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    r = db.query(Recipe).filter(Recipe.id==recipe_id, Recipe.owner_id==current_user.id).first()
+    if not r:
+        raise HTTPException(status_code=404, detail="Recipe not found")
+    dest_dir = os.path.join("backend", "media", "recipes", str(r.id), "steps")
+    os.makedirs(dest_dir, exist_ok=True)
+    ext = os.path.splitext(file.filename or "")[1].lower() or ".bin"
+    if ext not in {".png", ".jpg", ".jpeg", ".webp"}:
+        raise HTTPException(status_code=400, detail="Unsupported photo type")
+    name = f"step{step_index}_{int(time.time())}_{uuid.uuid4().hex}{ext}"
+    path = os.path.join(dest_dir, name)
+    with open(path, "wb") as f:
+        f.write(file.file.read())
+    rel = os.path.relpath(path, "backend")
+    db.add(RecipeStepPhoto(recipe_id=r.id, owner_id=current_user.id, step_index=max(0, int(step_index or 0)), path=rel))
+    db.commit()
+    return {"step_photo": rel}
+
 @router.get("/export")
 def export_recipes(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     recipes = db.query(Recipe).filter(Recipe.owner_id==current_user.id).order_by(Recipe.created_at.desc()).all()
@@ -176,6 +198,7 @@ def export_recipes(db: Session = Depends(get_db), current_user: User = Depends(g
             "servings": r.servings,
             "difficulty": r.difficulty,
             "category": r.category,
+            "subcategory": r.subcategory,
             "tags": recipe_tags,
             "photos": photo_map.get(r.id, []),
         })
@@ -203,6 +226,7 @@ def import_recipes(file: UploadFile = File(...), db: Session = Depends(get_db), 
             servings=item.get("servings"),
             difficulty=item.get("difficulty"),
             category=item.get("category"),
+            subcategory=item.get("subcategory"),
         )
         db.add(recipe)
         db.commit()

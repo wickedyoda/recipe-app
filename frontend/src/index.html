@@ -118,8 +118,17 @@
           <input id="recipeSearch" placeholder="Search recipes..." oninput="renderRecipes()" />
         </div>
         <div class="row" style="padding:8px 12px;gap:8px;flex-wrap:wrap;">
-          <span class="pill" style="cursor:pointer;" onclick="setCategoryFilter('')">All</span>
-          <span id="favPill" class="pill" style="cursor:pointer;" onclick="toggleFavoritesFilter()">❤ Favorites</span>
+          <span class="pill" style="cursor:pointer;font-weight:600;" onclick="setMealFilter('')" id="mealAll">All</span>
+          <span class="pill" style="cursor:pointer;" onclick="setMealFilter('Breakfast')" id="mealBreakfast">Breakfast</span>
+          <span class="pill" style="cursor:pointer;" onclick="setMealFilter('Lunch')" id="mealLunch">Lunch</span>
+          <span class="pill" style="cursor:pointer;" onclick="setMealFilter('Dinner')" id="mealDinner">Dinner</span>
+        </div>
+        <div class="row" style="padding:4px 12px 8px;gap:8px;flex-wrap:wrap;">
+          <span class="pill" style="cursor:pointer;font-weight:600;" onclick="setSubFilter('')" id="subAll">All types</span>
+          <span class="pill" style="cursor:pointer;" onclick="setSubFilter('Entrees')" id="subEntrees">Entrees</span>
+          <span class="pill" style="cursor:pointer;" onclick="setSubFilter('Snacks')" id="subSnacks">Snacks</span>
+          <span class="pill" style="cursor:pointer;" onclick="setSubFilter('Appetizers')" id="subAppetizers">Appetizers</span>
+          <span class="pill" style="cursor:pointer;" onclick="setSubFilter('Desserts')" id="subDesserts">Desserts</span>
         </div>
         <div id="recipeCategoryFilters" class="row" style="padding:8px 12px;flex-wrap:wrap;gap:8px;"></div>
         <div class="card">
@@ -150,6 +159,7 @@
             <input id="recipeServings" type="number" min="0" placeholder="Servings" />
             <input id="recipeDifficulty" placeholder="Difficulty" />
             <input id="recipeCategory" placeholder="Category / cuisine" />
+            <input id="recipeSubcategory" placeholder="Subcategory / type" />
           </div>
           <div>
             <input id="recipeTags" placeholder="Tags (comma separated)" />
@@ -169,12 +179,16 @@
           <div id="detailMetaExtra" class="meta" style="margin-top:8px;"></div>
           <div class="row" style="margin-top:10px;">
             <input type="file" id="recipePhotoInput" accept="image/*" style="font-size:13px;" onchange="uploadRecipePhoto()" />
+            <input type="file" id="stepPhotoInput" accept="image/*" style="font-size:13px;" onchange="uploadStepPhoto()" />
             <button class="secondary" onclick="addNoteFromDetail()">Add note</button>
             <button class="secondary" onclick="addToMealPlan()">Add to meal plan</button>
             <button class="secondary" onclick="createGroceryFromRecipe()">Grocery list</button>
+            <button class="secondary" onclick="window.print()">Print</button>
+            <button class="secondary" onclick="resetIngredientChecks()">Reset checks</button>
             <button onclick="startCooking()">Cook</button>
           </div>
           <div id="detailPhotos" class="row" style="margin-top:10px;"></div>
+          <div id="stepPhotos" class="row" style="margin-top:10px;"></div>
           <h3 style="margin-top:16px;">Notes</h3>
           <div id="detailNotes"></div>
         </div>
@@ -194,16 +208,16 @@
             <button class="secondary" onclick="window.print()" style="width:auto;padding:8px 10px;font-size:13px;">Print</button>
           </div>
           <div id="cookingMeta" class="meta" style="margin-bottom:10px;"></div>
-          <div class="card" style="background:#fff;border-radius:12px;padding:16px;margin-bottom:12px;">
-            <h3 style="margin-top:0;">Ingredients</h3>
-            <div id="cookingIngredients" style="white-space:pre-wrap;font-size:16px;"></div>
+          <div class="card" style="background:#1c1c1e;border-radius:12px;padding:16px;margin-bottom:12px;color:#f5f5f7;">
+            <h3 style="margin-top:0;color:#f5f5f7;">Ingredients</h3>
+            <div id="cookingIngredients" style="white-space:pre-wrap;font-size:16px;color:#f5f5f7;"></div>
           </div>
-          <div class="card" style="background:#fff;border-radius:12px;padding:16px;margin-bottom:12px;">
+          <div class="card" style="background:#1c1c1e;border-radius:12px;padding:16px;margin-bottom:12px;color:#f5f5f7;">
             <div class="top" style="margin-bottom:8px;">
-              <h3 style="margin:0;">Instructions</h3>
+              <h3 style="margin:0;color:#f5f5f7;">Instructions</h3>
               <button class="secondary" onclick="startStepTimer()" style="width:auto;padding:8px 10px;font-size:12px;">Start timer</button>
             </div>
-            <div id="cookingInstructions" style="white-space:pre-wrap;font-size:16px;"></div>
+            <div id="cookingInstructions" style="white-space:pre-wrap;font-size:16px;color:#f5f5f7;"></div>
             <div id="cookingSteps" style="margin-top:12px;"></div>
             <div id="cookingTimer" class="meta" style="margin-top:8px;"></div>
           </div>
@@ -478,14 +492,18 @@ async function renderRecipes() {
   const categories = Array.from(new Set(items.map(r => r.category).filter(Boolean))).slice(0, 20);
   const filterBox = document.getElementById('recipeCategoryFilters');
   const activeCategory = filterBox.dataset.active || '';
+  const activeMeal = (filterBox.dataset.meal || '').trim();
+  const activeSub = (filterBox.dataset.sub || '').trim();
   filterBox.innerHTML = '<span class="pill" style="cursor:pointer;" onclick="setCategoryFilter(\'\')">All</span>' + categories.map(c => '<span class="pill" style="cursor:pointer;" onclick="setCategoryFilter(\'' + escapeHtml(c) + '\')">' + escapeHtml(c) + '</span>').join('');
   const box = document.getElementById('recipeList');
   box.innerHTML = '';
   const filtered = items.filter(r => {
     const matchesSearch = !q || (r.title||'').toLowerCase().includes(q) || (r.description||'').toLowerCase().includes(q);
     const matchesCategory = !activeCategory || r.category === activeCategory;
+    const matchesMeal = !activeMeal || (r.category || '').toLowerCase() === activeMeal.toLowerCase();
+    const matchesSub = !activeSub || (r.subcategory || '').toLowerCase() === activeSub.toLowerCase();
     const matchesFav = !filterBox.dataset.favs || favs.has(String(r.id));
-    return matchesSearch && matchesCategory && matchesFav;
+    return matchesSearch && matchesCategory && matchesMeal && matchesSub && matchesFav;
   });
   const favPill = document.getElementById('favPill');
   if (favPill) favPill.style.background = filterBox.dataset.favs ? '#111' : '';
@@ -504,6 +522,34 @@ window.setCategoryFilter = function(category) {
   const filterBox = document.getElementById('recipeCategoryFilters');
   filterBox.dataset.active = category || '';
   filterBox.dataset.favs = '';
+  renderRecipes();
+};
+window.setMealFilter = function(meal) {
+  const filterBox = document.getElementById('recipeCategoryFilters');
+  filterBox.dataset.meal = meal || '';
+  ['mealAll','mealBreakfast','mealLunch','mealDinner'].forEach(id => { const el = document.getElementById(id); if (el) { el.style.background = ''; el.style.color = ''; } });
+  if (meal) {
+    const map = {Breakfast:'mealBreakfast',Lunch:'mealLunch',Dinner:'mealDinner'};
+    const el = document.getElementById(map[meal]);
+    if (el) { el.style.background = '#111'; el.style.color = '#fff'; }
+  } else {
+    const el = document.getElementById('mealAll');
+    if (el) { el.style.background = '#111'; el.style.color = '#fff'; }
+  }
+  renderRecipes();
+};
+window.setSubFilter = function(sub) {
+  const filterBox = document.getElementById('recipeCategoryFilters');
+  filterBox.dataset.sub = sub || '';
+  ['subAll','subEntrees','subSnacks','subAppetizers','subDesserts'].forEach(id => { const el = document.getElementById(id); if (el) { el.style.background = ''; el.style.color = ''; } });
+  if (sub) {
+    const map = {Entrees:'subEntrees',Snacks:'subSnacks',Appetizers:'subAppetizers',Desserts:'subDesserts'};
+    const el = document.getElementById(map[sub]);
+    if (el) { el.style.background = '#111'; el.style.color = '#fff'; }
+  } else {
+    const el = document.getElementById('subAll');
+    if (el) { el.style.background = '#111'; el.style.color = '#fff'; }
+  }
   renderRecipes();
 };
 window.toggleFavoritesFilter = function() {
@@ -565,6 +611,7 @@ function openRecipeForm(id) {
       document.getElementById('recipeServings').value = data.servings ?? '';
       document.getElementById('recipeDifficulty').value = data.difficulty || '';
       document.getElementById('recipeCategory').value = data.category || '';
+      document.getElementById('recipeSubcategory').value = data.subcategory || '';
       document.getElementById('recipeTags').value = (data.tags||[]).join(', ');
     });
   } else {
@@ -604,7 +651,7 @@ async function saveRecipe() {
     return existing ? existing.id : null;
   }).filter(Boolean);
 
-  const payload = { title, description, ingredients, instructions, source_url, rating, prep_time_minutes: prepTime, cook_time_minutes: cookTime, servings, difficulty, category: document.getElementById('recipeCategory')?.value?.trim() || null, tag_ids: tagIds.length ? tagIds : undefined };
+  const payload = { title, description, ingredients, instructions, source_url, rating, prep_time_minutes: prepTime, cook_time_minutes: cookTime, servings, difficulty, category: document.getElementById('recipeCategory')?.value?.trim() || null, subcategory: document.getElementById('recipeSubcategory')?.value?.trim() || null, tag_ids: tagIds.length ? tagIds : undefined };
   const url = editingRecipeId ? API + '/recipes/' + editingRecipeId : API + '/recipes';
   const method = editingRecipeId ? 'PATCH' : 'POST';
   const res = await fetch(url, { method, headers: authHeaders(), body: JSON.stringify(payload) });
@@ -620,14 +667,19 @@ async function openRecipeDetail(id) {
   const r = await res.json();
   document.getElementById('detailTitle').textContent = r.title || 'Untitled';
   document.getElementById('detailMeta').innerHTML = '<div class="meta">' + escapeHtml(r.description||'') + '</div>' + (r.rating ? '<div class="stars">' + '★'.repeat(Math.round(r.rating)) + '</div>' : '') + '<div class="meta">' + (r.tags||[]).map(t=>'<span class="pill">'+escapeHtml(t)+'</span>').join(' ') + '</div>';
-  document.getElementById('detailBody').innerHTML = '<div style="white-space:pre-wrap;font-size:14px;">' + escapeHtml(r.ingredients||'') + '\n\n' + escapeHtml(r.instructions||'') + '</div><div id="ingredientActions" class="row" style="margin-top:8px;"><button class="secondary" onclick="addAllIngredientsToGrocery()">Add ingredients to grocery list</button></div>';
+  document.getElementById('detailBody').innerHTML = '<div style="display:flex;flex-direction:column;gap:8px;"><div>' + (r.ingredients||'').split('\n').filter(Boolean).map(line => '<label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" onchange="toggleIngredientCheck(this)" /> <span style="white-space:pre-wrap;">' + escapeHtml(line) + '</span></label>').join('') + '</div><div style="white-space:pre-wrap;font-size:14px;margin-top:8px;">' + escapeHtml(r.instructions||'') + '</div></div><div id="ingredientActions" class="row" style="margin-top:8px;"><button class="secondary" onclick="addAllIngredientsToGrocery()">Add ingredients to grocery list</button></div>';
   const metaExtra = [];
   if (r.prep_time_minutes) metaExtra.push('Prep ' + r.prep_time_minutes + ' min');
   if (r.cook_time_minutes) metaExtra.push('Cook ' + r.cook_time_minutes + ' min');
   if (r.servings) metaExtra.push('Serves ' + r.servings);
   if (r.difficulty) metaExtra.push(r.difficulty);
   if (r.category) metaExtra.push(r.category);
+  if (r.subcategory) metaExtra.push(r.subcategory);
   document.getElementById('detailMetaExtra').textContent = metaExtra.join(' • ');
+  const ingredientChecks = JSON.parse(localStorage.getItem('recipe_ingredient_checks_' + id) || '[]');
+  setTimeout(() => {
+    document.querySelectorAll('#detailBody input[type="checkbox"]').forEach((cb, idx) => { if (ingredientChecks[idx]) cb.checked = true; });
+  }, 0);
   document.getElementById('recipeDetail').classList.remove('hidden');
   const favs = new Set(JSON.parse(localStorage.getItem('recipe_favorites') || '[]'));
   const favBtn = document.getElementById('favBtn');
@@ -635,6 +687,28 @@ async function openRecipeDetail(id) {
   renderNotes(id);
   const photoBox = document.getElementById('detailPhotos');
   photoBox.innerHTML = (r.photos || []).map(p => '<img src="/media/' + p + '" style="max-height:120px;border-radius:8px;margin-right:8px;" />').join('');
+  const stepBox = document.getElementById('stepPhotos');
+  const stepPhotos = (r.step_photos || []);
+  const steps = (r.instructions || '').split('\n').filter(Boolean);
+  stepBox.innerHTML = steps.map((_, i) => {
+    const photos = stepPhotos.filter(sp => sp.step_index === i).map(sp => '<img src="/media/' + sp.path + '" style="max-height:120px;border-radius:8px;margin-right:8px;" />').join('');
+    return photos ? '<div style="margin-top:8px;font-size:12px;color:#555;">Step ' + (i + 1) + ' photos</div><div class="row">' + photos + '</div>' : '';
+  }).join('');
+}
+async function uploadStepPhoto() {
+  const input = document.getElementById('stepPhotoInput');
+  const file = input.files[0];
+  if (!file || !currentRecipeId) return;
+  const stepIndex = prompt('Step number for this photo?', '1');
+  if (stepIndex === null) return;
+  const form = new FormData();
+  form.append('file', file);
+  form.append('step_index', stepIndex);
+  const res = await fetch(API + '/recipes/' + currentRecipeId + '/step-photos', { method:'POST', headers: authHeaders(), body: form });
+  const data = await res.json();
+  if (!res.ok) return alert('Step photo upload failed');
+  input.value = '';
+  openRecipeDetail(currentRecipeId);
 }
 async function uploadRecipePhoto() {
   const input = document.getElementById('recipePhotoInput');
@@ -650,12 +724,12 @@ async function uploadRecipePhoto() {
 }
 async function addIngredientToGrocery(name) {
   if (!currentRecipeId) return;
-  const listName = prompt('Add to grocery list:', (document.getElementById('recipeTitle').value || '') + ' groceries');
+  const listName = prompt('Add to grocery list:', (document.getElementById('detailTitle').value || '') + ' groceries');
   if (!listName) return;
-  const res = await fetch(API + '/grocery-lists', { method:'POST', headers: authHeaders(), body: JSON.stringify({name: listName}) });
-  const data = await res.json();
-  if (!res.ok) return alert('Failed: ' + (data.detail || 'unknown'));
-  await fetch(API + '/grocery-lists/' + data.id + '/items', { method:'POST', headers: authHeaders(), body: JSON.stringify({name, list_id: data.id, recipe_id: currentRecipeId}) });
+  const listRes = await fetch(API + '/grocery-lists', { method:'POST', headers: authHeaders(), body: JSON.stringify({name: listName}) });
+  const list = await listRes.json();
+  if (!listRes.ok) return alert('Failed: ' + (list.detail || 'unknown'));
+  await fetch(API + '/grocery-lists/' + list.id + '/items', { method:'POST', headers: authHeaders(), body: JSON.stringify({name, list_id: list.id, recipe_id: currentRecipeId}) });
   alert('Added to grocery list');
 }
 async function addAllIngredientsToGrocery() {
@@ -663,7 +737,7 @@ async function addAllIngredientsToGrocery() {
   const r = await (await fetch(API + '/recipes/' + currentRecipeId, { headers: authHeaders() })).json();
   const lines = (r.ingredients || '').split('\n').filter(Boolean).slice(0, 30);
   if (!lines.length) return alert('No ingredients to add');
-  const listName = prompt('Grocery list name:', (document.getElementById('recipeTitle').value || '') + ' groceries');
+  const listName = prompt('Grocery list name:', (document.getElementById('detailTitle').value || '') + ' groceries');
   if (!listName) return;
   const listRes = await fetch(API + '/grocery-lists', { method:'POST', headers: authHeaders(), body: JSON.stringify({name: listName}) });
   const list = await listRes.json();
@@ -1004,6 +1078,26 @@ function completeStep(cb) {
   if (!label) return;
   if (cb.checked) label.style.opacity = '0.6';
   else label.style.opacity = '1';
+}
+function toggleIngredientCheck(cb) {
+  const box = cb.closest('label');
+  if (!box) return;
+  if (cb.checked) box.style.textDecoration = 'line-through';
+  else box.style.textDecoration = 'none';
+  saveIngredientChecks();
+}
+function saveIngredientChecks() {
+  if (!currentRecipeId) return;
+  const checks = Array.from(document.querySelectorAll('#detailBody input[type="checkbox"]')).map(cb => cb.checked ? 1 : 0);
+  localStorage.setItem('recipe_ingredient_checks_' + currentRecipeId, JSON.stringify(checks));
+}
+function resetIngredientChecks() {
+  if (!currentRecipeId) return;
+  localStorage.removeItem('recipe_ingredient_checks_' + currentRecipeId);
+  const checks = JSON.parse(localStorage.getItem('recipe_ingredient_checks_' + currentRecipeId) || '[]');
+  setTimeout(() => {
+    document.querySelectorAll('#detailBody input[type="checkbox"]').forEach((cb, idx) => { cb.checked = !!(checks[idx]); toggleIngredientCheck(cb); });
+  }, 0);
 }
 </script>
 </body>
