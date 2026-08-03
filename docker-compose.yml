@@ -32,6 +32,7 @@ services:
       MEDIA_ROOT: ${MEDIA_ROOT:-/media}
       WHISPER_MODEL: ${WHISPER_MODEL:-tiny}
       PUBLIC_URL: ${PUBLIC_URL}
+      PYTHONUNBUFFERED: "1"
     ports:
       - "8000:8000"
     depends_on:
