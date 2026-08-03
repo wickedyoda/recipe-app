@@ -109,7 +109,7 @@ jobs:
 
       - name: Dependency audit
         working-directory: ./backend
-        run: pip-audit
+        run: pip-audit -r requirements.txt
 
       - name: CodeQL init
         uses: github/codeql-action/init@v3
