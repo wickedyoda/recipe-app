@@ -9,4 +9,5 @@ passlib[bcrypt]==1.7.4
 mysql-connector-python==8.4.0
 pillow==10.4.0
 requests==2.32.3
+setuptools>=83.0.1
 wheel>=0.46.2
