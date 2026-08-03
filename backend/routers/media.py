@@ -1,10 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from backend.database import get_db
 from backend.models import User, Recipe, Cookbook, Store
 from backend.services.auth import get_current_user, require_role
-from backend.services.ingest import download_media
+from backend.services.ingest import download_media, ingest_upload
 
 router = APIRouter(prefix="/media", tags=["media"])
 
@@ -16,6 +16,13 @@ def ingest_media(payload: IngestRequest, db: Session = Depends(get_db), current_
     result = download_media(payload.url, current_user.id)
     if not result.get("ok"):
         raise HTTPException(status_code=400, detail=result.get("error","ingest failed"))
+    return result
+
+@router.post("/upload")
+def upload_media(file: UploadFile = File(...), db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    result = ingest_upload(file, current_user.id)
+    if not result.get("ok"):
+        raise HTTPException(status_code=400, detail=result.get("error","upload failed"))
     return result
 
 @router.get("/items")

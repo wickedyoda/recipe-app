@@ -54,8 +54,14 @@
       <div class="card">
         <h2 style="margin-top:0;">Import video</h2>
         <input id="videoUrl" placeholder="TikTok / YouTube / Facebook / Reels URL" />
-        <button onclick="ingest()">Extract audio & subtitles</button>
+        <button onclick="ingestUrl()">Extract from URL</button>
         <p id="ingestStatus" style="font-size:13px;color:#555;margin-top:8px;"></p>
+        <div style="margin-top:12px; padding-top:12px; border-top:1px solid #eee;">
+          <p style="font-size:13px;color:#555;margin-top:0;margin-bottom:8px;">Or upload a video file directly:</p>
+          <input id="videoFile" type="file" accept="video/*" />
+          <button onclick="ingestFile()">Upload & process</button>
+          <p id="uploadStatus" style="font-size:13px;color:#555;margin-top:8px;"></p>
+        </div>
       </div>
 
       <div class="card">
@@ -159,16 +165,46 @@ async function updateProfile() {
   alert('Profile saved');
 }
 
-async function ingest() {
+async function ingestUrl() {
   const url = document.getElementById('videoUrl').value.trim();
   const status = document.getElementById('ingestStatus');
   if (!url) return;
   status.textContent = 'Processing...';
-  const res = await fetch(API + '/media/ingest', { method:'POST', headers: authHeaders(), body: JSON.stringify({url}) });
-  const data = await res.json();
-  if (!res.ok) return status.textContent = 'Error: ' + (data.detail || data.error || 'unknown');
-  status.textContent = 'Done. Saved media items: ' + JSON.stringify(data);
-  loadMedia();
+  try {
+    const res = await fetch(API + '/media/ingest', { method:'POST', headers: authHeaders(), body: JSON.stringify({url}) });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || data.error || 'unknown');
+    status.textContent = 'Done. Saved media items: ' + JSON.stringify(data);
+    loadMedia();
+  } catch (err) {
+    status.textContent = 'Error: ' + err.message;
+  }
+}
+
+async function ingestFile() {
+  const fileInput = document.getElementById('videoFile');
+  const status = document.getElementById('uploadStatus');
+  const file = fileInput.files[0];
+  if (!file) return;
+  status.textContent = 'Uploading...';
+  const form = new FormData();
+  form.append('file', file);
+  try {
+    const res = await fetch(API + '/media/upload', { method:'POST', headers: authHeadersNoJson(), body: form });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || data.error || 'unknown');
+    status.textContent = 'Done. Saved media items: ' + JSON.stringify(data);
+    loadMedia();
+    fileInput.value = '';
+  } catch (err) {
+    status.textContent = 'Error: ' + err.message;
+  }
+}
+
+function authHeadersNoJson() {
+  const h = authHeaders();
+  delete h['Content-Type'];
+  return h;
 }
 
 function escapeHtml(text) {
