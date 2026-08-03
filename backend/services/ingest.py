@@ -1,11 +1,13 @@
 import os
 import subprocess
+import re
 import uuid
 from pathlib import Path
 from datetime import datetime
+from typing import Optional
 from sqlalchemy.orm import Session
 from .database import SessionLocal
-from .models import Recipe, Cookbook, Store
+from backend.models import Recipe, Cookbook, Store, Tag, RecipeTag
 
 MEDIA_ROOT = Path(os.getenv("MEDIA_ROOT", "/media"))
 MEDIA_ROOT.mkdir(parents=True, exist_ok=True)
@@ -14,17 +16,15 @@ MEDIA_ROOT.mkdir(parents=True, exist_ok=True)
 (MEDIA_ROOT / "raw").mkdir(exist_ok=True)
 
 def ensure_local_cookbook(db: Session, user_id: int) -> Cookbook:
-    cb = db.query(Cookbook).filter(Cookbook.owner_id==user_id, Cookbook.name=="Imported Videos", Cookbook.store==Store.local).first()
+    cb = db.query(Cookbook).filter(Cookbook.owner_id==user_id, Cookbook.name=="Imported Recipes", Cookbook.store==Store.local).first()
     if not cb:
-        cb = Cookbook(name="Imported Videos", description="Auto-imported social videos", store=Store.local, owner_id=user_id)
+        cb = Cookbook(name="Imported Recipes", description="Auto-imported social recipes", store=Store.local, owner_id=user_id)
         db.add(cb)
         db.commit()
         db.refresh(cb)
     return cb
 
-def download_media(url: str, user_id: int) -> dict:
-    workdir = MEDIA_ROOT / "raw" / f"{datetime.utcnow().strftime('%Y%m%d')}-{uuid.uuid4().hex}"
-    workdir.mkdir(parents=True, exist_ok=True)
+def _download_media(url: str, workdir: Path) -> dict:
     cmd = [
         "yt-dlp", "--no-warnings", "--no-playlist",
         "-o", str(workdir / "%(id)s.%(ext)s"),
@@ -59,16 +59,63 @@ def download_media(url: str, user_id: int) -> dict:
         subs = sorted([p for p in workdir.iterdir() if p.suffix.lower()==".srt"])
 
     subtitle_path = subs[0] if subs else None
+    return {"video": video, "audio": audio, "subtitle": subtitle_path, "workdir": workdir}
+
+def _clean_srt_text(text: str) -> str:
+    text = re.sub(r"\d+\n", "", text)
+    text = re.sub(r"\d{2}:\d{2}:\d{2},\d{3} --> \d{2}:\d{2}:\d{2},\d{3}", "", text)
+    text = re.sub(r"<[^>]+>", "", text)
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
+    return "\n".join(lines)
+
+def _extract_recipe_from_text(text: str) -> dict:
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
+    if not lines:
+        return {"title": None, "ingredients": None, "instructions": None}
+
+    title = lines[0]
+    ingredients: list[str] = []
+    instructions: list[str] = []
+    section = "title"
+
+    for line in lines[1:]:
+        lower = line.lower()
+        if lower.startswith("ingredient") or lower.startswith("you'll need") or lower.startswith("what you need"):
+            section = "ingredients"
+            continue
+        if lower.startswith("instruction") or lower.startswith("step") or lower.startswith("how to") or lower.startswith("directions"):
+            section = "instructions"
+            continue
+        if section == "ingredients":
+            ingredients.append(line)
+        elif section == "instructions":
+            instructions.append(line)
+
+    return {
+        "title": title,
+        "ingredients": "\n".join(ingredients) if ingredients else None,
+        "instructions": "\n".join(instructions) if instructions else None,
+    }
+
+def download_media(url: str, user_id: int) -> dict:
+    workdir = MEDIA_ROOT / "raw" / f"{datetime.utcnow().strftime('%Y%m%d')}-{uuid.uuid4().hex}"
+    workdir.mkdir(parents=True, exist_ok=True)
+    result = _download_media(url, workdir)
+    if not result.get("ok") and "error" in result:
+        return result
+
+    subtitle_path = result.get("subtitle")
+    description = str(subtitle_path) if subtitle_path else None
     db = SessionLocal()
     cookbook = ensure_local_cookbook(db, user_id)
     recipe = Recipe(
         title=workdir.name,
         source_url=url,
-        source_path=str(video) if video else None,
+        source_path=str(result.get("video") or result.get("audio") or ""),
         store=Store.local,
         owner_id=user_id,
         cookbook_id=cookbook.id,
-        description=str(subtitle_path) if subtitle_path else None,
+        description=description,
     )
     db.add(recipe)
     db.commit()
@@ -77,9 +124,50 @@ def download_media(url: str, user_id: int) -> dict:
     return {
         "ok": True,
         "recipe_id": recipe.id,
-        "video": str(video) if video else None,
-        "audio": str(audio) if audio else None,
+        "video": str(result.get("video")) if result.get("video") else None,
+        "audio": str(result.get("audio")) if result.get("audio") else None,
         "subtitles": str(subtitle_path) if subtitle_path else None,
+        "cookbook_id": cookbook.id,
+    }
+
+def extract_recipe_from_url(url: str, user_id: int) -> dict:
+    workdir = MEDIA_ROOT / "raw" / f"{datetime.utcnow().strftime('%Y%m%d')}-{uuid.uuid4().hex}"
+    workdir.mkdir(parents=True, exist_ok=True)
+    result = _download_media(url, workdir)
+    if not result.get("ok") and "error" in result:
+        return result
+
+    subtitle_path = result.get("subtitle")
+    if not subtitle_path:
+        return {"ok": False, "error": "No subtitles or transcript available"}
+
+    raw_text = _clean_srt_text(subtitle_path.read_text(errors="ignore") or "")
+    parsed = _extract_recipe_from_text(raw_text)
+
+    db = SessionLocal()
+    cookbook = ensure_local_cookbook(db, user_id)
+    recipe = Recipe(
+        title=parsed.get("title") or workdir.name,
+        description=parsed.get("instructions") or raw_text[:1000],
+        ingredients=parsed.get("ingredients"),
+        instructions=parsed.get("instructions"),
+        source_url=url,
+        source_path=str(result.get("video") or result.get("audio") or ""),
+        store=Store.local,
+        owner_id=user_id,
+        cookbook_id=cookbook.id,
+    )
+    db.add(recipe)
+    db.commit()
+    db.refresh(recipe)
+    db.close()
+    return {
+        "ok": True,
+        "recipe_id": recipe.id,
+        "title": recipe.title,
+        "ingredients": recipe.ingredients,
+        "instructions": recipe.instructions,
+        "source_url": url,
         "cookbook_id": cookbook.id,
     }
 

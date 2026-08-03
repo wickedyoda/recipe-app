@@ -6,28 +6,43 @@
 <title>Recipe App</title>
 <style>
   * { box-sizing: border-box; }
-  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; background: #f5f5f7; color:#111; }
-  .container { max-width: 720px; margin: 0 auto; padding: 24px; }
-  .card { background:#fff; border-radius:16px; padding:16px; margin-bottom:16px; box-shadow:0 1px 2px rgba(0,0,0,0.06); }
-  input, button { width:100%; padding:12px 14px; border-radius:12px; border:1px solid #d1d5db; font-size:16px; margin-top:8px; }
-  button { background:#111; color:#fff; border:none; cursor:pointer; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; background: #f5f5f7; color:#111; padding-bottom: 64px; }
+  .container { max-width: 720px; margin: 0 auto; padding: 16px; }
+  .card { background:#fff; border-radius:16px; padding:16px; margin-bottom:12px; box-shadow:0 1px 2px rgba(0,0,0,0.06); }
+  input, select, textarea { width:100%; padding:10px 12px; border-radius:12px; border:1px solid #d1d5db; font-size:16px; margin-top:6px; font-family: inherit; }
+  button { width:100%; padding:12px 14px; border-radius:12px; border:none; background:#111; color:#fff; font-size:16px; cursor:pointer; margin-top:8px; }
   button.secondary { background:#e5e7eb; color:#111; }
+  button.danger { background:#ef4444; color:#fff; }
   .row { display:flex; gap:8px; }
   .row > * { flex:1; }
-  .hidden { display:none; }
-  .item { display:flex; justify-content:space-between; align-items:center; gap:12px; }
+  .hidden { display:none !important; }
+  .top { display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:8px; }
+  .section { margin-bottom: 12px; }
+  .section h2 { margin: 0 0 8px; font-size: 18px; }
+  .section h3 { margin: 12px 0 6px; font-size: 15px; color:#444; }
+  .item { display:flex; justify-content:space-between; align-items:flex-start; gap:10px; padding:10px 0; border-bottom:1px solid #f0f0f0; }
+  .item:last-child { border-bottom:none; }
   .item a { color:#2563eb; text-decoration:none; word-break:break-all; }
-  .top { display:flex; justify-content:space-between; align-items:center; gap:8px; }
+  .meta { font-size:12px; color:#777; margin-top:4px; }
+  .stars { color:#f59e0b; font-size:18px; }
+  .nav { position: fixed; bottom:0; left:0; right:0; background:#fff; border-top:1px solid #e5e7eb; display:flex; justify-content:space-around; padding:8px 0; }
+  .nav button { background:none; color:#555; width:auto; padding:6px 10px; font-size:12px; margin:0; border-radius:10px; }
+  .nav button.active { color:#111; font-weight:600; background:#e5e7eb; }
+  .fab { position:fixed; bottom:72px; right:16px; width:52px; height:52px; border-radius:50%; background:#111; color:#fff; border:none; font-size:22px; padding:0; }
+  .checkbox { width:20px; height:20px; accent-color:#111; }
+  .empty { color:#888; font-size:13px; padding:10px 0; }
+  .pill { display:inline-block; padding:2px 8px; background:#e5e7eb; color:#111; border-radius:999px; font-size:12px; margin:2px; }
+  .search { padding:12px; position:sticky; top:0; background:#f5f5f7; z-index:5; }
 </style>
 </head>
 <body>
   <div class="container">
     <div class="card">
       <div class="top">
-        <h1 style="margin:0;font-size:22px;">Recipe App</h1>
+        <h1 style="margin:0;font-size:20px;">Recipe App</h1>
         <div id="authArea" class="hidden">
           <span id="userEmail" style="font-size:12px;color:#555;"></span>
-          <button class="secondary" onclick="logout()" style="width:auto;padding:8px 10px;font-size:13px;">Logout</button>
+          <button class="secondary" onclick="logout()" style="width:auto;padding:6px 10px;font-size:12px;">Logout</button>
         </div>
       </div>
     </div>
@@ -51,50 +66,197 @@
     </div>
 
     <div id="appSection" class="hidden">
-      <div class="card">
-        <h2 style="margin-top:0;">Import video</h2>
-        <input id="videoUrl" placeholder="TikTok / YouTube / Facebook / Reels URL" />
-        <button onclick="ingestUrl()">Extract from URL</button>
-        <p id="ingestStatus" style="font-size:13px;color:#555;margin-top:8px;"></p>
-        <div style="margin-top:12px; padding-top:12px; border-top:1px solid #eee;">
-          <p style="font-size:13px;color:#555;margin-top:0;margin-bottom:8px;">Or upload a video file directly:</p>
-          <input id="videoFile" type="file" accept="video/*" />
-          <button onclick="ingestFile()">Upload & process</button>
-          <p id="uploadStatus" style="font-size:13px;color:#555;margin-top:8px;"></p>
+      <div id="tabImport" class="tab hidden">
+        <div class="card">
+          <h2 style="margin-top:0;">Import video</h2>
+          <input id="videoUrl" placeholder="TikTok / YouTube / Facebook / Reels URL" />
+          <button onclick="ingestUrl()">Extract from URL</button>
+          <p id="ingestStatus" style="font-size:13px;color:#555;margin-top:8px;"></p>
+          <div style="margin-top:12px; padding-top:12px; border-top:1px solid #eee;">
+            <p style="font-size:13px;color:#555;margin-top:0;margin-bottom:8px;">Or upload a video file directly:</p>
+            <input id="videoFile" type="file" accept="video/*" />
+            <button onclick="ingestFile()">Upload & process</button>
+            <p id="uploadStatus" style="font-size:13px;color:#555;margin-top:8px;"></p>
+          </div>
+        </div>
+        <div class="card">
+          <h2 style="margin-top:0;">Extract recipe from video</h2>
+          <input id="recipeUrl" placeholder="Paste TikTok / YouTube / Reels URL" />
+          <button onclick="extractRecipe()">Extract recipe</button>
+          <p id="recipeStatus" style="font-size:13px;color:#555;margin-top:8px;"></p>
+        </div>
+        <div class="card">
+          <h2 style="margin-top:0;">My media</h2>
+          <div id="mediaList"></div>
         </div>
       </div>
 
-      <div class="card">
-        <h2 style="margin-top:0;">Profile</h2>
-        <input id="profileName" placeholder="Display name" />
-        <input id="profileAvatar" placeholder="Avatar URL" />
-        <button onclick="updateProfile()">Save profile</button>
-      </div>
-
-      <div class="card">
-        <h2 style="margin-top:0;">My media</h2>
-        <div id="mediaList"></div>
-      </div>
-
-      <div id="adminSection" class="card hidden">
-        <div class="top">
-          <h2 style="margin-top:0;">Admin</h2>
-          <button class="secondary" onclick="loadPending()" style="width:auto;padding:8px 10px;font-size:13px;">Refresh</button>
+      <div id="tabRecipes" class="tab hidden">
+        <div class="search">
+          <input id="recipeSearch" placeholder="Search recipes..." oninput="renderRecipes()" />
         </div>
-        <h3 style="margin-top:0;font-size:16px;">Pending approvals</h3>
-        <div id="pendingList"></div>
-        <h3 style="margin-top:16px;font-size:16px;">All users</h3>
-        <div id="userList"></div>
+        <div class="card">
+          <div class="top">
+            <h2 style="margin-top:0;">Recipes</h2>
+            <button class="secondary" onclick="openRecipeForm()" style="width:auto;padding:8px 10px;font-size:13px;">New recipe</button>
+          </div>
+          <div id="recipeList"></div>
+        </div>
+        <div id="recipeForm" class="card hidden">
+          <h2 style="margin-top:0;" id="recipeFormTitle">New recipe</h2>
+          <input id="recipeTitle" placeholder="Title" />
+          <textarea id="recipeDesc" placeholder="Description"></textarea>
+          <textarea id="recipeIngredients" placeholder="Ingredients"></textarea>
+          <textarea id="recipeInstructions" placeholder="Instructions"></textarea>
+          <input id="recipeSource" placeholder="Source URL" />
+          <input id="recipeRating" type="number" step="0.5" min="0" max="5" placeholder="Rating 0-5" />
+          <div>
+            <input id="recipeTags" placeholder="Tags (comma separated)" />
+          </div>
+          <button onclick="saveRecipe()">Save</button>
+          <button class="secondary" onclick="closeRecipeForm()">Cancel</button>
+        </div>
+        <div id="recipeDetail" class="card hidden">
+          <div class="top">
+            <h2 style="margin:0;font-size:18px;" id="detailTitle"></h2>
+            <button class="secondary" onclick="closeRecipeDetail()" style="width:auto;padding:8px 10px;font-size:13px;">Close</button>
+          </div>
+          <div id="detailMeta"></div>
+          <div id="detailBody"></div>
+          <div class="row" style="margin-top:10px;">
+            <button class="secondary" onclick="addNoteFromDetail()">Add note</button>
+            <button class="secondary" onclick="addToMealPlan()">Add to meal plan</button>
+            <button class="secondary" onclick="createGroceryFromRecipe()">Grocery list</button>
+          </div>
+          <h3 style="margin-top:16px;">Notes</h3>
+          <div id="detailNotes"></div>
+        </div>
+      </div>
+
+      <div id="tabMeals" class="tab hidden">
+        <div class="card">
+          <div class="top">
+            <h2 style="margin-top:0;">Meal plans</h2>
+            <button class="secondary" onclick="openPlanForm()" style="width:auto;padding:8px 10px;font-size:13px;">New plan</button>
+          </div>
+          <div id="planList"></div>
+        </div>
+        <div id="planForm" class="card hidden">
+          <h2 style="margin-top:0;">New meal plan</h2>
+          <input id="planName" placeholder="Plan name" />
+          <select id="planPeriod">
+            <option value="daily">Daily</option>
+            <option value="weekly">Weekly</option>
+            <option value="monthly">Monthly</option>
+          </select>
+          <button onclick="savePlan()">Save</button>
+          <button class="secondary" onclick="closePlanForm()">Cancel</button>
+        </div>
+        <div id="planDetail" class="card hidden">
+          <div class="top">
+            <h2 style="margin-top:0;" id="planDetailTitle"></h2>
+            <button class="secondary" onclick="closePlanDetail()" style="width:auto;padding:8px 10px;font-size:13px;">Close</button>
+          </div>
+          <div class="row">
+            <select id="entryMeal">
+              <option>Breakfast</option>
+              <option>Lunch</option>
+              <option>Dinner</option>
+              <option>Snack</option>
+            </select>
+            <input id="entryDate" type="date" />
+          </div>
+          <div style="margin-top:8px;">
+            <select id="entryRecipe">
+              <option value="">Select recipe</option>
+            </select>
+            <button onclick="addMealEntry()">Add entry</button>
+          </div>
+          <h3 style="margin-top:12px;font-size:15px;color:#444;">Entries</h3>
+          <div id="entryList"></div>
+        </div>
+      </div>
+
+      <div id="tabGroceries" class="tab hidden">
+        <div class="card">
+          <div class="top">
+            <h2 style="margin-top:0;">Grocery lists</h2>
+            <button class="secondary" onclick="openGroceryForm()" style="width:auto;padding:8px 10px;font-size:13px;">New list</button>
+          </div>
+          <div id="groceryList"></div>
+        </div>
+        <div id="groceryForm" class="card hidden">
+          <h2 style="margin-top:0;">New grocery list</h2>
+          <input id="groceryName" placeholder="List name" />
+          <button onclick="saveGrocery()">Save</button>
+          <button class="secondary" onclick="closeGroceryForm()">Cancel</button>
+        </div>
+        <div id="groceryDetail" class="card hidden">
+          <div class="top">
+            <h2 style="margin-top:0;" id="groceryDetailTitle"></h2>
+            <button class="secondary" onclick="closeGroceryDetail()" style="width:auto;padding:8px 10px;font-size:13px;">Close</button>
+          </div>
+          <div class="row">
+            <input id="groceryItemName" placeholder="Item" />
+            <input id="groceryItemQty" placeholder="Qty" />
+          </div>
+          <button onclick="addGroceryItem()">Add item</button>
+          <h3 style="margin-top:12px;font-size:15px;color:#444;">Items</h3>
+          <div id="groceryItems"></div>
+        </div>
+      </div>
+
+      <div id="tabAdmin" class="tab hidden">
+        <div class="card">
+          <div class="top">
+            <h2 style="margin-top:0;">Admin</h2>
+            <button class="secondary" onclick="loadPending();loadUsers();" style="width:auto;padding:8px 10px;font-size:13px;">Refresh</button>
+          </div>
+          <h3 style="margin-top:0;font-size:16px;">Pending approvals</h3>
+          <div id="pendingList"></div>
+          <h3 style="margin-top:16px;font-size:16px;">All users</h3>
+          <div id="userList"></div>
+        </div>
       </div>
     </div>
   </div>
 
+  <div id="nav" class="nav hidden">
+    <button data-tab="tabImport" onclick="switchTab('tabImport')">Import</button>
+    <button data-tab="tabRecipes" onclick="switchTab('tabRecipes')">Recipes</button>
+    <button data-tab="tabMeals" onclick="switchTab('tabMeals')">Meals</button>
+    <button data-tab="tabGroceries" onclick="switchTab('tabGroceries')">Groceries</button>
+    <button id="adminTabBtn" data-tab="tabAdmin" onclick="switchTab('tabAdmin')" class="hidden">Admin</button>
+  </div>
+
 <script>
 const API = location.origin;
-const token = localStorage.getItem('token');
+let token = localStorage.getItem('token');
+let currentRecipeId = null;
+let currentPlanId = null;
+let currentGroceryId = null;
+let editingRecipeId = null;
 
 function authHeaders() {
   return { 'Content-Type':'application/json', Authorization: 'Bearer ' + token };
+}
+function authHeadersNoJson() {
+  const h = authHeaders();
+  delete h['Content-Type'];
+  return h;
+}
+function escapeHtml(text) {
+  return String(text||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(el => el.classList.add('hidden'));
+  document.getElementById(name).classList.remove('hidden');
+  document.querySelectorAll('.nav button').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+  if (name === 'tabRecipes') renderRecipes();
+  if (name === 'tabMeals') { renderPlans(); }
+  if (name === 'tabGroceries') renderGroceryLists();
+  if (name === 'tabAdmin') { loadPending(); loadUsers(); }
 }
 
 if (token) initApp();
@@ -105,11 +267,8 @@ async function login() {
   const res = await fetch(API + '/auth/login', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({email,password}) });
   const data = await res.json();
   if (!res.ok) return alert('Login failed: ' + (data.detail || 'unknown'));
-  localStorage.setItem('token', data.access_token);
-  token = data.access_token;
-  initApp();
+  token = data.access_token; localStorage.setItem('token', token); initApp();
 }
-
 async function register() {
   const email = document.getElementById('regEmail').value.trim();
   const password = document.getElementById('regPassword').value;
@@ -119,17 +278,11 @@ async function register() {
   const data = await res.json();
   if (!res.ok) return status.textContent = 'Error: ' + (data.detail || 'unknown');
   status.textContent = data.message || 'Registered. Please wait for admin approval.';
-  document.getElementById('regEmail').value = '';
-  document.getElementById('regPassword').value = '';
-  document.getElementById('regName').value = '';
+  document.getElementById('regEmail').value=''; document.getElementById('regPassword').value=''; document.getElementById('regName').value='';
 }
-
 function logout() {
-  localStorage.removeItem('token');
-  token = null;
-  location.reload();
+  localStorage.removeItem('token'); token = null; location.reload();
 }
-
 function showRegister() {
   document.getElementById('loginSection').classList.add('hidden');
   document.getElementById('registerSection').classList.remove('hidden');
@@ -150,11 +303,12 @@ async function initApp() {
   document.getElementById('loginSection').classList.add('hidden');
   document.getElementById('registerSection').classList.add('hidden');
   document.getElementById('appSection').classList.remove('hidden');
+  document.getElementById('nav').classList.remove('hidden');
   document.getElementById('authArea').classList.remove('hidden');
   document.getElementById('userEmail').textContent = user.email + ' (' + user.role + ')';
-  document.getElementById('profileName').value = user.display_name || '';
-  document.getElementById('profileAvatar').value = user.avatar_url || '';
-  loadMedia();
+  if (user.role === 'admin') document.getElementById('adminTabBtn').classList.remove('hidden');
+  switchTab('tabImport');
+  await loadTags();
 }
 
 async function updateProfile() {
@@ -176,41 +330,36 @@ async function ingestUrl() {
     if (!res.ok) throw new Error(data.detail || data.error || 'unknown');
     status.textContent = 'Done. Saved media items: ' + JSON.stringify(data);
     loadMedia();
-  } catch (err) {
-    status.textContent = 'Error: ' + err.message;
-  }
+  } catch (err) { status.textContent = 'Error: ' + err.message; }
 }
-
 async function ingestFile() {
   const fileInput = document.getElementById('videoFile');
   const status = document.getElementById('uploadStatus');
   const file = fileInput.files[0];
   if (!file) return;
   status.textContent = 'Uploading...';
-  const form = new FormData();
-  form.append('file', file);
+  const form = new FormData(); form.append('file', file);
   try {
     const res = await fetch(API + '/media/upload', { method:'POST', headers: authHeadersNoJson(), body: form });
     const data = await res.json();
     if (!res.ok) throw new Error(data.detail || data.error || 'unknown');
     status.textContent = 'Done. Saved media items: ' + JSON.stringify(data);
-    loadMedia();
-    fileInput.value = '';
-  } catch (err) {
-    status.textContent = 'Error: ' + err.message;
-  }
+    loadMedia(); fileInput.value='';
+  } catch (err) { status.textContent = 'Error: ' + err.message; }
 }
-
-function authHeadersNoJson() {
-  const h = authHeaders();
-  delete h['Content-Type'];
-  return h;
+async function extractRecipe() {
+  const url = document.getElementById('recipeUrl').value.trim();
+  const status = document.getElementById('recipeStatus');
+  if (!url) return;
+  status.textContent = 'Extracting recipe...';
+  try {
+    const res = await fetch(API + '/media/recipe', { method:'POST', headers: authHeaders(), body: JSON.stringify({url}) });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || data.error || 'unknown');
+    status.textContent = 'Done. Saved recipe: ' + (data.title || data.recipe_id);
+    if (data.recipe_id) openRecipeDetail(data.recipe_id);
+  } catch (err) { status.textContent = 'Error: ' + err.message; }
 }
-
-function escapeHtml(text) {
-  return String(text || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
-
 async function loadMedia() {
   const res = await fetch(API + '/media/items', { headers: authHeaders() });
   const items = await res.json();
@@ -219,9 +368,285 @@ async function loadMedia() {
   for (const item of items) {
     const el = document.createElement('div');
     el.className = 'item';
-    el.innerHTML = '<div><div><strong>' + escapeHtml(item.title) + '</strong></div><div style="font-size:12px;color:#555;">' + escapeHtml(item.source_url || '') + '</div></div>';
+    el.innerHTML = '<div><div><strong>' + escapeHtml(item.title) + '</strong></div><div style="font-size:12px;color:#555;">' + escapeHtml(item.source_url || '') + '</div><div style="font-size:12px;color:#555;">' + escapeHtml(item.description || '') + '</div></div>';
     box.appendChild(el);
   }
+}
+
+let tags = [];
+async function loadTags() {
+  const res = await fetch(API + '/tags', { headers: authHeaders() });
+  if (!res.ok) return;
+  tags = await res.json();
+}
+
+async function renderRecipes() {
+  const q = (document.getElementById('recipeSearch')?.value || '').trim().toLowerCase();
+  const res = await fetch(API + '/recipes', { headers: authHeaders() });
+  if (!res.ok) return;
+  const items = await res.json();
+  const box = document.getElementById('recipeList');
+  box.innerHTML = '';
+  const filtered = q ? items.filter(r => (r.title||'').toLowerCase().includes(q) || (r.description||'').toLowerCase().includes(q)) : items;
+  if (!filtered.length) box.innerHTML = '<div class="empty">No recipes yet.</div>';
+  for (const r of filtered) {
+    const el = document.createElement('div');
+    el.className = 'item';
+    el.innerHTML = '<div><div><strong>' + escapeHtml(r.title) + '</strong></div><div class="meta">' + escapeHtml(r.description||'') + ' • ' + (r.tags||[]).map(t=>'<span class="pill">'+escapeHtml(t)+'</span>').join(' ') + '</div>' + (r.rating ? '<div class="stars">' + '★'.repeat(Math.round(r.rating)) + '</div>' : '') + '</div>';
+    el.style.cursor = 'pointer';
+    el.onclick = () => openRecipeDetail(r.id);
+    box.appendChild(el);
+  }
+}
+function openRecipeForm(id) {
+  editingRecipeId = id || null;
+  document.getElementById('recipeFormTitle').textContent = id ? 'Edit recipe' : 'New recipe';
+  if (id) {
+    fetch(API + '/recipes/' + id, { headers: authHeaders() }).then(r=>r.json()).then(data => {
+      document.getElementById('recipeTitle').value = data.title||'';
+      document.getElementById('recipeDesc').value = data.description||'';
+      document.getElementById('recipeIngredients').value = data.ingredients||'';
+      document.getElementById('recipeInstructions').value = data.instructions||'';
+      document.getElementById('recipeSource').value = data.source_url||'';
+      document.getElementById('recipeRating').value = data.rating ?? '';
+      document.getElementById('recipeTags').value = (data.tags||[]).join(', ');
+    });
+  } else {
+    document.getElementById('recipeTitle').value='';
+    document.getElementById('recipeDesc').value='';
+    document.getElementById('recipeIngredients').value='';
+    document.getElementById('recipeInstructions').value='';
+    document.getElementById('recipeSource').value='';
+    document.getElementById('recipeRating').value='';
+    document.getElementById('recipeTags').value='';
+  }
+  document.getElementById('recipeForm').classList.remove('hidden');
+}
+function closeRecipeForm() {
+  editingRecipeId = null;
+  document.getElementById('recipeForm').classList.add('hidden');
+}
+async function saveRecipe() {
+  const title = document.getElementById('recipeTitle').value.trim();
+  const description = document.getElementById('recipeDesc').value.trim();
+  const ingredients = document.getElementById('recipeIngredients').value.trim();
+  const instructions = document.getElementById('recipeInstructions').value.trim();
+  const source_url = document.getElementById('recipeSource').value.trim();
+  const rating = parseFloat(document.getElementById('recipeRating').value || '0') || 0;
+  const tagNames = document.getElementById('recipeTags').value.split(',').map(s=>s.trim()).filter(Boolean);
+  const tagIds = tagNames.map(name => {
+    const existing = tags.find(t => t.name.toLowerCase() === name.toLowerCase());
+    return existing ? existing.id : null;
+  }).filter(Boolean);
+
+  const payload = { title, description, ingredients, instructions, source_url, rating, tag_ids: tagIds.length ? tagIds : undefined };
+  const url = editingRecipeId ? API + '/recipes/' + editingRecipeId : API + '/recipes';
+  const method = editingRecipeId ? 'PATCH' : 'POST';
+  const res = await fetch(url, { method, headers: authHeaders(), body: JSON.stringify(payload) });
+  const data = await res.json();
+  if (!res.ok) return alert('Save failed: ' + (data.detail || 'unknown'));
+  closeRecipeForm();
+  renderRecipes();
+}
+async function openRecipeDetail(id) {
+  currentRecipeId = id;
+  const res = await fetch(API + '/recipes/' + id, { headers: authHeaders() });
+  if (!res.ok) return alert('Recipe not found');
+  const r = await res.json();
+  document.getElementById('detailTitle').textContent = r.title || 'Untitled';
+  document.getElementById('detailMeta').innerHTML = '<div class="meta">' + escapeHtml(r.description||'') + '</div>' + (r.rating ? '<div class="stars">' + '★'.repeat(Math.round(r.rating)) + '</div>' : '') + '<div class="meta">' + (r.tags||[]).map(t=>'<span class="pill">'+escapeHtml(t)+'</span>').join(' ') + '</div>';
+  document.getElementById('detailBody').innerHTML = '<div style="white-space:pre-wrap;font-size:14px;">' + escapeHtml(r.ingredients||'') + '\n\n' + escapeHtml(r.instructions||'') + '</div>';
+  document.getElementById('recipeDetail').classList.remove('hidden');
+  renderNotes(id);
+}
+function closeRecipeDetail() {
+  document.getElementById('recipeDetail').classList.add('hidden');
+  currentRecipeId = null;
+}
+async function renderNotes(recipeId) {
+  const res = await fetch(API + '/notes?recipe_id=' + recipeId, { headers: authHeaders() });
+  const items = await res.json();
+  const box = document.getElementById('detailNotes');
+  box.innerHTML = '';
+  for (const n of items) {
+    const el = document.createElement('div');
+    el.className = 'item';
+    el.innerHTML = '<div><div style="font-size:14px;">' + escapeHtml(n.body) + '</div><div class="meta">' + new Date(n.created_at).toLocaleString() + '</div></div><button class="danger" onclick="deleteNote(' + n.id + ')" style="width:auto;padding:8px 10px;font-size:12px;">Delete</button>';
+    box.appendChild(el);
+  }
+}
+async function addNoteFromDetail() {
+  const body = prompt('Note:');
+  if (!body) return;
+  const res = await fetch(API + '/notes', { method:'POST', headers: authHeaders(), body: JSON.stringify({body, recipe_id: currentRecipeId}) });
+  const data = await res.json();
+  if (!res.ok) return alert('Failed: ' + (data.detail || 'unknown'));
+  renderNotes(currentRecipeId);
+}
+async function deleteNote(id) {
+  const res = await fetch(API + '/notes/' + id, { method:'DELETE', headers: authHeaders() });
+  if (!res.ok) return alert('Failed');
+  if (currentRecipeId) renderNotes(currentRecipeId);
+}
+
+async function renderPlans() {
+  const res = await fetch(API + '/meal-plans', { headers: authHeaders() });
+  const items = await res.json();
+  const box = document.getElementById('planList');
+  box.innerHTML = '';
+  for (const p of items) {
+    const el = document.createElement('div');
+    el.className = 'item';
+    el.innerHTML = '<div><div><strong>' + escapeHtml(p.name) + '</strong></div><div class="meta">' + escapeHtml(p.period) + '</div></div><button class="secondary" onclick="openPlanDetail(' + p.id + ')" style="width:auto;padding:8px 10px;font-size:13px;">Open</button>';
+    box.appendChild(el);
+  }
+}
+function openPlanForm() { document.getElementById('planForm').classList.remove('hidden'); }
+function closePlanForm() { document.getElementById('planForm').classList.add('hidden'); }
+async function savePlan() {
+  const name = document.getElementById('planName').value.trim();
+  const period = document.getElementById('planPeriod').value;
+  const res = await fetch(API + '/meal-plans', { method:'POST', headers: authHeaders(), body: JSON.stringify({name,period}) });
+  const data = await res.json();
+  if (!res.ok) return alert('Failed: ' + (data.detail || 'unknown'));
+  closePlanForm(); renderPlans();
+}
+async function openPlanDetail(id) {
+  currentPlanId = id;
+  const res = await fetch(API + '/meal-plans/' + id, { headers: authHeaders() });
+  if (!res.ok) return alert('Plan not found');
+  const plan = await res.json();
+  document.getElementById('planDetailTitle').textContent = plan.name + ' (' + plan.period + ')';
+  const recipeRes = await fetch(API + '/recipes', { headers: authHeaders() });
+  const recipes = await recipeRes.json();
+  const sel = document.getElementById('entryRecipe');
+  sel.innerHTML = '<option value="">Select recipe</option>' + recipes.map(r => '<option value="' + r.id + '">' + escapeHtml(r.title) + '</option>').join('');
+  await loadPlanEntries(id);
+  document.getElementById('planDetail').classList.remove('hidden');
+}
+function closePlanDetail() {
+  document.getElementById('planDetail').classList.add('hidden');
+  currentPlanId = null;
+}
+async function loadPlanEntries(planId) {
+  const res = await fetch(API + '/meal-plans/' + planId + '/entries', { headers: authHeaders() });
+  const items = await res.json();
+  const box = document.getElementById('entryList');
+  box.innerHTML = '';
+  for (const e of items) {
+    const el = document.createElement('div');
+    el.className = 'item';
+    el.innerHTML = '<div><div><strong>' + escapeHtml(e.meal) + '</strong></div><div class="meta">' + escapeHtml(e.date||'') + ' • recipe_id=' + e.recipe_id + '</div></div><button class="danger" onclick="deleteMealEntry(' + e.id + ')" style="width:auto;padding:8px 10px;font-size:12px;">Delete</button>';
+    box.appendChild(el);
+  }
+}
+async function addMealEntry() {
+  const meal = document.getElementById('entryMeal').value;
+  const date = document.getElementById('entryDate').value;
+  const recipe_id = parseInt(document.getElementById('entryRecipe').value || '0');
+  if (!recipe_id) return alert('Select a recipe');
+  const res = await fetch(API + '/meal-plans/entries', { method:'POST', headers: authHeaders(), body: JSON.stringify({meal_plan_id: currentPlanId, recipe_id, meal, date}) });
+  const data = await res.json();
+  if (!res.ok) return alert('Failed: ' + (data.detail || 'unknown'));
+  loadPlanEntries(currentPlanId);
+}
+async function deleteMealEntry(id) {
+  const res = await fetch(API + '/meal-plans/entries/' + id, { method:'DELETE', headers: authHeaders() });
+  if (!res.ok) return alert('Failed');
+  if (currentPlanId) loadPlanEntries(currentPlanId);
+}
+
+async function renderGroceryLists() {
+  const res = await fetch(API + '/grocery-lists', { headers: authHeaders() });
+  const items = await res.json();
+  const box = document.getElementById('groceryList');
+  box.innerHTML = '';
+  for (const g of items) {
+    const el = document.createElement('div');
+    el.className = 'item';
+    el.innerHTML = '<div><div><strong>' + escapeHtml(g.name) + '</strong></div></div><button class="secondary" onclick="openGroceryDetail(' + g.id + ')" style="width:auto;padding:8px 10px;font-size:13px;">Open</button>';
+    box.appendChild(el);
+  }
+}
+function openGroceryForm() { document.getElementById('groceryForm').classList.remove('hidden'); }
+function closeGroceryForm() { document.getElementById('groceryForm').classList.add('hidden'); }
+async function saveGrocery() {
+  const name = document.getElementById('groceryName').value.trim();
+  const res = await fetch(API + '/grocery-lists', { method:'POST', headers: authHeaders(), body: JSON.stringify({name}) });
+  const data = await res.json();
+  if (!res.ok) return alert('Failed: ' + (data.detail || 'unknown'));
+  closeGroceryForm(); renderGroceryLists();
+}
+async function openGroceryDetail(id) {
+  currentGroceryId = id;
+  const res = await fetch(API + '/grocery-lists/' + id, { headers: authHeaders() });
+  if (!res.ok) return alert('List not found');
+  const data = await res.json();
+  document.getElementById('groceryDetailTitle').textContent = data.name;
+  await loadGroceryItems(id);
+  document.getElementById('groceryDetail').classList.remove('hidden');
+}
+function closeGroceryDetail() {
+  document.getElementById('groceryDetail').classList.add('hidden');
+  currentGroceryId = null;
+}
+async function loadGroceryItems(listId) {
+  const res = await fetch(API + '/grocery-lists/' + listId + '/items', { headers: authHeaders() });
+  const items = await res.json();
+  const box = document.getElementById('groceryItems');
+  box.innerHTML = '';
+  for (const it of items) {
+    const el = document.createElement('div');
+    el.className = 'item';
+    el.innerHTML = '<div><input type="checkbox" class="checkbox" ' + (it.checked ? 'checked' : '') + ' onchange="toggleGrocery(' + it.id + ', this.checked)" /><div style="margin-left:8px;flex:1;"><div>' + escapeHtml(it.name) + '</div><div class="meta">' + escapeHtml(it.quantity||'') + '</div></div></div><button class="danger" onclick="deleteGroceryItem(' + it.id + ')" style="width:auto;padding:8px 10px;font-size:12px;">Delete</button>';
+    box.appendChild(el);
+  }
+}
+async function addGroceryItem() {
+  const name = document.getElementById('groceryItemName').value.trim();
+  const quantity = document.getElementById('groceryItemQty').value.trim();
+  if (!name) return;
+  const res = await fetch(API + '/grocery-lists/' + currentGroceryId + '/items', { method:'POST', headers: authHeaders(), body: JSON.stringify({name, quantity, list_id: currentGroceryId, recipe_id: null}) });
+  const data = await res.json();
+  if (!res.ok) return alert('Failed: ' + (data.detail || 'unknown'));
+  document.getElementById('groceryItemName').value='';
+  document.getElementById('groceryItemQty').value='';
+  loadGroceryItems(currentGroceryId);
+}
+async function createGroceryFromRecipe() {
+  if (!currentRecipeId) return;
+  const name = prompt('Grocery list name:');
+  if (!name) return;
+  const res = await fetch(API + '/grocery-lists', { method:'POST', headers: authHeaders(), body: JSON.stringify({name}) });
+  const list = await res.json();
+  const recipeRes = await fetch(API + '/recipes/' + currentRecipeId, { headers: authHeaders() });
+  const recipe = await recipeRes.json();
+  const lines = (recipe.ingredients || '').split('\n').filter(Boolean).slice(0, 20);
+  for (const line of lines) {
+    await fetch(API + '/grocery-lists/' + list.id + '/items', { method:'POST', headers: authHeaders(), body: JSON.stringify({name: line, list_id: list.id, recipe_id: recipe.id}) });
+  }
+  alert('Created list from recipe');
+  openGroceryDetail(list.id);
+  switchTab('tabGroceries');
+}
+async function toggleGrocery(id, checked) {
+  const res = await fetch(API + '/grocery-lists/items/' + id, { method:'PATCH', headers: authHeaders(), body: JSON.stringify({checked}) });
+  if (!res.ok) alert('Update failed');
+}
+async function deleteGroceryItem(id) {
+  const res = await fetch(API + '/grocery-lists/items/' + id, { method:'DELETE', headers: authHeaders() });
+  if (!res.ok) return alert('Failed');
+  if (currentGroceryId) loadGroceryItems(currentGroceryId);
+}
+
+async function addToMealPlan() {
+  if (!currentRecipeId) return;
+  const planName = prompt('Meal plan name:');
+  if (!planName) return;
+  const res = await fetch(API + '/meal-plans', { method:'POST', headers: authHeaders(), body: JSON.stringify({name: planName, period: 'weekly'}) });
+  const plan = await res.json();
+  await fetch(API + '/meal-plans/entries', { method:'POST', headers: authHeaders(), body: JSON.stringify({meal_plan_id: plan.id, recipe_id: currentRecipeId, meal: 'Dinner', date: ''}) });
+  alert('Added to meal plan');
 }
 
 async function loadPending() {
@@ -230,17 +655,14 @@ async function loadPending() {
   const items = await res.json();
   const box = document.getElementById('pendingList');
   box.innerHTML = '';
-  if (!items.length) box.innerHTML = '<div style="font-size:13px;color:#555;">No pending users.</div>';
+  if (!items.length) box.innerHTML = '<div class="empty">No pending users.</div>';
   for (const user of items) {
     const el = document.createElement('div');
     el.className = 'item';
-    el.innerHTML = '<div><div>' + escapeHtml(user.email) + '</div><div style="font-size:12px;color:#555;">' + escapeHtml(user.display_name || '') + '</div></div>' +
-      '<button onclick="approveUser(' + user.id + ', true)">Approve</button>' +
-      '<button class="secondary" onclick="approveUser(' + user.id + ', false)" style="margin-top:8px;">Reject</button>';
+    el.innerHTML = '<div><div>' + escapeHtml(user.email) + '</div><div class="meta">' + escapeHtml(user.display_name || '') + '</div></div><button onclick="approveUser(' + user.id + ', true)">Approve</button><button class="secondary" onclick="approveUser(' + user.id + ', false)" style="margin-top:8px;">Reject</button>';
     box.appendChild(el);
   }
 }
-
 async function loadUsers() {
   const res = await fetch(API + '/auth/users', { headers: authHeaders() });
   if (!res.ok) return;
@@ -250,47 +672,15 @@ async function loadUsers() {
   for (const user of items) {
     const el = document.createElement('div');
     el.className = 'item';
-    el.innerHTML = '<div><div>' + escapeHtml(user.email) + '</div><div style="font-size:12px;color:#555;">' + escapeHtml(user.display_name || '') + ' • ' + user.role + ' • active=' + user.is_active + ' approved=' + user.is_approved + '</div></div>';
+    el.innerHTML = '<div><div>' + escapeHtml(user.email) + '</div><div class="meta">' + escapeHtml(user.display_name || '') + ' • ' + user.role + ' • active=' + user.is_active + ' approved=' + user.is_approved + '</div></div>';
     box.appendChild(el);
   }
 }
-
 async function approveUser(id, active) {
-  const res = await fetch(API + '/auth/users/approve', {
-    method: 'POST',
-    headers: authHeaders(),
-    body: JSON.stringify({user_id: id, is_active: active})
-  });
+  const res = await fetch(API + '/auth/users/approve', { method:'POST', headers: authHeaders(), body: JSON.stringify({user_id: id, is_active: active}) });
   const data = await res.json();
   if (!res.ok) return alert('Action failed: ' + (data.detail || 'unknown'));
-  alert('Updated user ' + id);
-  loadPending();
-  loadUsers();
-}
-
-function showAdmin() {
-  document.getElementById('adminSection').classList.remove('hidden');
-  loadPending();
-  loadUsers();
-}
-
-async function initApp() {
-  const me = await fetch(API + '/auth/me', { headers: authHeaders() });
-  if (!me.ok) {
-    const data = await me.json().catch(() => ({detail:'not authorized'}));
-    alert('Access: ' + (data.detail || 'not authorized'));
-    return logout();
-  }
-  const user = await me.json();
-  document.getElementById('loginSection').classList.add('hidden');
-  document.getElementById('registerSection').classList.add('hidden');
-  document.getElementById('appSection').classList.remove('hidden');
-  document.getElementById('authArea').classList.remove('hidden');
-  document.getElementById('userEmail').textContent = user.email + ' (' + user.role + ')';
-  document.getElementById('profileName').value = user.display_name || '';
-  document.getElementById('profileAvatar').value = user.avatar_url || '';
-  loadMedia();
-  if (user.role === 'admin') showAdmin();
+  loadPending(); loadUsers();
 }
 </script>
 </body>

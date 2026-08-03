@@ -19,6 +19,13 @@ def create_meal_plan(payload: MealPlanCreate, db: Session = Depends(get_db), cur
 def list_meal_plans(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     return db.query(MealPlan).filter(MealPlan.owner_id==current_user.id).order_by(MealPlan.created_at.desc()).all()
 
+@router.get("/{plan_id}", response_model=MealPlanOut)
+def get_meal_plan(plan_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    plan = db.query(MealPlan).filter(MealPlan.id==plan_id, MealPlan.owner_id==current_user.id).first()
+    if not plan:
+        raise HTTPException(status_code=404, detail="Meal plan not found")
+    return MealPlanOut.model_validate(plan)
+
 @router.post("/entries", response_model=MealPlanEntryOut)
 def create_entry(payload: MealPlanEntryCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     plan = db.query(MealPlan).filter(MealPlan.id==payload.meal_plan_id, MealPlan.owner_id==current_user.id).first()

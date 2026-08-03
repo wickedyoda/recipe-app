@@ -19,6 +19,13 @@ def create_list(payload: GroceryListCreate, db: Session = Depends(get_db), curre
 def list_lists(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     return db.query(GroceryList).filter(GroceryList.owner_id==current_user.id).order_by(GroceryList.created_at.desc()).all()
 
+@router.get("/{list_id}", response_model=GroceryListOut)
+def get_list(list_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    gl = db.query(GroceryList).filter(GroceryList.id==list_id, GroceryList.owner_id==current_user.id).first()
+    if not gl:
+        raise HTTPException(status_code=404, detail="Grocery list not found")
+    return GroceryListOut.model_validate(gl)
+
 @router.post("/{list_id}/items", response_model=GroceryItemOut)
 def add_item(list_id: int, payload: GroceryItemCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     gl = db.query(GroceryList).filter(GroceryList.id==list_id, GroceryList.owner_id==current_user.id).first()
