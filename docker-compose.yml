@@ -31,6 +31,7 @@ services:
       SECRET_KEY: ${SECRET_KEY}
       MEDIA_ROOT: ${MEDIA_ROOT:-/media}
       WHISPER_MODEL: ${WHISPER_MODEL:-tiny}
+      PUBLIC_URL: ${PUBLIC_URL}
     ports:
       - "8000:8000"
     depends_on:
