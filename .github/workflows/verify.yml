@@ -173,11 +173,13 @@ jobs:
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: "trivy-backend.sarif"
+          category: "trivy-backend"
 
       - name: Upload Trivy frontend scan results
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: "trivy-frontend.sarif"
+          category: "trivy-frontend"
 
   yaml-validate:
     name: YAML & Compose Validate
