@@ -1,9 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.staticfiles import StaticFiles
-from backend.database import engine, Base, ensure_schema
+
+from backend.database import Base, engine, ensure_schema
 from backend.routers import router as api_router
 
 Base.metadata.create_all(bind=engine)

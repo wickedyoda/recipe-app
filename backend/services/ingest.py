@@ -7,10 +7,9 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 import yt_dlp
+from backend.database import SessionLocal
 from backend.models import Cookbook, Recipe, Store
 from sqlalchemy.orm import Session
-
-from backend.database import SessionLocal
 
 MEDIA_ROOT = Path(os.getenv("MEDIA_ROOT", "/media"))
 MEDIA_ROOT.mkdir(parents=True, exist_ok=True)
