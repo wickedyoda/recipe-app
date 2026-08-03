@@ -135,6 +135,8 @@ class GroceryListCreate(BaseModel):
 class GroceryListOut(GroceryListCreate):
     id: int
     owner_id: int
+    share_token: str | None
+    share_enabled: bool = False
     created_at: datetime
     class Config:
         from_attributes = True
