@@ -1,3 +1,4 @@
+import os
 import secrets
 import urllib.parse
 
@@ -137,9 +138,8 @@ def share_list(list_id: int, db: Session = Depends(get_db), current_user: User =
     db.commit()
     db.refresh(gl)
     items = db.query(GroceryItem).filter(GroceryItem.list_id==list_id).order_by(GroceryItem.id).all()
-    base = str(location.origin).rstrip("/") if False else ""
-    base = ""
-    link = "/grocery-lists/public/" + gl.share_token
+    public_url = (os.getenv("PUBLIC_URL") or "").rstrip("/")
+    link = (public_url + "/grocery-lists/public/" + gl.share_token) if public_url else ("/grocery-lists/public/" + gl.share_token)
     text = _list_text(gl.name, items)
     subject = urllib.parse.quote(gl.name or "Grocery list")
     body = urllib.parse.quote(text)
