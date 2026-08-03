@@ -80,6 +80,12 @@
           </div>
         </div>
         <div class="card">
+          <h2 style="margin-top:0;">Extract recipe from video</h2>
+          <input id="recipeUrl" placeholder="Paste TikTok / YouTube / Reels URL" />
+          <button onclick="extractRecipe()">Extract recipe</button>
+          <p id="recipeStatus" style="font-size:13px;color:#555;margin-top:8px;"></p>
+        </div>
+        <div class="card">
           <h2 style="margin-top:0;">My media</h2>
           <div id="mediaList"></div>
         </div>
@@ -339,6 +345,19 @@ async function ingestFile() {
     if (!res.ok) throw new Error(data.detail || data.error || 'unknown');
     status.textContent = 'Done. Saved media items: ' + JSON.stringify(data);
     loadMedia(); fileInput.value='';
+  } catch (err) { status.textContent = 'Error: ' + err.message; }
+}
+async function extractRecipe() {
+  const url = document.getElementById('recipeUrl').value.trim();
+  const status = document.getElementById('recipeStatus');
+  if (!url) return;
+  status.textContent = 'Extracting recipe...';
+  try {
+    const res = await fetch(API + '/media/recipe', { method:'POST', headers: authHeaders(), body: JSON.stringify({url}) });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || data.error || 'unknown');
+    status.textContent = 'Done. Saved recipe: ' + (data.title || data.recipe_id);
+    if (data.recipe_id) openRecipeDetail(data.recipe_id);
   } catch (err) { status.textContent = 'Error: ' + err.message; }
 }
 async function loadMedia() {
