@@ -126,6 +126,7 @@
           <div class="top">
             <h2 style="margin:0;font-size:18px;" id="detailTitle"></h2>
             <button class="secondary" onclick="closeRecipeDetail()" style="width:auto;padding:8px 10px;font-size:13px;">Close</button>
+            <button class="secondary" onclick="editCurrentRecipe()" style="width:auto;padding:8px 10px;font-size:13px;">Edit</button>
           </div>
           <div id="detailMeta"></div>
           <div id="detailBody"></div>
@@ -468,6 +469,27 @@ async function openRecipeDetail(id) {
 function closeRecipeDetail() {
   document.getElementById('recipeDetail').classList.add('hidden');
   currentRecipeId = null;
+}
+function editCurrentRecipe() {
+  if (!currentRecipeId) return;
+  closeRecipeDetail();
+  openRecipeForm(currentRecipeId);
+}
+async function extractRecipeFromUpload() {
+  const fileInput = document.getElementById('recipeFile');
+  const status = document.getElementById('recipeUploadStatus');
+  const file = fileInput.files[0];
+  if (!file) return;
+  status.textContent = 'Uploading & extracting...';
+  const form = new FormData(); form.append('file', file);
+  try {
+    const res = await fetch(API + '/media/recipe/upload', { method:'POST', headers: authHeadersNoJson(), body: form });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || data.error || 'unknown');
+    status.textContent = 'Done. Saved recipe: ' + (data.title || data.recipe_id);
+    if (data.recipe_id) openRecipeDetail(data.recipe_id);
+    fileInput.value='';
+  } catch (err) { status.textContent = 'Error: ' + err.message; }
 }
 async function renderNotes(recipeId) {
   const res = await fetch(API + '/notes?recipe_id=' + recipeId, { headers: authHeaders() });
