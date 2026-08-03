@@ -3,11 +3,11 @@ uvicorn[standard]==0.30.0
 sqlalchemy==2.0.36
 pydantic==2.10.0
 pydantic-settings==2.7.1
-python-multipart==0.0.18
-python-jose[cryptography]==3.3.0
+python-multipart==0.0.31
+python-jose[cryptography]==3.4.0
 passlib[bcrypt]==1.7.4
-mysql-connector-python==8.4.0
-pillow==10.4.0
-requests==2.32.3
+mysql-connector-python==9.1.0
+pillow==11.3.0
+requests==2.33.0
 setuptools>=83.0.0
 wheel>=0.46.2
