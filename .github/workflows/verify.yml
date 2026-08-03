@@ -111,10 +111,11 @@ jobs:
         working-directory: ./backend
         run: pip-audit -r requirements.txt --fix || true
 
-      - name: CodeQL init
+      - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
           languages: python
+          queries: security-extended
           config: |
             paths:
               - backend
@@ -148,7 +149,7 @@ jobs:
           push: false
           tags: recipe-app-backend:${{ github.sha }}
 
-      - name: Trivy image scan
+      - name: Trivy backend scan
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: recipe-app-backend:${{ github.sha }}
@@ -174,7 +175,7 @@ jobs:
           severity: "CRITICAL,HIGH"
           exit-code: "0"
 
-      - name: Upload Trivy scan results
+      - name: Upload Trivy backend scan results
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: "trivy-backend.sarif"
@@ -221,3 +222,11 @@ jobs:
           grep -q "Extract recipe from video" frontend/src/index.html
           grep -q "Extract recipe from file" frontend/src/index.html
           grep -q "Edit recipe" frontend/src/index.html
+
+  guard:
+    name: Guard
+    runs-on: ubuntu-latest
+    needs: [lint-python, test-python, security-sast-python, security-secrets, yaml-validate, frontend-validate]
+    steps:
+      - name: Confirm dependent checks completed
+        run: echo "All required checks completed."
