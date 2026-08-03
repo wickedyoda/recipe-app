@@ -7,11 +7,18 @@ class Store(str, enum.Enum):
     local = "local"
     cloud = "cloud"
 
+class Role(str, enum.Enum):
+    admin = "admin"
+    user = "user"
+
 class User(Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String(255), unique=True, index=True, nullable=False)
     hashed_password = Column(String(255), nullable=False)
+    role = Column(Enum(Role), default=Role.user, nullable=False)
+    display_name = Column(String(255), nullable=True)
+    avatar_url = Column(String(1024), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 class Cookbook(Base):

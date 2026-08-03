@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Recipe App</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; background: #f5f5f7; color:#111; }
+  .container { max-width: 720px; margin: 0 auto; padding: 24px; }
+  .card { background:#fff; border-radius:16px; padding:16px; margin-bottom:16px; box-shadow:0 1px 2px rgba(0,0,0,0.06); }
+  input, button { width:100%; padding:12px 14px; border-radius:12px; border:1px solid #d1d5db; font-size:16px; margin-top:8px; }
+  button { background:#111; color:#fff; border:none; cursor:pointer; }
+  button.secondary { background:#e5e7eb; color:#111; }
+  .row { display:flex; gap:8px; }
+  .row > * { flex:1; }
+  .hidden { display:none; }
+  .item { display:flex; justify-content:space-between; align-items:center; gap:12px; }
+  .item a { color:#2563eb; text-decoration:none; word-break:break-all; }
+  .top { display:flex; justify-content:space-between; align-items:center; gap:8px; }
+</style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <div class="top">
+        <h1 style="margin:0;font-size:22px;">Recipe App</h1>
+        <div id="authArea" class="hidden">
+          <span id="userEmail" style="font-size:12px;color:#555;"></span>
+          <button class="secondary" onclick="logout()" style="width:auto;padding:8px 10px;font-size:13px;">Logout</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="loginSection" class="card">
+      <h2 style="margin-top:0;">Sign in</h2>
+      <input id="loginEmail" type="email" placeholder="Email" />
+      <input id="loginPassword" type="password" placeholder="Password" />
+      <button onclick="login()">Login</button>
+      <button class="secondary" onclick="showRegister()">Create account</button>
+    </div>
+
+    <div id="registerSection" class="card hidden">
+      <h2 style="margin-top:0;">Create account</h2>
+      <input id="regEmail" type="email" placeholder="Email" />
+      <input id="regPassword" type="password" placeholder="Password" />
+      <input id="regName" type="text" placeholder="Display name" />
+      <button onclick="register()">Register</button>
+      <button class="secondary" onclick="showLogin()">Back to login</button>
+    </div>
+
+    <div id="appSection" class="hidden">
+      <div class="card">
+        <h2 style="margin-top:0;">Import video</h2>
+        <input id="videoUrl" placeholder="TikTok / YouTube / Facebook / Reels URL" />
+        <button onclick="ingest()">Extract audio & subtitles</button>
+        <p id="ingestStatus" style="font-size:13px;color:#555;margin-top:8px;"></p>
+      </div>
+
+      <div class="card">
+        <h2 style="margin-top:0;">Profile</h2>
+        <input id="profileName" placeholder="Display name" />
+        <input id="profileAvatar" placeholder="Avatar URL" />
+        <button onclick="updateProfile()">Save profile</button>
+      </div>
+
+      <div class="card">
+        <h2 style="margin-top:0;">My media</h2>
+        <div id="mediaList"></div>
+      </div>
+    </div>
+  </div>
+
+<script>
+const API = location.origin;
+const token = localStorage.getItem('token');
+
+function authHeaders() {
+  return { 'Content-Type':'application/json', Authorization: 'Bearer ' + token };
+}
+
+if (token) initApp();
+
+async function login() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const res = await fetch(API + '/auth/login', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({email,password}) });
+  if (!res.ok) return alert('Login failed');
+  const data = await res.json();
+  localStorage.setItem('token', data.access_token);
+  token = data.access_token;
+  initApp();
+}
+
+async function register() {
+  const email = document.getElementById('regEmail').value.trim();
+  const password = document.getElementById('regPassword').value;
+  const display_name = document.getElementById('regName').value.trim();
+  const res = await fetch(API + '/auth/register', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({email,password,display_name}) });
+  if (!res.ok) return alert('Register failed');
+  const data = await res.json();
+  localStorage.setItem('token', data.access_token);
+  token = data.access_token;
+  initApp();
+}
+
+function logout() {
+  localStorage.removeItem('token');
+  token = null;
+  location.reload();
+}
+
+function showRegister() {
+  document.getElementById('loginSection').classList.add('hidden');
+  document.getElementById('registerSection').classList.remove('hidden');
+}
+function showLogin() {
+  document.getElementById('registerSection').classList.add('hidden');
+  document.getElementById('loginSection').classList.remove('hidden');
+}
+
+async function initApp() {
+  const me = await fetch(API + '/auth/me', { headers: authHeaders() });
+  if (!me.ok) return logout();
+  const user = await me.json();
+  document.getElementById('loginSection').classList.add('hidden');
+  document.getElementById('registerSection').classList.add('hidden');
+  document.getElementById('appSection').classList.remove('hidden');
+  document.getElementById('authArea').classList.remove('hidden');
+  document.getElementById('userEmail').textContent = user.email;
+  document.getElementById('profileName').value = user.display_name || '';
+  document.getElementById('profileAvatar').value = user.avatar_url || '';
+  loadMedia();
+}
+
+async function updateProfile() {
+  const display_name = document.getElementById('profileName').value.trim();
+  const avatar_url = document.getElementById('profileAvatar').value.trim();
+  const res = await fetch(API + '/auth/me', { method:'PATCH', headers: authHeaders(), body: JSON.stringify({display_name,avatar_url}) });
+  if (!res.ok) return alert('Update failed');
+  alert('Profile saved');
+}
+
+async function ingest() {
+  const url = document.getElementById('videoUrl').value.trim();
+  const status = document.getElementById('ingestStatus');
+  if (!url) return;
+  status.textContent = 'Processing...';
+  const res = await fetch(API + '/media/ingest', { method:'POST', headers: authHeaders(), body: JSON.stringify({url}) });
+  const data = await res.json();
+  if (!res.ok) return status.textContent = 'Error: ' + (data.detail || data.error || 'unknown');
+  status.textContent = 'Done. Saved media items: ' + JSON.stringify(data);
+  loadMedia();
+}
+
+async function loadMedia() {
+  const res = await fetch(API + '/media/items', { headers: authHeaders() });
+  const items = await res.json();
+  const box = document.getElementById('mediaList');
+  box.innerHTML = '';
+  for (const item of items) {
+    const el = document.createElement('div');
+    el.className = 'item';
+    el.innerHTML = '<div><div><strong>' + escapeHtml(item.title) + '</strong></div><div style="font-size:12px;color:#555;">' + escapeHtml(item.source_url || '') + '</div></div>';
+    box.appendChild(el);
+  }
+}
+
+function escapeHtml(text) {
+  return String(text || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+</script>
+</body>
+</html>
