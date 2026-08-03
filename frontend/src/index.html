@@ -111,6 +111,11 @@
           <div class="top">
             <h2 style="margin-top:0;">Recipes</h2>
             <button class="secondary" onclick="openRecipeForm()" style="width:auto;padding:8px 10px;font-size:13px;">New recipe</button>
+            <button class="secondary" onclick="exportRecipes()" style="width:auto;padding:8px 10px;font-size:13px;">Export</button>
+            <label class="secondary" style="width:auto;padding:8px 10px;font-size:13px;display:inline-flex;align-items:center;cursor:pointer;">
+              Import
+              <input type="file" accept="application/json" style="display:none;" onchange="importRecipes(this)" />
+            </label>
           </div>
           <div id="recipeList"></div>
         </div>
@@ -450,11 +455,33 @@ async function renderRecipes() {
   for (const r of filtered) {
     const el = document.createElement('div');
     el.className = 'item';
-    el.innerHTML = '<div><div><strong>' + escapeHtml(r.title) + '</strong></div><div class="meta">' + escapeHtml(r.description||'') + ' • ' + (r.tags||[]).map(t=>'<span class="pill">'+escapeHtml(t)+'</span>').join(' ') + '</div>' + (r.rating ? '<div class="stars">' + '★'.repeat(Math.round(r.rating)) + '</div>' : '') + '</div>';
-    el.style.cursor = 'pointer';
-    el.onclick = () => openRecipeDetail(r.id);
+    const meta = [r.difficulty ? r.difficulty : '', r.category ? r.category : '', r.rating ? '★'.repeat(Math.round(r.rating)) : ''].filter(Boolean).join(' • ');
+    el.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;"><div><div style="font-weight:600;">' + escapeHtml(r.title || 'Untitled') + '</div><div class="meta">' + escapeHtml(meta) + '</div></div><button class="secondary" onclick="openRecipeDetail(' + r.id + ')" style="width:auto;padding:8px 10px;font-size:13px;">Open</button></div>';
     box.appendChild(el);
   }
+}
+async function exportRecipes() {
+  const res = await fetch(API + '/recipes/export', { headers: authHeaders() });
+  if (!res.ok) return alert('Export failed');
+  const blob = await res.blob();
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'recipes.json';
+  a.click();
+  window.URL.revokeObjectURL(url);
+}
+async function importRecipes(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const form = new FormData();
+  form.append('file', file);
+  const res = await fetch(API + '/recipes/import', { method:'POST', headers: authHeaders(), body: form });
+  const data = await res.json();
+  if (!res.ok) return alert('Import failed: ' + (data.detail || 'unknown'));
+  alert('Imported ' + (data.imported || 0) + ' recipes');
+  input.value = '';
+  renderRecipes();
 }
 function openRecipeForm(id) {
   editingRecipeId = id || null;

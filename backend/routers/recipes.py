@@ -1,8 +1,9 @@
+import json
 import os
 import time
 import uuid
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, Response, UploadFile
 from sqlalchemy.orm import Session
 
 from backend.database import get_db
@@ -148,3 +149,79 @@ def upload_recipe_photo(recipe_id: int, file: UploadFile = File(...), db: Sessio
     db.add(RecipePhoto(recipe_id=r.id, owner_id=current_user.id, path=rel))
     db.commit()
     return {"photo": rel}
+
+@router.get("/export")
+def export_recipes(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    recipes = db.query(Recipe).filter(Recipe.owner_id==current_user.id).order_by(Recipe.created_at.desc()).all()
+    tag_map = {}
+    for t in db.query(Tag).filter(Tag.owner_id==current_user.id).all():
+        tag_map[t.id] = t.name
+    photo_map = {}
+    for p in db.query(RecipePhoto).filter(RecipePhoto.owner_id==current_user.id).all():
+        photo_map.setdefault(p.recipe_id, []).append(p.path)
+    payload = []
+    for r in recipes:
+        recipe_tags = [t.name for t in db.query(Tag).join(RecipeTag, RecipeTag.tag_id==Tag.id).filter(RecipeTag.recipe_id==r.id).all()]
+        payload.append({
+            "title": r.title,
+            "description": r.description,
+            "ingredients": r.ingredients,
+            "instructions": r.instructions,
+            "source_url": r.source_url,
+            "store": r.store.value,
+            "cookbook_id": r.cookbook_id,
+            "rating": r.rating,
+            "prep_time_minutes": r.prep_time_minutes,
+            "cook_time_minutes": r.cook_time_minutes,
+            "servings": r.servings,
+            "difficulty": r.difficulty,
+            "category": r.category,
+            "tags": recipe_tags,
+            "photos": photo_map.get(r.id, []),
+        })
+    data = json.dumps(payload, ensure_ascii=False, default=str).encode("utf-8")
+    return Response(content=data, media_type="application/json", headers={"Content-Disposition": "attachment; filename=recipes.json"})
+
+@router.post("/import")
+def import_recipes(file: UploadFile = File(...), db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    content = file.file.read().decode("utf-8")
+    items = json.loads(content)
+    imported = 0
+    for item in items:
+        recipe = Recipe(
+            title=item.get("title") or "Untitled",
+            description=item.get("description"),
+            ingredients=item.get("ingredients"),
+            instructions=item.get("instructions"),
+            source_url=item.get("source_url"),
+            store=Store[item["store"]] if item.get("store") in {"local", "cloud"} else Store.local,
+            owner_id=current_user.id,
+            cookbook_id=item.get("cookbook_id"),
+            rating=item.get("rating"),
+            prep_time_minutes=item.get("prep_time_minutes"),
+            cook_time_minutes=item.get("cook_time_minutes"),
+            servings=item.get("servings"),
+            difficulty=item.get("difficulty"),
+            category=item.get("category"),
+        )
+        db.add(recipe)
+        db.commit()
+        db.refresh(recipe)
+        names = [str(t).strip() for t in (item.get("tags") or []) if str(t).strip()]
+        for name in names:
+            tag = db.query(Tag).filter(Tag.owner_id==current_user.id, Tag.name.ilike(name)).first()
+            if not tag:
+                tag = Tag(owner_id=current_user.id, name=name)
+                db.add(tag)
+                db.commit()
+                db.refresh(tag)
+            db.add(RecipeTag(recipe_id=recipe.id, tag_id=tag.id))
+        for rel in item.get("photos") or []:
+            if not rel:
+                continue
+            path = rel if os.path.isabs(rel) else os.path.join("backend", rel)
+            if os.path.exists(path):
+                db.add(RecipePhoto(recipe_id=recipe.id, owner_id=current_user.id, path=rel))
+        db.commit()
+        imported += 1
+    return {"imported": imported}
