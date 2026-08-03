@@ -21,10 +21,8 @@ services:
       start_period: 30s
 
   backend:
-    build:
-      context: .
-      dockerfile: Dockerfile.backend
-    image: ghcr.io/${GITHUB_REPOSITORY:-wickedyoda/recipe-app}-backend:latest
+    image: ${BACKEND_IMAGE:-}
+    pull_policy: ${BACKEND_PULL_POLICY:-never}
     restart: unless-stopped
     environment:
       DATABASE_URL: ${DATABASE_URL}
@@ -43,10 +41,8 @@ services:
       - backend_media:/app/backend/media
 
   frontend:
-    build:
-      context: .
-      dockerfile: Dockerfile.frontend
-    image: ghcr.io/${GITHUB_REPOSITORY:-wickedyoda/recipe-app}-frontend:latest
+    image: ${FRONTEND_IMAGE:-}
+    pull_policy: ${FRONTEND_PULL_POLICY:-never}
     restart: unless-stopped
     ports:
       - "3000:3000"
