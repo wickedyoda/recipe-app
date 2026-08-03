@@ -46,6 +46,7 @@
       <input id="regPassword" type="password" placeholder="Password" />
       <input id="regName" type="text" placeholder="Display name" />
       <button onclick="register()">Register</button>
+      <p id="registerStatus" style="font-size:13px;color:#555;margin-top:8px;"></p>
       <button class="secondary" onclick="showLogin()">Back to login</button>
     </div>
 
@@ -85,8 +86,8 @@ async function login() {
   const email = document.getElementById('loginEmail').value.trim();
   const password = document.getElementById('loginPassword').value;
   const res = await fetch(API + '/auth/login', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({email,password}) });
-  if (!res.ok) return alert('Login failed');
   const data = await res.json();
+  if (!res.ok) return alert('Login failed: ' + (data.detail || 'unknown'));
   localStorage.setItem('token', data.access_token);
   token = data.access_token;
   initApp();
@@ -96,12 +97,14 @@ async function register() {
   const email = document.getElementById('regEmail').value.trim();
   const password = document.getElementById('regPassword').value;
   const display_name = document.getElementById('regName').value.trim();
+  const status = document.getElementById('registerStatus');
   const res = await fetch(API + '/auth/register', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({email,password,display_name}) });
-  if (!res.ok) return alert('Register failed');
   const data = await res.json();
-  localStorage.setItem('token', data.access_token);
-  token = data.access_token;
-  initApp();
+  if (!res.ok) return status.textContent = 'Error: ' + (data.detail || 'unknown');
+  status.textContent = data.message || 'Registered. Please wait for admin approval.';
+  document.getElementById('regEmail').value = '';
+  document.getElementById('regPassword').value = '';
+  document.getElementById('regName').value = '';
 }
 
 function logout() {
@@ -121,13 +124,17 @@ function showLogin() {
 
 async function initApp() {
   const me = await fetch(API + '/auth/me', { headers: authHeaders() });
-  if (!me.ok) return logout();
+  if (!me.ok) {
+    const data = await me.json().catch(() => ({detail:'not authorized'}));
+    alert('Access: ' + (data.detail || 'not authorized'));
+    return logout();
+  }
   const user = await me.json();
   document.getElementById('loginSection').classList.add('hidden');
   document.getElementById('registerSection').classList.add('hidden');
   document.getElementById('appSection').classList.remove('hidden');
   document.getElementById('authArea').classList.remove('hidden');
-  document.getElementById('userEmail').textContent = user.email;
+  document.getElementById('userEmail').textContent = user.email + ' (' + user.role + ')';
   document.getElementById('profileName').value = user.display_name || '';
   document.getElementById('profileAvatar').value = user.avatar_url || '';
   loadMedia();

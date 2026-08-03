@@ -19,6 +19,10 @@ class User(Base):
     role = Column(Enum(Role), default=Role.user, nullable=False)
     display_name = Column(String(255), nullable=True)
     avatar_url = Column(String(1024), nullable=True)
+    is_active = Column(Integer, default=0, nullable=False)
+    is_approved = Column(Integer, default=0, nullable=False)
+    approved_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    approved_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 class Cookbook(Base):

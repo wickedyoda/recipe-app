@@ -13,6 +13,9 @@ class UserOut(BaseModel):
     role: str
     display_name: Optional[str]
     avatar_url: Optional[str]
+    is_active: bool
+    is_approved: bool
+    approved_at: Optional[datetime]
     created_at: datetime
     class Config:
         from_attributes = True
@@ -20,11 +23,15 @@ class UserOut(BaseModel):
 class UserUpdate(BaseModel):
     display_name: Optional[str] = None
     avatar_url: Optional[str] = None
+    is_active: Optional[bool] = None
+    is_approved: Optional[bool] = None
 
 class TokenOut(BaseModel):
     access_token: str
     token_type: str = "bearer"
     user: UserOut
+    approved: bool = False
+    active: bool = False
 
 class CookbookCreate(BaseModel):
     name: str
