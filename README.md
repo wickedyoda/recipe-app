@@ -28,6 +28,10 @@ The app is mobile-first and uses warm minimalist styling. Key screens:
 
 *(Screenshots and further examples are available in the project wiki.)*
 
+![Home screen](docs/screenshots/home.png)
+![Recipe detail](docs/screenshots/detail.png)
+![Cooking mode](docs/screenshots/cooking-mode.png)
+
 ## Disclosure
 
 This project was developed with AI-assisted tooling. Core implementation, design decisions, and review were performed by the repository owner. AI tools were used for iteration, prototyping, and documentation.
