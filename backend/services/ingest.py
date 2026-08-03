@@ -68,7 +68,7 @@ def _download_media(url: str, workdir: Path) -> dict:
     try:
         with yt_dlp.YoutubeDL(opts) as ydl:  # type: ignore[arg-type]
             ydl.download([sanitized_url])
-    except Exception as exc:
+    except Exception:
         raise RuntimeError("media download failed")
 
     files = list(workdir.iterdir())
