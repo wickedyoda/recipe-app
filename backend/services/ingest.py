@@ -69,7 +69,7 @@ def _download_media(url: str, workdir: Path) -> dict:
         with yt_dlp.YoutubeDL(opts) as ydl:  # type: ignore[arg-type]
             ydl.download([sanitized_url])
     except Exception as exc:
-        return {"ok": False, "error": str(exc)[-1000:]}
+        raise RuntimeError("media download failed")
 
     files = list(workdir.iterdir())
     video = next((p for p in files if p.suffix.lower() in {".mp4", ".mkv", ".webm", ".mov"}), None)
