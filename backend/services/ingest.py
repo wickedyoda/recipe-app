@@ -6,6 +6,8 @@ from datetime import datetime
 from pathlib import Path
 from urllib.parse import urlparse
 
+import yt_dlp
+
 from backend.models import Cookbook, Recipe, Store
 from sqlalchemy.orm import Session
 
@@ -55,16 +57,21 @@ def ensure_local_cookbook(db: Session, user_id: int) -> Cookbook:
 
 def _download_media(url: str, workdir: Path) -> dict:
     sanitized_url = _sanitize_media_url(url)
-    cmd = [
-        "yt-dlp", "--no-warnings", "--no-playlist",
-        "-o", str(workdir / "%(id)s.%(ext)s"),
-        "--write-subs", "--write-auto-sub",
-        "--sub-lang", "en", "--convert-subs", "srt",
-        sanitized_url,
-    ]
-    proc = subprocess.run(cmd, capture_output=True, text=True, check=False)
-    if proc.returncode != 0:
-        return {"ok": False, "error": proc.stderr[-1000:]}
+    opts = {
+        "no_warnings": True,
+        "noplaylist": True,
+        "outtmpl": str(workdir / "%(id)s.%(ext)s"),
+        "writesubtitles": True,
+        "writeautomaticsub": True,
+        "subtitleslangs": ["en"],
+        "convertsubtitles": "srt",
+        "quiet": True,
+    }
+    try:
+        with yt_dlp.YoutubeDL(opts) as ydl:  # type: ignore[arg-type]
+            ydl.download([sanitized_url])
+    except Exception as exc:
+        return {"ok": False, "error": str(exc)[-1000:]}
 
     files = list(workdir.iterdir())
     video = next((p for p in files if p.suffix.lower() in {".mp4", ".mkv", ".webm", ".mov"}), None)
