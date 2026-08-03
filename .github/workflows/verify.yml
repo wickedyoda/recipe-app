@@ -109,7 +109,7 @@ jobs:
 
       - name: Dependency audit
         working-directory: ./backend
-        run: pip-audit --fix || true
+        run: pip-audit
 
       - name: CodeQL init
         uses: github/codeql-action/init@v3
@@ -129,7 +129,7 @@ jobs:
           fetch-depth: 0
 
       - name: TruffleHog Secrets Scan
-        uses: trufflesecurity/trufflehog@main
+        uses: trufflesecurity/trufflehog@v3.88.0
         with:
           path: ./
           base: ${{ github.event.repository.default_branch }}
