@@ -21,6 +21,10 @@ def create_recipe(payload: RecipeCreate, db: Session = Depends(get_db), current_
         owner_id=current_user.id,
         cookbook_id=payload.cookbook_id,
         rating=payload.rating,
+        prep_time_minutes=payload.prep_time_minutes,
+        cook_time_minutes=payload.cook_time_minutes,
+        servings=payload.servings,
+        difficulty=payload.difficulty,
     )
     db.add(recipe)
     db.commit()
@@ -72,6 +76,10 @@ def update_recipe(recipe_id: int, payload: RecipeCreate, db: Session = Depends(g
         r.store = Store[payload.store]
     r.cookbook_id = payload.cookbook_id
     r.rating = payload.rating
+    r.prep_time_minutes = payload.prep_time_minutes
+    r.cook_time_minutes = payload.cook_time_minutes
+    r.servings = payload.servings
+    r.difficulty = payload.difficulty
     db.query(RecipeTag).filter(RecipeTag.recipe_id==r.id).delete()
     if payload.tag_ids:
         for tag_id in payload.tag_ids:
@@ -95,3 +103,19 @@ def delete_recipe(recipe_id: int, db: Session = Depends(get_db), current_user: U
     db.delete(r)
     db.commit()
     return {"deleted": True}
+
+@router.post("/{recipe_id}/cook")
+def start_cooking(recipe_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    r = db.query(Recipe).filter(Recipe.id==recipe_id, Recipe.owner_id==current_user.id).first()
+    if not r:
+        raise HTTPException(status_code=404, detail="Recipe not found")
+    return {
+        "recipe_id": r.id,
+        "title": r.title,
+        "ingredients": r.ingredients,
+        "instructions": r.instructions,
+        "servings": r.servings,
+        "prep_time_minutes": r.prep_time_minutes,
+        "cook_time_minutes": r.cook_time_minutes,
+        "difficulty": r.difficulty,
+    }
