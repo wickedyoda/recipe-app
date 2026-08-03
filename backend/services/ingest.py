@@ -19,6 +19,7 @@ MEDIA_ROOT.mkdir(parents=True, exist_ok=True)
 
 _VALID_SCHEMES = {"http", "https"}
 _MAX_URL_LENGTH = 2048
+_URL_RE = re.compile(r"^https?://[^\s]+$")
 
 
 def _sanitize_media_url(url: str) -> str:
@@ -31,6 +32,8 @@ def _sanitize_media_url(url: str) -> str:
         raise ValueError("unsupported url scheme")
     if not parsed.netloc:
         raise ValueError("url must include a host")
+    if not _URL_RE.match(url):
+        raise ValueError("invalid url format")
     return url.strip()
 
 
