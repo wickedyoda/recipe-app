@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, ForeignKey, DateTime, Enum
+from sqlalchemy import Column, Integer, String, Text, ForeignKey, DateTime, Enum, Float
 from sqlalchemy.sql import func
 import enum
 from backend.database import Base
@@ -34,6 +34,12 @@ class Cookbook(Base):
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
+class Tag(Base):
+    __tablename__ = "tags"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(100), unique=True, nullable=False)
+    owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+
 class Recipe(Base):
     __tablename__ = "recipes"
     id = Column(Integer, primary_key=True, index=True)
@@ -46,5 +52,54 @@ class Recipe(Base):
     store = Column(Enum(Store), default=Store.local, nullable=False)
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     cookbook_id = Column(Integer, ForeignKey("cookbooks.id"), nullable=True)
+    rating = Column(Float, nullable=True)
     embedding = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+class RecipeTag(Base):
+    __tablename__ = "recipe_tags"
+    id = Column(Integer, primary_key=True, index=True)
+    recipe_id = Column(Integer, ForeignKey("recipes.id"), nullable=False)
+    tag_id = Column(Integer, ForeignKey("tags.id"), nullable=False)
+
+class Note(Base):
+    __tablename__ = "notes"
+    id = Column(Integer, primary_key=True, index=True)
+    recipe_id = Column(Integer, ForeignKey("recipes.id"), nullable=False)
+    owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    body = Column(Text, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+class MealPlan(Base):
+    __tablename__ = "meal_plans"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), nullable=False)
+    period = Column(String(50), nullable=False)
+    owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+class MealPlanEntry(Base):
+    __tablename__ = "meal_plan_entries"
+    id = Column(Integer, primary_key=True, index=True)
+    meal_plan_id = Column(Integer, ForeignKey("meal_plans.id"), nullable=False)
+    recipe_id = Column(Integer, ForeignKey("recipes.id"), nullable=False)
+    meal = Column(String(50), nullable=False)
+    date = Column(String(20), nullable=True)
+    owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+
+class GroceryList(Base):
+    __tablename__ = "grocery_lists"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), nullable=False)
+    owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+class GroceryItem(Base):
+    __tablename__ = "grocery_items"
+    id = Column(Integer, primary_key=True, index=True)
+    list_id = Column(Integer, ForeignKey("grocery_lists.id"), nullable=False)
+    recipe_id = Column(Integer, ForeignKey("recipes.id"), nullable=True)
+    name = Column(String(255), nullable=False)
+    quantity = Column(String(100), nullable=True)
+    checked = Column(Integer, default=0, nullable=False)
+    owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)

@@ -1,6 +1,6 @@
 from pydantic import BaseModel, EmailStr
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 
 class UserCreate(BaseModel):
     email: EmailStr
@@ -54,11 +54,14 @@ class RecipeCreate(BaseModel):
     source_path: Optional[str] = None
     store: Optional[str] = "local"
     cookbook_id: Optional[int] = None
+    rating: Optional[float] = None
+    tag_ids: Optional[List[int]] = None
 
 class RecipeOut(RecipeCreate):
     id: int
     owner_id: int
     created_at: datetime
+    tags: List[str] = []
     class Config:
         from_attributes = True
 
@@ -72,5 +75,71 @@ class MediaItem(BaseModel):
     source_path: Optional[str]
     description: Optional[str]
     created_at: datetime
+    class Config:
+        from_attributes = True
+
+class NoteCreate(BaseModel):
+    body: str
+
+class NoteOut(NoteCreate):
+    id: int
+    recipe_id: int
+    owner_id: int
+    created_at: datetime
+    class Config:
+        from_attributes = True
+
+class TagCreate(BaseModel):
+    name: str
+
+class TagOut(TagCreate):
+    id: int
+    owner_id: int
+    class Config:
+        from_attributes = True
+
+class MealPlanCreate(BaseModel):
+    name: str
+    period: str
+
+class MealPlanOut(MealPlanCreate):
+    id: int
+    owner_id: int
+    created_at: datetime
+    class Config:
+        from_attributes = True
+
+class MealPlanEntryCreate(BaseModel):
+    meal_plan_id: int
+    recipe_id: int
+    meal: str
+    date: Optional[str] = None
+
+class MealPlanEntryOut(MealPlanEntryCreate):
+    id: int
+    owner_id: int
+    class Config:
+        from_attributes = True
+
+class GroceryListCreate(BaseModel):
+    name: str
+
+class GroceryListOut(GroceryListCreate):
+    id: int
+    owner_id: int
+    created_at: datetime
+    class Config:
+        from_attributes = True
+
+class GroceryItemCreate(BaseModel):
+    list_id: int
+    recipe_id: Optional[int] = None
+    name: str
+    quantity: Optional[str] = None
+
+class GroceryItemOut(GroceryItemCreate):
+    id: int
+    checked: bool
+    owner_id: int
     class Config:
         from_attributes = True
