@@ -66,7 +66,15 @@
     <div id="loginSection" class="card">
       <h2 style="margin-top:0;">Sign in</h2>
       <input id="loginEmail" type="email" placeholder="Email" />
-      <input id="loginPassword" type="password" placeholder="Password" />
+      <div class="row" style="gap:8px;">
+        <input id="loginPassword" type="password" placeholder="Password" style="flex:1;" />
+        <button class="secondary" id="loginShowPw" onclick="toggleLoginPassword()" style="width:auto;padding:8px 10px;font-size:13px;">Show</button>
+      </div>
+      <div class="row" style="justify-content:space-between;align-items:center;">
+        <label style="font-size:13px;display:inline-flex;align-items:center;gap:6px;cursor:pointer;">
+          <input type="checkbox" id="saveLogin" /> Save login
+        </label>
+      </div>
       <button onclick="login()">Login</button>
       <button class="secondary" onclick="showRegister()">Create account</button>
     </div>
@@ -388,13 +396,33 @@ let cookingRecipe = null;
 
 if (token) initApp();
 
+let savedLogin = JSON.parse(localStorage.getItem('saved_login') || 'null');
+if (savedLogin) {
+  document.getElementById('loginEmail').value = savedLogin.email || '';
+  document.getElementById('loginPassword').value = savedLogin.password || '';
+  document.getElementById('saveLogin').checked = !!savedLogin.email;
+}
+
 async function login() {
   const email = document.getElementById('loginEmail').value.trim();
   const password = document.getElementById('loginPassword').value;
+  const saveLogin = document.getElementById('saveLogin').checked;
+  if (saveLogin) {
+    localStorage.setItem('saved_login', JSON.stringify({email,password}));
+  } else {
+    localStorage.removeItem('saved_login');
+  }
   const res = await fetch(API + '/auth/login', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({email,password}) });
   const data = await res.json();
   if (!res.ok) return alert('Login failed: ' + (data.detail || 'unknown'));
   token = data.access_token; localStorage.setItem('token', token); initApp();
+}
+function toggleLoginPassword() {
+  const input = document.getElementById('loginPassword');
+  const btn = document.getElementById('loginShowPw');
+  const isPassword = input.type === 'password';
+  input.type = isPassword ? 'text' : 'password';
+  btn.textContent = isPassword ? 'Hide' : 'Show';
 }
 async function register() {
   const email = document.getElementById('regEmail').value.trim();
