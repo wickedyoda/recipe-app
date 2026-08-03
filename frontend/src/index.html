@@ -7,6 +7,8 @@
 <style>
   * { box-sizing: border-box; }
   body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; background: #f5f5f7; color:#111; padding-bottom: 64px; }
+  body.dark { background:#0b0c0f; color:#f3f3f3; }
+  .card.dark { background:#141519; color:#f3f3f3; box-shadow:0 1px 2px rgba(255,255,255,0.04); }
   .container { max-width: 720px; margin: 0 auto; padding: 16px; }
   .card { background:#fff; border-radius:16px; padding:16px; margin-bottom:12px; box-shadow:0 1px 2px rgba(0,0,0,0.06); }
   input, select, textarea { width:100%; padding:10px 12px; border-radius:12px; border:1px solid #d1d5db; font-size:16px; margin-top:6px; font-family: inherit; }
@@ -32,6 +34,13 @@
   .checkbox { width:20px; height:20px; accent-color:#111; }
   .empty { color:#888; font-size:13px; padding:10px 0; }
   .pill { display:inline-block; padding:2px 8px; background:#e5e7eb; color:#111; border-radius:999px; font-size:12px; margin:2px; }
+  body.dark .pill { background:#2a2d35; color:#f3f3f3; }
+  body.dark .card { background:#141519; box-shadow:0 1px 2px rgba(255,255,255,0.04); }
+  body.dark input, body.dark select, body.dark textarea { background:#0f1115; color:#f3f3f3; border-color:#2a2d35; }
+  body.dark button { background:#f3f3f3; color:#0b0c0f; }
+  body.dark button.secondary { background:#2a2d35; color:#f3f3f3; }
+  body.dark .search { background:#0f1115; }
+  .dark .card { background:#141519; color:#f3f3f3; }
   .search { padding:12px; position:sticky; top:0; background:#f5f5f7; z-index:5; }
   @media print {
     body { background:#fff; }
@@ -50,6 +59,7 @@
           <span id="userEmail" style="font-size:12px;color:#555;"></span>
           <button class="secondary" onclick="logout()" style="width:auto;padding:6px 10px;font-size:12px;">Logout</button>
         </div>
+        <button class="secondary" id="themeToggle" onclick="toggleTheme()" style="width:auto;padding:6px 10px;font-size:12px;">🌙</button>
       </div>
     </div>
 
@@ -260,8 +270,9 @@
         </div>
         <div id="groceryDetail" class="card hidden">
           <div class="top">
-            <h2 style="margin-top:0;" id="groceryDetailTitle"></h2>
+            <h2 style="margin:0;font-size:18px;" id="groceryDetailTitle"></h2>
             <button class="secondary" onclick="closeGroceryDetail()" style="width:auto;padding:8px 10px;font-size:13px;">Close</button>
+            <button class="secondary" id="groceryShareBtn" onclick="openGroceryShare()" style="width:auto;padding:8px 10px;font-size:13px;">Share</button>
           </div>
           <div class="row">
             <input id="groceryItemName" placeholder="Item" />
@@ -270,6 +281,15 @@
           <button onclick="addGroceryItem()">Add item</button>
           <h3 style="margin-top:12px;font-size:15px;color:#444;">Items</h3>
           <div id="groceryItems"></div>
+          <div id="grocerySharePanel" class="hidden" style="margin-top:12px;padding:12px;background:#f5f5f7;border-radius:12px;">
+            <div class="row" style="gap:8px;flex-wrap:wrap;">
+              <button class="secondary" onclick="copyGroceryLink()" style="width:auto;padding:8px 10px;font-size:13px;">Copy link</button>
+              <button class="secondary" onclick="shareGrocerySms()" style="width:auto;padding:8px 10px;font-size:13px;">SMS</button>
+              <button class="secondary" onclick="shareGroceryEmail()" style="width:auto;padding:8px 10px;font-size:13px;">Email</button>
+              <button class="secondary" onclick="copyGroceryText()" style="width:auto;padding:8px 10px;font-size:13px;">Copy text</button>
+            </div>
+            <p id="groceryShareStatus" style="font-size:12px;color:#555;margin-top:8px;"></p>
+          </div>
         </div>
       </div>
 
@@ -800,12 +820,44 @@ async function openGroceryDetail(id) {
   if (!res.ok) return alert('List not found');
   const data = await res.json();
   document.getElementById('groceryDetailTitle').textContent = data.name;
+  document.getElementById('grocerySharePanel').classList.add('hidden');
+  document.getElementById('groceryShareStatus').textContent = '';
   await loadGroceryItems(id);
   document.getElementById('groceryDetail').classList.remove('hidden');
 }
 function closeGroceryDetail() {
   document.getElementById('groceryDetail').classList.add('hidden');
   currentGroceryId = null;
+}
+let groceryShareData = null;
+async function openGroceryShare() {
+  if (!currentGroceryId) return;
+  const res = await fetch(API + '/grocery-lists/' + currentGroceryId + '/share', { method:'POST', headers: authHeaders() });
+  const data = await res.json();
+  if (!res.ok) return alert('Share failed');
+  groceryShareData = data;
+  document.getElementById('grocerySharePanel').classList.remove('hidden');
+  document.getElementById('groceryShareStatus').textContent = 'Share ready. Use one of the options below.';
+}
+function copyGroceryLink() {
+  if (!groceryShareData) return;
+  const link = location.origin + groceryShareData.link;
+  navigator.clipboard.writeText(link).then(() => setShareStatus('Link copied'));
+}
+function shareGrocerySms() {
+  if (!groceryShareData) return;
+  window.location.href = groceryShareData.sms;
+}
+function shareGroceryEmail() {
+  if (!groceryShareData) return;
+  window.location.href = groceryShareData.mailto;
+}
+function copyGroceryText() {
+  if (!groceryShareData) return;
+  navigator.clipboard.writeText(groceryShareData.text).then(() => setShareStatus('Text copied'));
+}
+function setShareStatus(msg) {
+  document.getElementById('groceryShareStatus').textContent = msg;
 }
 async function loadGroceryItems(listId) {
   const res = await fetch(API + '/grocery-lists/' + listId + '/items', { headers: authHeaders() });
