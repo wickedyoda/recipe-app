@@ -979,7 +979,7 @@ function renderPlannerSlots(dayKey, byDay, recipeMap) {
 function updatePlannerSummary(dayKey, byDay) {
   const dayEntries = (byDay[dayKey] && Object.keys(byDay[dayKey]).length) || 0;
   const total = Object.values(byDay).reduce((sum, dayObj) => sum + Object.keys(dayObj).length, 0);
-  document.getElementById('plannerSummary').textContent = dayEntries + ' meal' + (dayEntries !== 1 ? 's' : '') + ' on ' + dayKey + ' • ' + total + ' planned this week';
+  document.getElementById('plannerSummary').textContent = dayEntries + ' meal' + (dayEntries !== 1 ? 's' : '') + ' on ' + dayKey + ' • ' + total + ' planned total';
 }
 async function addMealEntry(date, meal) {
   const recipes = window._plannerRecipes || [];
