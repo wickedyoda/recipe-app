@@ -26,6 +26,8 @@ def create_recipe(payload: RecipeCreate, db: Session = Depends(get_db), current_
         owner_id=current_user.id,
         cookbook_id=payload.cookbook_id,
         rating=payload.rating,
+        flavor_rating=payload.flavor_rating,
+        effort_rating=payload.effort_rating,
         prep_time_minutes=payload.prep_time_minutes,
         cook_time_minutes=payload.cook_time_minutes,
         servings=payload.servings,
@@ -86,6 +88,8 @@ def update_recipe(recipe_id: int, payload: RecipeCreate, db: Session = Depends(g
         r.store = Store[payload.store]
     r.cookbook_id = payload.cookbook_id
     r.rating = payload.rating
+    r.flavor_rating = payload.flavor_rating
+    r.effort_rating = payload.effort_rating
     r.prep_time_minutes = payload.prep_time_minutes
     r.cook_time_minutes = payload.cook_time_minutes
     r.servings = payload.servings
@@ -193,6 +197,8 @@ def export_recipes(db: Session = Depends(get_db), current_user: User = Depends(g
             "store": r.store.value,
             "cookbook_id": r.cookbook_id,
             "rating": r.rating,
+            "flavor_rating": r.flavor_rating,
+            "effort_rating": r.effort_rating,
             "prep_time_minutes": r.prep_time_minutes,
             "cook_time_minutes": r.cook_time_minutes,
             "servings": r.servings,
@@ -221,6 +227,8 @@ def import_recipes(file: UploadFile = File(...), db: Session = Depends(get_db), 
             owner_id=current_user.id,
             cookbook_id=item.get("cookbook_id"),
             rating=item.get("rating"),
+            flavor_rating=item.get("flavor_rating"),
+            effort_rating=item.get("effort_rating"),
             prep_time_minutes=item.get("prep_time_minutes"),
             cook_time_minutes=item.get("cook_time_minutes"),
             servings=item.get("servings"),

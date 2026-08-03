@@ -1,12 +1,25 @@
 from datetime import datetime
 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, field_validator
 
 
 class UserCreate(BaseModel):
     email: EmailStr
     password: str
     display_name: str | None = None
+
+    @field_validator("password")
+    @classmethod
+    def validate_password(cls, value: str) -> str:
+        if len(value) < 6:
+            raise ValueError("Password must be at least 6 characters")
+        if len(value) > 12:
+            raise ValueError("Password must be no more than 12 characters")
+        if not any(c.isupper() for c in value):
+            raise ValueError("Password must contain at least 1 uppercase letter")
+        if not any(c in "!@#$%^&*()_+-=[]{}|;:,.<>?/" for c in value):
+            raise ValueError("Password must contain at least 1 symbol")
+        return value
 
 class UserOut(BaseModel):
     id: int
@@ -18,14 +31,55 @@ class UserOut(BaseModel):
     is_approved: bool
     approved_at: datetime | None
     created_at: datetime
+    must_change_password: bool = False
     class Config:
         from_attributes = True
 
-class UserUpdate(BaseModel):
+class UpdateProfileRequest(BaseModel):
     display_name: str | None = None
     avatar_url: str | None = None
     is_active: bool | None = None
     is_approved: bool | None = None
+
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str
+
+    @field_validator("new_password")
+    @classmethod
+    def validate_new_password(cls, value: str) -> str:
+        if len(value) < 6:
+            raise ValueError("Password must be at least 6 characters")
+        if len(value) > 12:
+            raise ValueError("Password must be no more than 12 characters")
+        if not any(c.isupper() for c in value):
+            raise ValueError("Password must contain at least 1 uppercase letter")
+        if not any(c in "!@#$%^&*()_+-=[]{}|;:,.<>?/" for c in value):
+            raise ValueError("Password must contain at least 1 symbol")
+        return value
+
+
+class PasswordResetRequest(BaseModel):
+    email: EmailStr
+
+
+class ResetPasswordConfirm(BaseModel):
+    token: str
+    new_password: str
+
+    @field_validator("new_password")
+    @classmethod
+    def validate_new_password(cls, value: str) -> str:
+        if len(value) < 6:
+            raise ValueError("Password must be at least 6 characters")
+        if len(value) > 12:
+            raise ValueError("Password must be no more than 12 characters")
+        if not any(c.isupper() for c in value):
+            raise ValueError("Password must contain at least 1 uppercase letter")
+        if not any(c in "!@#$%^&*()_+-=[]{}|;:,.<>?/" for c in value):
+            raise ValueError("Password must contain at least 1 symbol")
+        return value
 
 class TokenOut(BaseModel):
     access_token: str
@@ -56,6 +110,8 @@ class RecipeCreate(BaseModel):
     store: str | None = "local"
     cookbook_id: int | None = None
     rating: float | None = None
+    flavor_rating: float | None = None
+    effort_rating: float | None = None
     prep_time_minutes: int | None = None
     cook_time_minutes: int | None = None
     servings: int | None = None

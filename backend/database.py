@@ -28,6 +28,8 @@ def ensure_schema():
         "difficulty": "VARCHAR(50)",
         "category": "VARCHAR(100)",
         "subcategory": "VARCHAR(100)",
+        "flavor_rating": "FLOAT",
+        "effort_rating": "FLOAT",
     }
     with engine.begin() as conn:
         for name, dtype in needed.items():

@@ -948,7 +948,11 @@ async function loadGroceryItems(listId) {
   for (const it of items) {
     const el = document.createElement('div');
     el.className = 'item';
-    el.innerHTML = '<div><input type="checkbox" class="checkbox" ' + (it.checked ? 'checked' : '') + ' onchange="toggleGrocery(' + it.id + ', this.checked)" /><div style="margin-left:8px;flex:1;"><div>' + escapeHtml(it.name) + '</div><div class="meta">' + escapeHtml(it.quantity||'') + '</div></div></div><button class="danger" onclick="deleteGroceryItem(' + it.id + ')" style="width:auto;padding:8px 10px;font-size:12px;">Delete</button>';
+    const isRecipe = !!it.recipe_id;
+    const badge = isRecipe ? '<span style="display:inline-block;padding:2px 8px;border-radius:999px;background:#e5e7eb;color:#111;font-size:11px;margin-left:8px;">Recipe</span>' : '';
+    const borderStyle = isRecipe ? 'border-left:4px solid #d97706;padding-left:10px;' : '';
+    const bgStyle = isRecipe ? 'background:#fdf6e3;' : '';
+    el.innerHTML = '<div style="' + borderStyle + bgStyle + 'flex:1;min-width:0;"><input type="checkbox" class="checkbox" ' + (it.checked ? 'checked' : '') + ' onchange="toggleGrocery(' + it.id + ', this.checked)" /><div style="margin-left:8px;flex:1;"><div style="display:flex;align-items:center;gap:4px;">' + escapeHtml(it.name) + badge + '</div><div class="meta">' + escapeHtml(it.quantity||'') + '</div></div></div><button class="danger" onclick="deleteGroceryItem(' + it.id + ')" style="width:auto;padding:8px 10px;font-size:12px;">Delete</button>';
     box.appendChild(el);
   }
 }

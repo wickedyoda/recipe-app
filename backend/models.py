@@ -27,6 +27,8 @@ class User(Base):
     approved_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     approved_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    must_change_password = Column(Integer, default=0, nullable=False)
+    password_changed_at = Column(DateTime(timezone=True), nullable=True)
 
 class Cookbook(Base):
     __tablename__ = "cookbooks"
@@ -56,6 +58,8 @@ class Recipe(Base):
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     cookbook_id = Column(Integer, ForeignKey("cookbooks.id"), nullable=True)
     rating = Column(Float, nullable=True)
+    flavor_rating = Column(Float, nullable=True)
+    effort_rating = Column(Float, nullable=True)
     prep_time_minutes = Column(Integer, nullable=True)
     cook_time_minutes = Column(Integer, nullable=True)
     servings = Column(Integer, nullable=True)
@@ -131,3 +135,13 @@ class GroceryItem(Base):
     quantity = Column(String(100), nullable=True)
     checked = Column(Integer, default=0, nullable=False)
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+
+
+class PasswordResetToken(Base):
+    __tablename__ = "password_reset_tokens"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    token = Column(String(255), unique=True, index=True, nullable=False)
+    expires_at = Column(DateTime(timezone=True), nullable=False)
+    used = Column(Integer, default=0, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
