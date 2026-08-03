@@ -6,10 +6,12 @@ Self-hosted recipe/media app with:
 - Admin approval flow for new accounts
 - Media ingest from TikTok, YouTube, Facebook Reels
 - File upload support
-- Audio/subtitle extraction via `yt-dlp` + `ffmpeg` + `whisper`
+- Audio/subtitle extraction via `yt-dlp` + `ffmpeg`
 - MySQL persistence
 - Mobile-first web UI
-- Docker images published to GitHub Packages
+- Docker Compose deployment
+- Recipe photos, categories, favorites, print view, scaling
+- Grocery list sharing via link, SMS, email, and text copy
 
 ## Quick start
 
@@ -28,16 +30,17 @@ Open:
 - `DATABASE_URL` - default MySQL in compose
 - `SECRET_KEY` - JWT secret
 - `MEDIA_ROOT` - media storage path
+- `PUBLIC_URL` - public base URL for shared links
 
-## GitHub Packages
+## CI / security
 
-Docker images are built and published automatically on push to `master`.
-
-Pull the latest image:
-
-```bash
-docker pull ghcr.io/wickedyoda/recipe-app:latest
-```
+CI runs on pull requests via GitHub Actions:
+- Python Lint
+- Python Tests
+- Python SAST & Dependencies
+- Secrets & Container Scan
+- YAML & Compose Validate
+- Frontend Validate
 
 ## Wiki
 
