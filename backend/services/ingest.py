@@ -7,7 +7,6 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 import yt_dlp
-
 from backend.models import Cookbook, Recipe, Store
 from sqlalchemy.orm import Session
 
