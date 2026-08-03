@@ -1,12 +1,11 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy.orm import Session
-from .database import engine, Base
-from .routers import router as api_router
+from backend.database import engine, Base
+from backend.routers import router as api_router
 
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="Recipe App API")
+app = FastAPI(title="Recipe App API", version="0.1.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -16,6 +15,6 @@ app.add_middleware(
 )
 app.include_router(api_router)
 
-@app.get("/health")
+@app.get("/health", tags=["health"])
 def health():
     return {"status": "ok"}

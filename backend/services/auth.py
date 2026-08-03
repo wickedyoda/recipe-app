@@ -3,10 +3,10 @@ from datetime import datetime, timedelta
 from typing import Optional
 from jose import jwt
 from passlib.context import CryptContext
-from sqlalchemy.orm import Session
-from fastapi import Depends, HTTPException, status
-from .database import SessionLocal
-from .models import User, Role
+from fastapi import Depends, HTTPException, status, Header
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from backend.database import SessionLocal
+from backend.models import User, Role
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 SECRET_KEY = os.getenv("SECRET_KEY", "change-me")
@@ -32,11 +32,9 @@ def get_db():
         db.close()
 
 def get_current_user(authorization: Optional[str] = None):
-    from fastapi import Header
-    from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
     security = HTTPBearer(auto_error=False)
     credentials: HTTPAuthorizationCredentials = Depends(security)
-    auth = authorization
+    auth = authorization or (Header("authorization") or "")
     if not auth and credentials:
         auth = credentials.credentials
     if not auth or not auth.lower().startswith("bearer "):
