@@ -1,5 +1,5 @@
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from backend.database import SessionLocal
 from backend.models import Role, User
@@ -12,17 +12,21 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 SECRET_KEY = os.getenv("SECRET_KEY", "change-me")
 ALGORITHM = "HS256"
 
+
 def hash_password(password: str) -> str:
     return pwd_context.hash(password)
+
 
 def verify_password(plain: str, hashed: str) -> bool:
     return pwd_context.verify(plain, hashed)
 
-def create_access_token(email: str, expires_delta: timedelta | None=None):
+
+def create_access_token(email: str, expires_delta: timedelta | None = None):
     payload = {"sub": email}
-    expire = datetime.utcnow() + (expires_delta or timedelta(minutes=60*24))
-    payload["exp"] = expire.isoformat() + "Z"
+    expire = datetime.now(timezone.utc) + (expires_delta or timedelta(minutes=60 * 24))
+    payload["exp"] = int(expire.timestamp())
     return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+
 
 def get_db():
     db = SessionLocal()
@@ -31,15 +35,22 @@ def get_db():
     finally:
         db.close()
 
-def get_current_user(authorization: str | None = None):
-    security = HTTPBearer(auto_error=False)
-    credentials: HTTPAuthorizationCredentials = Depends(security)
-    auth = authorization or (Header("authorization") or "")
-    if not auth and credentials:
-        auth = credentials.credentials
-    if not auth or not auth.lower().startswith("bearer "):
+
+bearer_scheme = HTTPBearer(auto_error=False)
+
+
+def get_current_user(
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
+    authorization: str | None = Header(default=None),
+):
+    token = None
+    if authorization and authorization.lower().startswith("bearer "):
+        token = authorization.split(" ", 1)[1]
+    elif credentials:
+        token = credentials.credentials
+
+    if not token:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing bearer token")
-    token = auth.split(" ",1)[1]
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         email = payload.get("sub")
@@ -48,7 +59,7 @@ def get_current_user(authorization: str | None = None):
     except Exception:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
     db = SessionLocal()
-    user = db.query(User).filter(User.email==email).first()
+    user = db.query(User).filter(User.email == email).first()
     db.close()
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
@@ -57,6 +68,7 @@ def get_current_user(authorization: str | None = None):
     if not user.is_active:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account is inactive")
     return user
+
 
 def require_role(*allowed: Role):
     def checker(current_user: User = Depends(get_current_user)):

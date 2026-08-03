@@ -1,7 +1,7 @@
 ---
 name: Verify & Security
 
-"on":
+on:
   push:
     branches: ["master", "main"]
   pull_request:
@@ -207,6 +207,8 @@ jobs:
             rules:
               line-length:
                 max: 200
+              truthy: disable
+              document-start: disable
 
   frontend-validate:
     name: Frontend Validate
