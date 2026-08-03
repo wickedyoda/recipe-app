@@ -56,6 +56,10 @@ class RecipeCreate(BaseModel):
     store: str | None = "local"
     cookbook_id: int | None = None
     rating: float | None = None
+    prep_time_minutes: int | None = None
+    cook_time_minutes: int | None = None
+    servings: int | None = None
+    difficulty: str | None = None
     tag_ids: list[int] | None = None
 
 class RecipeOut(RecipeCreate):
