@@ -35,10 +35,13 @@ The app is mobile-first and uses warm minimalist styling. Key screens:
 
 ## Privacy
 
-CookieRue is a **self-hosted** application — all your data stays on your own server.
+CookieRue is a **self-hosted** application — all your data stays on your server.
 
-### Data Collected
-The app stores only what you enter:
+- **No third-party analytics or tracking scripts** — the app collects nothing
+- **GDPR compliance**: Export your data (`GET /auth/me/export`) or delete your account (`POST /auth/me/delete`) anytime
+- **CCPA compliance**: No data is sold or shared; no opt-out required
+- **Cookie policy**: JWT token stored in localStorage only (not a tracking cookie)
+- **Full privacy policy**: See [PRIVACY.md](PRIVACY.md) or [privacy.wickedyoda.com](https://www.wickedyoda.com/privacy-policy-terms-of-use-disclaimer-and-limitation-of-liability/)
 - **Account**: email, display name, hashed password (bcrypt)
 - **Recipes**: titles, ingredients, instructions, categories, ratings
 - **Media**: videos/audio/images downloaded from source URLs, thumbnails

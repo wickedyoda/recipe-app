@@ -1,0 +1,177 @@
+# Privacy Policy — CookieRue Recipe App
+
+**Effective Date:** August 4, 2026  
+**Last Updated:** August 4, 2026
+
+## Overview
+
+CookieRue is a **self-hosted** recipe management application. Unlike the WickedYoda website (https://www.wickedyoda.com), CookieRue does not collect, transmit, or share your personal data with any third party. All data you enter stays exclusively on the server you choose to run the application on.
+
+This policy applies specifically to the CookieRue recipe application and its data handling practices. For the WickedYoda website privacy policy, terms of use, disclaimer, and limitation of liability, please see: [https://www.wickedyoda.com/privacy-policy-terms-of-use-disclaimer-and-limitation-of-liability/](https://www.wickedyoda.com/privacy-policy-terms-of-use-disclaimer-and-limitation-of-liability/)
+
+---
+
+## Data Collection
+
+### Self-Hosted Model
+CookieRue is designed to be hosted by you, on a server you control. We (the WickedYoda organization) do **not** collect any data from users of self-hosted instances. This includes:
+
+- **No analytics**: We do not use Google Analytics, Plausible, or any other tracking service.
+- **No cookies for tracking**: The application uses a single JWT (JSON Web Token) for authentication, stored in `localStorage`. This is not a tracking cookie.
+- **No data sharing**: We do not sell, rent, or share any user data with third parties.
+- **No usage statistics**: The application does not report usage, errors, or metrics to any external service.
+
+### Data You Provide
+The application stores only the data you explicitly enter:
+
+| Data Type | Purpose |
+|-----------|---------|
+| **Email address** | Login and password reset |
+| **Display name** | Optional profile label |
+| **Avatar URL** | Optional profile image |
+| **Password (hashed)** | Authentication (bcrypt-hashed, never stored in plaintext) |
+| **Recipes** | Titles, ingredients, instructions, source URLs, photos, videos |
+| **Media files** | Images, videos, and audio uploaded by you |
+| **Notes** | Text notes attached to recipes |
+| **Grocery lists** | List names, items, quantities, checked state |
+| **Meal plans** | Your planned meals |
+| **Password reset tokens** | Single-use, time-limited (1 hour), stored securely |
+| **Share tokens** | Random unguessable tokens for sharing grocery lists |
+
+### Data Automatically Collected
+When you use a self-hosted CookieRue instance, the following may be logged by your server infrastructure:
+
+- **IP address** — for connection and rate-limiting (handled by nginx, not stored by the app)
+- **Request timestamps** — for server logs (managed by your hosting configuration)
+
+The application itself does not log IP addresses or request details.
+
+---
+
+## Your Rights and Controls
+
+### Under California Consumer Privacy Act (CCPA)
+- **Right to know**: You can see all your data via `GET /auth/me/export`
+- **Right to delete**: You can delete your account via `POST /auth/me/delete`
+- **Right to opt-out of sale**: We do not sell your data — no action required
+- **Right to non-discrimination**: We do not discriminate against users who exercise their privacy rights
+
+### Under GDPR (EU)
+- **Right of access** (Article 15): `GET /auth/me/export`
+- **Right to data portability** (Article 20): JSON export includes all your recipes, grocery lists, meal plans, notes, and profile
+- **Right to erasure** (Article 17): `POST /auth/me/delete` deletes your account and all associated data
+- **Right to rectification** (Article 16): Edit your profile, recipes, and notes at any time
+- **Right to object** (Article 21): No tracking/analytics to object to
+- **Right to restriction of processing** (Article 18): Use delete to stop processing
+
+### Under US Law
+- **FTC Act**: We make no deceptive claims about data collection. What we say here is what we do.
+- **No data is collected by WickedYoda** from self-hosted instances.
+
+---
+
+## How to Export or Delete Your Data
+
+### Export Your Data
+1. Log into CookieRue
+2. Go to **Settings → Profile → Privacy**
+3. Click **"Export my data"**
+4. A file `cookieRue-data.json` will download containing all your recipes, grocery lists, meal plans, notes, and profile information
+
+Or via API:
+```bash
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" https://your-instance.com/auth/me/export
+```
+
+### Delete Your Account
+1. Log into CookieRue
+2. Go to **Settings → Profile → Privacy**
+3. Click **"Delete my account"**
+4. Confirm by typing `DELETE` in the prompt
+
+Or via API:
+```bash
+curl -X POST -H "Authorization: Bearer YOUR_JWT_TOKEN" https://your-instance.com/auth/me/delete
+```
+
+> **Note:** Account deletion is permanent and cannot be undone. All recipes, grocery lists, meal plans, notes, and uploaded media will be permanently deleted.
+
+---
+
+## Cookies and Local Storage
+
+CookieRue uses **localStorage** (not cookies) to store your JWT authentication token. This token:
+- Is generated by your server (not by WickedYoda)
+- Contains only your user ID and email
+- Expires after 24 hours
+- Can be revoked by restarting your server with a new `SECRET_KEY`
+
+No third-party cookies or tracking scripts are used.
+
+---
+
+## Data Retention
+
+As the self-hosted operator, you control data retention:
+- **Recipes, notes, grocery lists**: Retained until you delete them or delete your account
+- **Password reset tokens**: Automatically expire after 1 hour
+- **Share tokens**: Valid until the associated grocery list is deleted
+- **Media files**: Stored on your server; retained until manually deleted
+
+For your WickedYoda website account data retention, see the main [privacy policy](https://www.wickedyoda.com/privacy-policy-terms-of-use-disclaimer-and-limitation-of-liability/).
+
+---
+
+## Third-Party Services
+
+CookieRue does **not** integrate with any third-party services. When you self-host:
+
+- **No analytics services** (Google Analytics, Plausible, etc.)
+- **No CDN or cloud services** for data processing
+- **No external API calls** (except when you import recipes from TikTok, Instagram, etc. — those requests go directly from your server to the source site, and no data is shared with WickedYoda)
+
+For third-party services used on the WickedYoda website, see the main [privacy policy](https://www.wickedyoda.com/privacy-policy-terms-of-use-disclaimer-and-limitation-of-liability/).
+
+---
+
+## Security Measures
+
+When you self-host CookieRue, you are responsible for:
+- Securing your server and Docker containers
+- Configuring HTTPS/TLS certificates
+- Setting a strong `SECRET_KEY` environment variable
+- Regular backups of your data (see Settings → Backup)
+
+CookieRue implements:
+- **bcrypt** password hashing with salt
+- **JWT HS256** authentication (24-hour expiry)
+- **Password history** (last 5 passwords remembered, reuse blocked)
+- **Password policy** (min 6 chars, requires uppercase + symbol)
+- **Rate limiting** on auth endpoints (5 requests/min)
+- **Security headers** (CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy)
+- **SSRF protection** (blocks private/internal IPs on URL ingestion)
+- **XSS protection** (HTML escaping on all user-generated content in exports)
+- **Admin-only controls** for system settings (host management, database backup)
+- **Last-admin protection** (prevents locking yourself out)
+
+---
+
+## Modifications to This Policy
+
+WickedYoda may update this policy. Changes will be posted here with an updated "Last Updated" date. Material changes will be noted in the CookieRue release notes on GitHub.
+
+---
+
+## Contact
+
+For questions about this privacy policy:
+
+- **Website**: [https://www.wickedyoda.com](https://www.wickedyoda.com)
+- **Email**: traveryates@gmail.com
+- **GitHub**: [https://github.com/wickedyoda/recipe-app](https://github.com/wickedyoda/recipe-app)
+
+---
+
+## Relationship to WickedYoda Website Privacy Policy
+
+This CookieRue privacy policy supplements the WickedYoda website privacy policy at [wickedyoda.com/privacy-policy](https://www.wickedyoda.com/privacy-policy-terms-of-use-disclaimer-and-limitation-of-liability/). The website policy governs access to the wickedyoda.com website, documentation, and blog content. This policy governs data handling when you install and operate the CookieRue recipe application on your own server.
