@@ -319,7 +319,7 @@
         <button onclick="switchTab('tabMenu');closeDropdown()" class="dropdown-item">🏠 Menu</button>
         <button onclick="switchTab('tabRecipes');closeDropdown()" class="dropdown-item">📋 Recipes</button>
         <button onclick="switchTab('tabImport');closeDropdown()" class="dropdown-item">📥 Import</button>
-        <button onclick="switchTab('tabMeals');closeDropdown()" class="dropdown-item">🔥 Meal plans</button>
+        <button onclick="switchTab('tabMeals');closeDropdown()" class="dropdown-item">📅 Meal plans</button>
         <button onclick="switchTab('tabGroceries');closeDropdown()" class="dropdown-item">🛒 Grocery lists</button>
         <button onclick="switchTab('tabProfile');closeDropdown()" class="dropdown-item">👤 Profile</button>
         <button onclick="openSettingsCard();toggleDropdown()" class="dropdown-item">⚙️ Settings</button>
@@ -369,7 +369,7 @@
               <span style="font-size:24px;margin-bottom:4px;">🏠</span>Recipes
             </button>
             <button class="secondary" onclick="switchTab('tabMeals')" style="flex-direction:column;align-items:center;padding:16px 12px;font-size:13px;">
-              <span style="font-size:24px;margin-bottom:4px;">🔥</span>Meal plans
+              <span style="font-size:24px;margin-bottom:4px;">📅</span>Meal plans
             </button>
             <button class="secondary" onclick="switchTab('tabGroceries')" style="flex-direction:column;align-items:center;padding:16px 12px;font-size:13px;">
               <span style="font-size:24px;margin-bottom:4px;">🛒</span>Grocery lists
@@ -754,7 +754,7 @@
     <button data-tab="tabMenu" onclick="switchTab('tabMenu');closeDropdown()" aria-label="Menu">🏠</button>
     <button data-tab="tabImport" onclick="switchTab('tabImport');closeDropdown()" aria-label="Import">📥</button>
     <button data-tab="tabRecipes" onclick="switchTab('tabRecipes');closeDropdown()" aria-label="Recipes">🏠</button>
-    <button data-tab="tabMeals" onclick="switchTab('tabMeals')" aria-label="Meal plans">🔥</button>
+    <button data-tab="tabMeals" onclick="switchTab('tabMeals');closeDropdown()" aria-label="Meal plans">📅</button>
     <button data-tab="tabGroceries" onclick="switchTab('tabGroceries')" aria-label="Grocery lists">🛒</button>
     <button id="adminTabBtn" data-tab="tabAdmin" onclick="switchTab('tabAdmin')" class="hidden" aria-label="Admin">👤</button>
     <button data-tab="tabProfile" onclick="switchTab('tabProfile')" style="width:auto;padding:6px 10px;font-size:12px;" aria-label="Profile">👤</button>
