@@ -62,6 +62,9 @@ def consume_password_reset_token(token: str, new_password: str) -> bool:
         user = db.query(User).filter(User.id == entry.user_id).first()
         if not user:
             return False
+        if is_password_reused(new_password, user.id, db):
+            raise HTTPException(status_code=400, detail="New password must not match the last 5 passwords")
+        record_password_history(user.id, user.hashed_password, db)
         user.hashed_password = hash_password(new_password)
         user.must_change_password = 0
         user.password_changed_at = datetime.now(timezone.utc)
@@ -107,11 +110,11 @@ def is_password_reused(new_password: str, user_id: int, db) -> bool:
     return False
 
 
-def record_password_history(user: User, db) -> None:
-    """Record current password hash into history before updating."""
+def record_password_history(user_id: int, hashed_password: str, db) -> None:
+    """Record a password hash into history."""
     entry = PasswordHistory(
-        user_id=user.id,
-        hashed_password=user.hashed_password,
+        user_id=user_id,
+        hashed_password=hashed_password,
     )
     db.add(entry)
     db.commit()
@@ -120,13 +123,16 @@ def record_password_history(user: User, db) -> None:
 def change_password(user: User, current_password: str, new_password: str, db) -> None:
     if not verify_password(current_password, user.hashed_password):
         raise HTTPException(status_code=400, detail="Current password is incorrect")
+    if verify_password(new_password, user.hashed_password):
+        raise HTTPException(status_code=400, detail="New password must be different from current password")
     if is_password_reused(new_password, user.id, db):
         raise HTTPException(
             status_code=400,
             detail=f"New password must not match the last {PASSWORD_HISTORY_LIMIT} passwords",
         )
-    record_password_history(user, db)
-    user.hashed_password = hash_password(new_password)
+    new_hash = hash_password(new_password)
+    record_password_history(user.id, user.hashed_password, db)
+    user.hashed_password = new_hash
     user.must_change_password = 0
     user.password_changed_at = datetime.now(timezone.utc)
     db.add(user)
@@ -135,13 +141,16 @@ def change_password(user: User, current_password: str, new_password: str, db) ->
 
 def change_password_admin(target: User, new_password: str, db) -> None:
     """Admin-forced password change — no current password required."""
+    if verify_password(new_password, target.hashed_password):
+        raise HTTPException(status_code=400, detail="New password must be different from current password")
     if is_password_reused(new_password, target.id, db):
         raise HTTPException(
             status_code=400,
             detail=f"New password must not match the last {PASSWORD_HISTORY_LIMIT} passwords",
         )
-    record_password_history(target, db)
-    target.hashed_password = hash_password(new_password)
+    new_hash = hash_password(new_password)
+    record_password_history(target.id, target.hashed_password, db)
+    target.hashed_password = new_hash
     target.must_change_password = 0
     target.password_changed_at = datetime.now(timezone.utc)
     db.add(target)
