@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.staticfiles import StaticFiles
+from sqlalchemy import func
 
 from backend.config import settings
 from backend.database import Base, SessionLocal, engine, ensure_schema
@@ -15,7 +16,7 @@ def _bootstrap_default_admin() -> None:
     db = SessionLocal()
     try:
         admin_email = settings.DEFAULT_ADMIN_EMAIL.strip().lower()
-        existing = db.query(User).filter(User.email == admin_email).first()
+        existing = db.query(User).filter(func.lower(User.email) == admin_email).first()
         if existing:
             return
         admin = User(
