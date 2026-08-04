@@ -1,11 +1,14 @@
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+
     DATABASE_URL: str = "mysql+mysqlconnector://recipes:recipes@mysql:3306/recipes"
     SECRET_KEY: str = "change-me"
     MEDIA_ROOT: str = "/media"
     PUBLIC_URL: str = ""
+    BACKEND_PORT: int = 8000
 
     ALLOWED_ORIGINS: str = "http://localhost:3000,http://127.0.0.1:3000"
     ALLOWED_HOSTS: str = "localhost,127.0.0.1,*"
