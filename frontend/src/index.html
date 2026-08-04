@@ -1459,6 +1459,7 @@ async function toggleGrocery(id, checked) {
   if (!res.ok) alert('Update failed');
 }
 async function deleteGroceryItem(id) {
+  if (!confirm('Remove this item?')) return;
   const res = await fetch(API + '/grocery-lists/items/' + id, { method:'DELETE', headers: authHeaders() });
   if (!res.ok) return alert('Failed');
   if (currentGroceryId) loadGroceryItems(currentGroceryId);
