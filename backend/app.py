@@ -52,7 +52,7 @@ app.add_middleware(
     TrustedHostMiddleware,
     allowed_hosts=settings.ALLOWED_HOSTS_LIST,
 )
-app.mount("/media", StaticFiles(directory="backend/media"), name="backend-media")
+app.mount("/media/static", StaticFiles(directory="backend/media"), name="backend-media")
 
 
 @app.middleware("http")
