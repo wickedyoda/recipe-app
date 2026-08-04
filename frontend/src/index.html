@@ -540,7 +540,7 @@ async function login() {
     const [mode] = theme.split('.');
     if (mode === 'dark') document.body.classList.add('dark');
   }
-  applySavedTheme();
+  initTheme();
   initApp();
 }
 function toggleLoginPassword() {
@@ -550,7 +550,7 @@ function toggleLoginPassword() {
   input.type = isPassword ? 'text' : 'password';
   btn.textContent = isPassword ? 'Hide' : 'Show';
 }
-applySavedTheme();
+initTheme();
 
 window.onload = function() {
   const saved = JSON.parse(localStorage.getItem('saved_login') || 'null');
@@ -559,7 +559,7 @@ window.onload = function() {
     document.getElementById('loginPassword').value = saved.password || '';
     document.getElementById('saveLogin').checked = true;
   }
-  applySavedTheme();
+  initTheme();
 };
 async function register() {
   const email = document.getElementById('regEmail').value.trim();
@@ -887,7 +887,7 @@ async function openRecipeDetail(id) {
   const res = await fetch(API + '/recipes/' + id, { headers: authHeaders() });
   if (!res.ok) return alert('Recipe not found');
   const r = await res.json();
-  document.getElementById('detailTitle').textContent = r.title || 'Untitled';
+  document.getElementById('detailTitle').innerHTML = (r.category ? categoryIcon(r.category) + ' ' : '') + escapeHtml(r.title || 'Untitled');
   document.getElementById('detailMeta').innerHTML = '<div class="meta">' + escapeHtml(r.description||'') + '</div>' + (r.rating ? '<div class="stars">' + '★'.repeat(Math.round(r.rating)) + '</div>' : '') + (r.flavor_rating ? '<div class="meta">Flavor: ' + '★'.repeat(Math.round(r.flavor_rating)) + '</div>' : '') + (r.effort_rating ? '<div class="meta">Effort: ' + '★'.repeat(Math.round(r.effort_rating)) + '</div>' : '') + '<div class="meta">' + (r.tags||[]).map(t=>'<span class="pill">'+escapeHtml(t)+'</span>').join(' ') + '</div>';
   const scaleVal = parseFloat(document.getElementById('recipeScale')?.value || '1') || 1;
   document.getElementById('detailBody').innerHTML = '<div style="display:flex;flex-direction:column;gap:8px;"><div>' + (r.ingredients||'').split('\n').filter(Boolean).map(line => '<label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" onchange="toggleIngredientCheck(this)" /> <span style="white-space:pre-wrap;">' + scaleIngredientLine(escapeHtml(line), scaleVal) + '</span></label>').join('') + '</div><div style="white-space:pre-wrap;font-size:14px;margin-top:8px;">' + escapeHtml(r.instructions||'') + '</div></div><div id="ingredientActions" class="row" style="margin-top:8px;"><button class="secondary" onclick="addAllIngredientsToGrocery()">Add ingredients to grocery list</button></div>';
@@ -1666,6 +1666,13 @@ function applySavedTheme() {
   document.body.classList.add(theme);
   if (mode === 'dark') document.getElementById('themeToggle').textContent = '☀️';
 }
+function initTheme() {
+  if (!localStorage.getItem('theme')) {
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    localStorage.setItem('theme', (prefersDark ? 'dark' : 'light') + '.warm');
+  }
+  applySavedTheme();
+}
 function openThemePicker() {
   const themes = ['warm','dawn','cozy'];
   const current = getCurrentTheme();
@@ -1679,7 +1686,7 @@ function openThemePicker() {
   document.body.classList.remove('warm','dawn','cozy');
   document.body.classList.add(themes[idx]);
 }
-applySavedTheme();
+initTheme();
 function saveIngredientChecks() {
   if (!currentRecipeId) return;
   const checks = Array.from(document.querySelectorAll('#detailBody input[type="checkbox"]')).map(cb => cb.checked ? 1 : 0);
