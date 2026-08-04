@@ -107,13 +107,32 @@ def list_items(list_id: int, db: Session = Depends(get_db), current_user: User =
         raise HTTPException(status_code=404, detail="Grocery list not found")
     return db.query(GroceryItem).filter(GroceryItem.list_id==list_id).order_by(GroceryItem.id).all()
 
+@router.patch("/{list_id}", response_model=GroceryListOut)
+def update_list(list_id: int, payload: GroceryListCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    gl = db.query(GroceryList).filter(GroceryList.id==list_id, GroceryList.owner_id==current_user.id).first()
+    if not gl:
+        raise HTTPException(status_code=404, detail="Grocery list not found")
+    gl.name = payload.name
+    db.add(gl)
+    db.commit()
+    db.refresh(gl)
+    gl = _ensure_share_token(gl)
+    db.add(gl)
+    db.commit()
+    db.refresh(gl)
+    return GroceryListOut.model_validate(gl)
+
 @router.patch("/items/{item_id}", response_model=GroceryItemOut)
-def update_item(item_id: int, checked: bool | None = None, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def update_item(item_id: int, checked: bool | None = None, name: str | None = None, quantity: str | None = None, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     item = db.query(GroceryItem).filter(GroceryItem.id==item_id, GroceryItem.owner_id==current_user.id).first()
     if not item:
         raise HTTPException(status_code=404, detail="Item not found")
     if checked is not None:
         item.checked = 1 if checked else 0
+    if name is not None:
+        item.name = name
+    if quantity is not None:
+        item.quantity = quantity
     db.add(item)
     db.commit()
     db.refresh(item)

@@ -205,6 +205,7 @@ def delete_user(user_id: int, _: User = Depends(require_role(Role.admin)), db: S
         if admin_count <= 1:
             raise HTTPException(status_code=400, detail="Cannot delete the last admin")
     db.query(PasswordHistory).filter(PasswordHistory.user_id == user_id).delete(synchronize_session=False)
+    db.query(User).filter(User.approved_by == user_id).update({"approved_by": None}, synchronize_session=False)
     db.delete(target)
     db.commit()
     return {"ok": True, "message": "User deleted"}
