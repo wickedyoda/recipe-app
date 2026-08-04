@@ -559,7 +559,7 @@ function closeSettingsCard() {
   document.getElementById('settingsCard').classList.add('hidden');
 }
 async function loadSettings() {
-  const res = await fetch(API + '/settings', { headers: authHeaders() });
+  const res = await fetch(API + '/settings/', { headers: authHeaders() });
   if (!res.ok) { document.getElementById('settingsStatus').textContent = 'Failed to load settings'; return; }
   const s = await res.json();
   let html = '<div class="section"><h3>Allowed hosts</h3>';
