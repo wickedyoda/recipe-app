@@ -977,6 +977,7 @@ async function addAllIngredientsToGrocery() {
 }
 function closeRecipeDetail() {
   document.getElementById('recipeDetail').classList.add('hidden');
+  document.getElementById('recipeScale').value = '1';
   currentRecipeId = null;
 }
 function editCurrentRecipe() {
