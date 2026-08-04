@@ -270,7 +270,7 @@
           </div>
           <div class="card" style="background:#1c1c1e;border-radius:12px;padding:16px;margin-bottom:12px;color:#f5f5f7;">
             <div class="top" style="margin-bottom:8px;">
-              <h3 style="margin:0;color:#f5f5f7;">Instructions</h3>
+              <h3 style="margin:0;color:#f5f5f7;">Instructions</h3><button class="secondary" onclick="document.getElementById('stepPhotoInput').click()" style="width:auto;padding:8px 10px;font-size:13px;">📷</button>
               <button class="secondary" onclick="startStepTimer()" style="width:auto;padding:8px 10px;font-size:12px;">Start timer</button>
               <button class="secondary" onclick="startNamedTimer()" style="width:auto;padding:8px 10px;font-size:12px;">Named timer</button>
             </div>
@@ -680,6 +680,12 @@ async function loadTags() {
   tags = await res.json();
 }
 
+const categoryIcons = {
+  Breakfast:'🳑', Entrees:'🍽️', Snacks:'🍏', Appetizers:'🥟', Desserts:'🍰',
+  Soups:'🍲', Salads:'🥗', Bread:'🍞', Pasta:'🍝', Drinks:'☕',
+};
+function categoryIcon(cat) { return (cat && categoryIcons[cat]) || '📝'; }
+
 async function renderRecipes() {
   const q = (document.getElementById('recipeSearch')?.value || '').trim().toLowerCase();
   const res = await fetch(API + '/recipes', { headers: authHeaders() });
@@ -718,8 +724,8 @@ async function renderRecipes() {
     const flavorStars = r.flavor_rating ? ' Flavor:' + '★'.repeat(Math.round(r.flavor_rating)) : '';
     const effortStars = r.effort_rating ? ' Effort:' + '★'.repeat(Math.round(r.effort_rating)) : '';
     const timeMeta = [r.prep_time_minutes ? 'Prep ' + r.prep_time_minutes + ' min' : '', r.cook_time_minutes ? 'Cook ' + r.cook_time_minutes + ' min' : '', r.servings ? 'Serves ' + r.servings : ''].filter(Boolean).join(' • ');
-    const meta = [r.difficulty ? r.difficulty : '', r.category ? r.category : '', timeMeta, stars + flavorStars + effortStars].filter(Boolean).join(' • ');
-    el.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;"><div><div style="font-weight:600;">' + escapeHtml(r.title || 'Untitled') + '</div><div class="meta">' + escapeHtml(meta) + '</div></div><div style="display:flex;align-items:center;gap:8px;"><button class="secondary" onclick="toggleFavorite(' + r.id + ')" style="width:auto;padding:8px 10px;font-size:13px;">' + heart + '</button><button class="secondary" onclick="openRecipeDetail(' + r.id + ')" style="width:auto;padding:8px 10px;font-size:13px;">Open</button></div></div>';
+    const meta = [r.difficulty ? r.difficulty : '', r.category ? categoryIcon(r.category) + ' ' + r.category : '', timeMeta, stars + flavorStars + effortStars].filter(Boolean).join(' • ');
+    el.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;"><div><div style="font-weight:600;display:flex;align-items:center;gap:6px;">' + categoryIcon(r.category) + ' ' + escapeHtml(r.title || 'Untitled') + '</div><div class="meta">' + escapeHtml(meta) + '</div></div><div style="display:flex;align-items:center;gap:8px;"><button class="secondary" onclick="toggleFavorite(' + r.id + ')" style="width:auto;padding:8px 10px;font-size:13px;">' + heart + '</button><button class="secondary" onclick="openRecipeDetail(' + r.id + ')" style="width:auto;padding:8px 10px;font-size:13px;">Open</button></div></div>';
     box.appendChild(el);
   }
 }
@@ -1576,6 +1582,7 @@ async function startCooking() {
     return '<div style="margin-bottom:12px;"><label style="display:flex;align-items:center;gap:8px;margin:6px 0;font-size:15px;"><input type="checkbox" onchange="completeStep(this)" /> <span>' + escapeHtml(s) + '</span></label>' + (photos ? '<div class="row" style="margin-top:6px;">' + photos + '</div>' : '') + '</div>';
   }).join('');
   renderCookingNotes(data.id);
+  restoreCookingStepProgress();
   document.getElementById('recipeDetail').classList.add('hidden');
   document.getElementById('cookingMode').classList.remove('hidden');
 }
@@ -1613,6 +1620,22 @@ function completeStep(cb) {
   if (!label) return;
   if (cb.checked) label.style.opacity = '0.6';
   else label.style.opacity = '1';
+  saveCookingStepProgress();
+}
+function restoreCookingStepProgress() {
+  if (!currentRecipeId) return;
+  const checks = JSON.parse(localStorage.getItem('cooking_steps_' + currentRecipeId) || '[]');
+  setTimeout(() => {
+    document.querySelectorAll('#cookingSteps input[type="checkbox"]').forEach((cb, idx) => {
+      if (checks[idx]) { cb.checked = true; cb.closest('label').style.opacity = '0.6'; }
+    });
+  }, 0);
+}
+function saveCookingStepProgress() {
+  if (!currentRecipeId) return;
+  const checks = [];
+  document.querySelectorAll('#cookingSteps input[type="checkbox"]').forEach(cb => checks.push(cb.checked));
+  localStorage.setItem('cooking_steps_' + currentRecipeId, JSON.stringify(checks));
 }
 function toggleIngredientCheck(cb) {
   const box = cb.closest('label');
