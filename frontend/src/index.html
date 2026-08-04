@@ -440,7 +440,6 @@
               <button class="secondary" onclick="setTheme('dark','cozy')" style="width:auto;padding:8px 10px;font-size:13px;">Dark Cozy</button>
             </div>
           </div>
-          </div>
           <div class="section">
           <h3>Security</h3>
           <div class="row" style="gap:8px;">
@@ -974,12 +973,12 @@ async function openRecipeDetail(id) {
   if (favBtn) favBtn.textContent = favs.has(String(id)) ? '❤' : '🤍';
   renderNotes(id);
   const photoBox = document.getElementById('detailPhotos');
-  photoBox.innerHTML = (r.photos || []).map(p => '<div class="recipe-detail-gallery" onclick="openGalleryModal(this)"><img src="/media/static/' + p + '" /></div>').join('');
+  photoBox.innerHTML = (r.photos || []).map(p => '<div class="recipe-detail-gallery" onclick="openGalleryModal(this)"><img src="/media/' + p + '" /></div>').join('');
   const stepBox = document.getElementById('stepPhotos');
   const stepPhotos = (r.step_photos || []);
   const steps = (r.instructions || '').split('\n').filter(Boolean);
   stepBox.innerHTML = steps.map((_, i) => {
-    const photos = stepPhotos.filter(sp => sp.step_index === i).map(sp => '<img src="/media/static/' + sp.path + '" style="max-height:80px;border-radius:8px;margin-right:8px;" />').join('');
+    const photos = stepPhotos.filter(sp => sp.step_index === i).map(sp => '<img src="/media/' + sp.path + '" style="max-height:80px;border-radius:8px;margin-right:8px;" />').join('');
     return photos ? '<div style="margin-top:8px;font-size:12px;color:#555;">Step ' + (i + 1) + ' photos</div><div class="carousel-container">' + photos + '</div>' : '';
   }).join('');
 }
@@ -1654,7 +1653,6 @@ async function saveUser() {
   const pw = document.getElementById('userPassword').value;
   if (pw) payload.password = pw;
   if (!payload.email) return alert('Email is required');
-  if (!editingUserId && !pw) return alert('Password is required for new users');
 
   let url = API + '/auth/users';
   let method = 'POST';
@@ -1665,18 +1663,9 @@ async function saveUser() {
 
   const res = await fetch(url, { method, headers: authHeaders(), body: JSON.stringify(payload) });
   const data = await res.json();
-  if (!res.ok) {
-    let msg = 'Unknown error';
-    if (Array.isArray(data.detail)) {
-      msg = data.detail.map(d => d.msg || JSON.stringify(d)).join(', ');
-    } else {
-      msg = data.detail || 'unknown';
-    }
-    return alert('Failed: ' + msg);
-  }
+  if (!res.ok) return alert('Failed: ' + (data.detail || 'unknown'));
   closeUserForm();
   loadUsers();
-  loadPending();
 }
 async function deleteUser(id) {
   if (!confirm('Delete this user?')) return;
@@ -1761,7 +1750,7 @@ async function startCooking() {
   const stepPhotos = (data.step_photos || []);
   const stepsBox = document.getElementById('cookingSteps');
   stepsBox.innerHTML = steps.map((s, i) => {
-    const photos = stepPhotos.filter(sp => sp.step_index === i).map(sp => '<img src="/media/static/' + sp.path + '" style="max-height:80px;border-radius:8px;margin-right:8px;margin-bottom:6px;" />').join('');
+    const photos = stepPhotos.filter(sp => sp.step_index === i).map(sp => '<img src="/media/' + sp.path + '" style="max-height:80px;border-radius:8px;margin-right:8px;margin-bottom:6px;" />').join('');
     return '<div style="margin-bottom:12px;"><label style="display:flex;align-items:center;gap:8px;margin:6px 0;font-size:15px;"><input type="checkbox" class="step-checkbox" onchange="completeStep(this)" /> <span>' + escapeHtml(s) + '</span></label>' + (photos ? '<div class="row" style="margin-top:6px;">' + photos + '</div>' : '') + '</div>';
   }).join('');
   renderCookingNotes(data.id);
