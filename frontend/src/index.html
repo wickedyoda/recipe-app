@@ -262,9 +262,12 @@
             <div class="top" style="margin-bottom:8px;">
               <h3 style="margin:0;color:#f5f5f7;">Instructions</h3>
               <button class="secondary" onclick="startStepTimer()" style="width:auto;padding:8px 10px;font-size:12px;">Start timer</button>
+              <button class="secondary" onclick="startNamedTimer()" style="width:auto;padding:8px 10px;font-size:12px;">Named timer</button>
             </div>
             <div id="cookingInstructions" style="white-space:pre-wrap;font-size:16px;color:#f5f5f7;"></div>
             <div id="cookingSteps" style="margin-top:12px;"></div>
+            <div id="cookingNotes" style="margin-top:12px;"></div>
+            <button class="secondary" onclick="addCookingNote()" style="width:auto;padding:8px 10px;font-size:13px;">Add note</button>
             <div id="cookingTimer" class="meta" style="margin-top:8px;"></div>
           </div>
         </div>
@@ -1460,7 +1463,40 @@ function startStepTimer() {
     const m = Math.floor(remaining / 60);
     const s = remaining % 60;
     box.textContent = 'Timer: ' + m + ':' + (s < 10 ? '0' : '') + s;
+    }, 1000);
+}
+const cookingTimers = [];
+function addCookingTimer(label, minutes) {
+  const total = parseInt(minutes, 10) * 60;
+  if (!total || total <= 0) return;
+  const id = 'timer_' + Date.now();
+  const box = document.getElementById('cookingTimer');
+  const el = document.createElement('div');
+  el.id = id;
+  el.className = 'meta';
+  el.textContent = label + ': ' + minutes + ':00';
+  box.appendChild(el);
+  let remaining = total;
+  const interval = setInterval(() => {
+    remaining--;
+    if (remaining <= 0) {
+      clearInterval(interval);
+      el.textContent = label + ': Done!';
+      el.style.color = '#f59e0b';
+      try { new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=').play(); } catch (e) { /* ignore */ }
+    } else {
+      const m = Math.floor(remaining / 60);
+      const s = remaining % 60;
+      el.textContent = label + ': ' + m + ':' + (s < 10 ? '0' : '') + s;
+    }
   }, 1000);
+  cookingTimers.push({ id, label, interval });
+}
+function startNamedTimer() {
+  const label = prompt('Timer label:') || 'Timer';
+  const mins = prompt('Timer minutes:');
+  if (!mins || isNaN(mins)) return;
+  addCookingTimer(label, mins);
 }
 async function startCooking() {
   if (!currentRecipeId) return;
@@ -1478,13 +1514,42 @@ async function startCooking() {
   }).join('\n');
   document.getElementById('cookingInstructions').textContent = data.instructions || '';
   const steps = (data.instructions || '').split('\n').filter(Boolean).map(s => s.trim());
+  const stepPhotos = (data.step_photos || []);
   const stepsBox = document.getElementById('cookingSteps');
-  stepsBox.innerHTML = steps.map((s, i) => '<label style="display:flex;align-items:center;gap:8px;margin:6px 0;font-size:15px;"><input type="checkbox" onchange="completeStep(this)" /> <span>' + escapeHtml(s) + '</span></label>').join('');
+  stepsBox.innerHTML = steps.map((s, i) => {
+    const photos = stepPhotos.filter(sp => sp.step_index === i).map(sp => '<img src="/media/' + sp.path + '" style="max-height:80px;border-radius:8px;margin-right:8px;margin-bottom:6px;" />').join('');
+    return '<div style="margin-bottom:12px;"><label style="display:flex;align-items:center;gap:8px;margin:6px 0;font-size:15px;"><input type="checkbox" onchange="completeStep(this)" /> <span>' + escapeHtml(s) + '</span></label>' + (photos ? '<div class="row" style="margin-top:6px;">' + photos + '</div>' : '') + '</div>';
+  }).join('');
+  renderCookingNotes(data.id);
   document.getElementById('recipeDetail').classList.add('hidden');
   document.getElementById('cookingMode').classList.remove('hidden');
 }
+function renderCookingNotes(recipeId) {
+  const notes = JSON.parse(localStorage.getItem('recipe_notes_' + recipeId) || '[]');
+  const box = document.getElementById('cookingNotes');
+  if (!notes.length) {
+    box.innerHTML = '<div class="meta" style="margin-bottom:8px;">No cooking notes yet.</div>';
+    return;
+  }
+  box.innerHTML = '<div style="font-size:13px;">' + notes.map(n => '<div style="margin-bottom:4px;">• ' + escapeHtml(n.body) + '</div>').join('') + '</div>';
+}
+function addCookingNote() {
+  const body = prompt('Cooking note:');
+  if (!body || !currentRecipeId) return;
+  const existing = JSON.parse(localStorage.getItem('recipe_notes_' + currentRecipeId) || '[]');
+  // if backend notes exist, just render them; cooking notes are local-only
+  const localNote = { id: Date.now(), body, recipe_id: currentRecipeId, created_at: new Date().toISOString() };
+  existing.push(localNote);
+  localStorage.setItem('recipe_notes_' + currentRecipeId, JSON.stringify(existing));
+  renderCookingNotes(currentRecipeId);
+  // also refresh backend notes if possible
+  renderNotes(currentRecipeId);
+}
 function exitCooking() {
   clearInterval(timerInterval);
+  cookingTimers.forEach(t => clearInterval(t.interval));
+  cookingTimers.length = 0;
+  document.getElementById('cookingTimer').innerHTML = '';
   document.getElementById('cookingMode').classList.add('hidden');
   document.getElementById('recipeDetail').classList.remove('hidden');
 }
