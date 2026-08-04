@@ -62,18 +62,19 @@ def add_allowed_host(
     payload: HostUpdate,
     _: User = Depends(require_role(Role.admin)),
 ):
+    host = payload.host.strip()
+    if not host or any(c in host for c in [",", "\n", "\r", "="]):
+        raise HTTPException(status_code=400, detail="Invalid host")
     hosts = settings.ALLOWED_HOSTS_LIST
-    if payload.host in hosts:
+    if host in hosts:
         return {"status": "ok", "allowed_hosts": hosts, "message": "Host already in list"}
-    hosts.append(payload.host)
+    hosts.append(host)
     new_str = ",".join(hosts)
-    # Update the settings object (for runtime use)
-    settings.__dict__["_settings__fields_set"] = True
     # Write to .env file
     _update_env("ALLOWED_HOSTS", new_str)
     # Update runtime setting
     object.__setattr__(settings, "ALLOWED_HOSTS", new_str)
-    return {"status": "ok", "allowed_hosts": settings.ALLOWED_HOSTS_LIST, "message": f"Added {payload.host}"}
+    return {"status": "ok", "allowed_hosts": settings.ALLOWED_HOSTS_LIST, "message": f"Added {host}"}
 
 
 @router.delete("/allowed-hosts/{host}", response_model=dict)
