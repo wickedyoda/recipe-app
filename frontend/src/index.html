@@ -814,7 +814,30 @@ async function changeEmail() {
   document.getElementById('changeEmailNew').value = '';
   alert('Email changed successfully. You may need to log in again.');
 }
-
+async function exportUserData() {
+  if (!confirm('Export all your data as JSON?')) return;
+  const res = await fetch(API + '/auth/me/export', { headers: authHeaders() });
+  const data = await res.json();
+  if (!res.ok) return alert('Failed: ' + (data.detail || 'unknown'));
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'cookieRue-data.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  alert('Data exported to cookieRue-data.json');
+}
+async function deleteAccount() {
+  const confirmText = prompt('Type DELETE to confirm permanent deletion:');
+  if (confirmText !== 'DELETE') return alert('Confirmation did not match. Account not deleted.');
+  const res = await fetch(API + '/auth/me/delete', { method: 'DELETE', headers: authHeaders() });
+  const data = await res.json();
+  if (!res.ok) return alert('Failed: ' + (data.detail || 'unknown'));
+  alert('Account and all data deleted. You will be logged out.');
+  localStorage.removeItem('token');
+  location.reload();
+}
 let cookingRecipe = null;
 
 if (token) initApp();

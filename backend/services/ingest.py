@@ -4,6 +4,7 @@ import shutil
 import subprocess
 import uuid
 from datetime import datetime
+from ipaddress import ip_address, ip_network
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -22,6 +23,35 @@ _VALID_SCHEMES = {"http", "https"}
 _MAX_URL_LENGTH = 2048
 _URL_RE = re.compile(r"^https?://[^\s]+$")
 
+# SSRF protection — block private/internal/reserved addresses
+_PRIVATE_NETWORKS = [
+    ip_network("10.0.0.0/8"),
+    ip_network("172.16.0.0/12"),
+    ip_network("192.168.0.0/16"),
+    ip_network("127.0.0.0/8"),
+    ip_network("169.254.0.0/16"),
+    ip_network("0.0.0.0/8"),
+    ip_network("224.0.0.0/4"),
+    ip_network("240.0.0.0/4"),
+]
+_BLOCKED_HOSTS = {"localhost", "metadata.google.internal", "metadata"}
+
+
+def _is_private_host(hostname: str) -> bool:
+    """Check if a hostname resolves to or is a private/internal address (SSRF protection)."""
+    hostname = hostname.lower().strip()
+    if hostname in _BLOCKED_HOSTS:
+        return True
+    # Check if it's an IP address
+    try:
+        ip = ip_address(hostname)
+        for net in _PRIVATE_NETWORKS:
+            if ip in net:
+                return True
+    except ValueError:
+        pass  # Not an IP, it's a domain name — let yt-dlp handle it
+    return False
+
 
 def _sanitize_media_url(url: str) -> str:
     if not isinstance(url, str) or not url.strip():
@@ -35,6 +65,10 @@ def _sanitize_media_url(url: str) -> str:
         raise ValueError("url must include a host")
     if not _URL_RE.match(url):
         raise ValueError("invalid url format")
+    # SSRF protection — block internal/private hosts
+    hostname = parsed.hostname or ""
+    if _is_private_host(hostname):
+        raise ValueError("url resolves to a private or internal host")
     return url.strip()
 
 
