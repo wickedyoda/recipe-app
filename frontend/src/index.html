@@ -641,13 +641,6 @@
             <input id="changeEmailNew" type="email" placeholder="New email" style="font-size:13px;flex:1;" />
             <button class="secondary" onclick="changeEmail()" style="width:100%;padding:10px;font-size:14px;margin-top:6px;">Change email</button>
           </div>
-          <div class="section">
-            <h3>Account</h3>
-            <button class="secondary" onclick="exportUserData()" style="width:auto;padding:8px 10px;font-size:13px;">Export my data</button>
-            <div style="margin-top:6px;">
-              <button class="danger" onclick="deleteAccount()" style="width:auto;padding:8px 10px;font-size:13px;">Delete my account</button>
-            </div>
-          </div>
         </div>
         <button onclick="saveSettings()">Save settings</button>
       </div>
@@ -836,7 +829,6 @@ async function exportUserData() {
   alert('Data exported to cookieRue-data.json');
 }
 async function deleteAccount() {
-  if (!confirm('This will permanently delete your account and ALL your data. This cannot be undone. Type DELETE to confirm:')) return;
   const confirmText = prompt('Type DELETE to confirm permanent deletion:');
   if (confirmText !== 'DELETE') return alert('Confirmation did not match. Account not deleted.');
   const res = await fetch(API + '/auth/me/delete', { method: 'DELETE', headers: authHeaders() });
@@ -846,7 +838,6 @@ async function deleteAccount() {
   localStorage.removeItem('token');
   location.reload();
 }
-
 let cookingRecipe = null;
 
 if (token) initApp();
