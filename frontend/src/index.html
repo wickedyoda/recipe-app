@@ -734,7 +734,7 @@ async function renderRecipes() {
   const activeCategory = filterBox.dataset.active || '';
   const activeMeal = (filterBox.dataset.meal || '').trim();
   const activeSub = (filterBox.dataset.sub || '').trim();
-  filterBox.innerHTML = '<span class="pill" style="cursor:pointer;" onclick="setCategoryFilter(\'\')">All</span>' + categories.map(c => '<span class="pill" style="cursor:pointer;" onclick="setCategoryFilter(\'' + escapeHtml(c) + '\')">' + escapeHtml(c) + '</span>').join('');
+  filterBox.innerHTML = '<span class="pill" style="cursor:pointer;" onclick="setCategoryFilter(\'\')">All</span>' + categories.map(c => '<span class="pill" style="cursor:pointer;" onclick="setCategoryFilter(\'' + escapeHtml(c) + '\')">' + escapeHtml(categoryIcon(c)) + ' ' + escapeHtml(c) + '</span>').join('');
   const box = document.getElementById('recipeList');
   box.innerHTML = '';
   const filtered = items.filter(r => {
