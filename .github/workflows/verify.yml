@@ -226,6 +226,11 @@ jobs:
           grep -q "Extract recipe from file" frontend/src/index.html
           grep -q "Edit recipe" frontend/src/index.html
 
+      - name: Validate frontend JavaScript
+        run: |
+          sed -n '/<script>/,/<\/script>/p' frontend/src/index.html | sed '1d;$d' > /tmp/recipe-app.js
+          node --check /tmp/recipe-app.js
+
   guard:
     name: Guard
     runs-on: ubuntu-latest
