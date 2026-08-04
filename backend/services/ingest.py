@@ -1,6 +1,5 @@
 import os
 import re
-import shutil
 import subprocess
 import uuid
 from datetime import datetime
@@ -85,19 +84,14 @@ def _download_media(url: str, workdir: Path) -> dict:
         ])
 
     if not subs and audio is not None:
-        whisper_available = shutil.which("whisper")
-        if whisper_available:
-            try:
-                _run([
-                    whisper_available, str(audio),
-                    "--model", os.getenv("WHISPER_MODEL", "tiny"),
-                    "--language", "en",
-                    "--output_format", "srt",
-                    "--output_dir", str(workdir)
-                ])
-                subs = sorted([p for p in workdir.iterdir() if p.suffix.lower() == ".srt"])
-            except Exception:
-                pass  # whisper failed, continue without subtitles
+        _run([
+            "whisper", str(audio),
+            "--model", os.getenv("WHISPER_MODEL", "tiny"),
+            "--language", "en",
+            "--output_format", "srt",
+            "--output_dir", str(workdir)
+        ])
+        subs = sorted([p for p in workdir.iterdir() if p.suffix.lower() == ".srt"])
 
     subtitle_path = subs[0] if subs else None
     return {"video": video, "audio": audio, "subtitle": subtitle_path, "workdir": workdir}
@@ -171,20 +165,13 @@ def _extract_from_transcript(transcript_path: Path | None, fallback_audio: Path 
     if fallback_audio is None or not fallback_audio.exists():
         return {"title": None, "ingredients": None, "instructions": None}
 
-    whisper_available = shutil.which("whisper")
-    if not whisper_available:
-        return {"title": None, "ingredients": None, "instructions": None}
-
-    try:
-        _run([
-            whisper_available, str(fallback_audio),
-            "--model", os.getenv("WHISPER_MODEL", "tiny"),
-            "--language", "en",
-            "--output_format", "srt",
-            "--output_dir", str(workdir)
-        ])
-    except Exception:
-        return {"title": None, "ingredients": None, "instructions": None}
+    _run([
+        "whisper", str(fallback_audio),
+        "--model", os.getenv("WHISPER_MODEL", "tiny"),
+        "--language", "en",
+        "--output_format", "srt",
+        "--output_dir", str(workdir)
+    ])
 
     subs = sorted([p for p in workdir.iterdir() if p.suffix.lower() == ".srt"])
     if not subs:
