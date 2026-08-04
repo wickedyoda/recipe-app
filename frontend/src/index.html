@@ -888,7 +888,7 @@ async function loadRecentRecipes() {
     const img = (r.images && r.images[0]) ? r.images[0] : (r.thumbnail_url || '');
     const rating = r.rating ? '★'.repeat(Math.round(r.rating)) : '';
     const imgHtml = img ? '<img src="/media/static/' + escapeHtml(img) + '" style="width:32px;height:32px;border-radius:4px;object-fit:cover;flex-shrink:0;" />' : '<span style="width:32px;height:32px;border-radius:4px;background:#eee;display:inline-block;flex-shrink:0;"></span>';
-    return '<div style="display:flex;align-items:center;gap:8px;padding:4px 0;cursor:pointer;" onclick="switchTab(\'tabRecipes\');setTimeout(()=>openRecipeDetail(' + r.id + ')',100);">' +
+    return '<div style="display:flex;align-items:center;gap:8px;padding:4px 0;cursor:pointer;" onclick="switchTab(\'tabRecipes\');setTimeout(()=>openRecipeDetail(\' + r.id + \',100);">' +
       imgHtml +
       '<div style="flex:1;min-width:0;">' +
       '<div style="font-size:13px;font-weight:500;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escapeHtml(r.title) + '</div>' +
