@@ -62,3 +62,5 @@ def _migrate_mysql(conn):
         conn.execute(text("CREATE TABLE password_history (id INTEGER PRIMARY KEY AUTO_INCREMENT, user_id INTEGER NOT NULL, hashed_password VARCHAR(255) NOT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (user_id) REFERENCES users(id))"))
     if "password_reset_tokens" not in insp.get_table_names():
         conn.execute(text("CREATE TABLE password_reset_tokens (id INTEGER PRIMARY KEY AUTO_INCREMENT, user_id INTEGER NOT NULL, token VARCHAR(255) NOT NULL UNIQUE, expires_at DATETIME NOT NULL, used TINYINT(1) DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (user_id) REFERENCES users(id))"))
+    if "position" not in {c["name"] for c in insp.get_columns("meal_plan_entries")}:
+        conn.execute(text("ALTER TABLE meal_plan_entries ADD COLUMN position INTEGER NOT NULL DEFAULT 0"))
