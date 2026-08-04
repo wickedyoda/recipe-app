@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from backend.database import get_db
@@ -51,7 +52,7 @@ def list_entries(plan_id: int, db: Session = Depends(get_db), current_user: User
     plan = db.query(MealPlan).filter(MealPlan.id==plan_id, MealPlan.owner_id==current_user.id).first()
     if not plan:
         raise HTTPException(status_code=404, detail="Meal plan not found")
-    return db.query(MealPlanEntry).filter(MealPlanEntry.meal_plan_id==plan_id).all()
+    return db.query(MealPlanEntry).filter(MealPlanEntry.meal_plan_id==plan_id).order_by(MealPlanEntry.position.asc()).all()
 
 @router.delete("/entries/{entry_id}")
 def delete_entry(entry_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
@@ -61,3 +62,20 @@ def delete_entry(entry_id: int, db: Session = Depends(get_db), current_user: Use
     db.delete(entry)
     db.commit()
     return {"deleted": True}
+
+class ReorderPayload(BaseModel):
+    positions: list[dict]
+
+@router.patch("/entries/reorder", response_model=list[MealPlanEntryOut])
+def reorder_entries(payload: ReorderPayload, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    for item in payload.positions:
+        entry = db.query(MealPlanEntry).filter(MealPlanEntry.id==item["id"], MealPlanEntry.owner_id==current_user.id).first()
+        if entry:
+            entry.position = item["position"]
+    db.commit()
+    plan_id = payload.positions[0]["id"] if payload.positions else 0
+    if plan_id:
+        real_plan = db.query(MealPlanEntry).filter(MealPlanEntry.id==plan_id).first()
+        if real_plan:
+            return db.query(MealPlanEntry).filter(MealPlanEntry.meal_plan_id==real_plan.meal_plan_id).order_by(MealPlanEntry.position.asc()).all()
+    return []
