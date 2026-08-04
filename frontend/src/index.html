@@ -381,13 +381,32 @@
         <div class="card">
           <div class="top">
             <h2 style="margin-top:0;">Admin</h2>
-            <button class="secondary" onclick="loadPending();loadUsers();" style="width:auto;padding:8px 10px;font-size:13px;">Refresh</button>
+            <button class="secondary" onclick="loadPending();loadUsers();openUserForm()" style="width:auto;padding:8px 10px;font-size:13px;">New user</button>
           </div>
           <h3 style="margin-top:0;font-size:16px;">Pending approvals</h3>
           <div id="pendingList"></div>
           <h3 style="margin-top:16px;font-size:16px;">All users</h3>
           <div id="userList"></div>
         </div>
+        <div id="userForm" class="card hidden">
+          <h2 style="margin-top:0;" id="userFormTitle">New user</h2>
+          <input id="userEmail" type="email" placeholder="Email" />
+          <input id="userPassword" type="password" placeholder="Password" />
+          <input id="userDisplayName" placeholder="Display name" />
+          <select id="userRole">
+            <option value="user">User</option>
+            <option value="admin">Admin</option>
+          </select>
+          <div class="row">
+            <label style="font-size:13px;display:inline-flex;align-items:center;gap:6px;cursor:pointer;">
+              <input type="checkbox" id="userActive" checked style="width:auto;margin:0;" /> Active
+            </label>
+            <label style="font-size:13px;display:inline-flex;align-items:center;gap:6px;cursor:pointer;">
+              <input type="checkbox" id="userApproved" checked style="width:auto;margin:0;" /> Approved
+            </label>
+          </div>
+          <button onclick="saveUser()">Save</button>
+          <button class="secondary" onclick="closeUserForm()">Cancel</button>
       </div>
       <div id="tabProfile" class="tab hidden">
         <div class="card">
@@ -397,8 +416,13 @@
           </div>
           <div id="profileInfo" class="meta" style="margin-bottom:12px;"></div>
           <div class="section">
+            <h3>Display name</h3>
+            <input id="profileName" placeholder="Display name" />
+            <input id="profileAvatar" placeholder="Avatar URL (optional)" />
+            <button onclick="updateProfile()">Save profile</button>
+          </div>
+          <div class="section">
             <h3>Preferences</h3>
-            <label style="font-size:13px;">Default servings</label>
             <input id="defaultServings" type="number" min="1" max="20" value="4" />
           </div>
           <div class="section">
@@ -415,6 +439,7 @@
               <button class="secondary" onclick="setTheme('light','cozy')" style="width:auto;padding:8px 10px;font-size:13px;">Light Cozy</button>
               <button class="secondary" onclick="setTheme('dark','cozy')" style="width:auto;padding:8px 10px;font-size:13px;">Dark Cozy</button>
             </div>
+          </div>
           </div>
           <div class="section">
           <h3>Security</h3>
@@ -495,6 +520,8 @@ async function loadProfile() {
   const user = await res.json();
   document.getElementById('profileInfo').innerHTML = '<div style="font-weight:600;">' + escapeHtml(user.display_name || user.email) + '</div><div class="meta">' + escapeHtml(user.email) + ' • ' + escapeHtml(user.role || '') + '</div>' + (user.must_change_password ? '<div class="meta" style="color:#b91c1c;margin-top:4px;">⚠ Password must be changed</div>' : '');
   const saved = JSON.parse(localStorage.getItem('settings') || '{}');
+  document.getElementById('profileName').value = user.display_name || '';
+  document.getElementById('profileAvatar').value = user.avatar_url || '';
   document.getElementById('defaultServings').value = (saved.defaultServings || 4);
 }
 function setTheme(mode, color) {
@@ -947,12 +974,12 @@ async function openRecipeDetail(id) {
   if (favBtn) favBtn.textContent = favs.has(String(id)) ? '❤' : '🤍';
   renderNotes(id);
   const photoBox = document.getElementById('detailPhotos');
-  photoBox.innerHTML = (r.photos || []).map(p => '<div class="recipe-detail-gallery" onclick="openGalleryModal(this)"><img src="/media/' + p + '" /></div>').join('');
+  photoBox.innerHTML = (r.photos || []).map(p => '<div class="recipe-detail-gallery" onclick="openGalleryModal(this)"><img src="/media/static/' + p + '" /></div>').join('');
   const stepBox = document.getElementById('stepPhotos');
   const stepPhotos = (r.step_photos || []);
   const steps = (r.instructions || '').split('\n').filter(Boolean);
   stepBox.innerHTML = steps.map((_, i) => {
-    const photos = stepPhotos.filter(sp => sp.step_index === i).map(sp => '<img src="/media/' + sp.path + '" style="max-height:80px;border-radius:8px;margin-right:8px;" />').join('');
+    const photos = stepPhotos.filter(sp => sp.step_index === i).map(sp => '<img src="/media/static/' + sp.path + '" style="max-height:80px;border-radius:8px;margin-right:8px;" />').join('');
     return photos ? '<div style="margin-top:8px;font-size:12px;color:#555;">Step ' + (i + 1) + ' photos</div><div class="carousel-container">' + photos + '</div>' : '';
   }).join('');
 }
@@ -1575,7 +1602,7 @@ async function loadUsers() {
   for (const user of items) {
     const el = document.createElement('div');
     el.className = 'item';
-    el.innerHTML = '<div><div>' + escapeHtml(user.email) + '</div><div class="meta">' + escapeHtml(user.display_name || '') + ' • ' + user.role + ' • active=' + user.is_active + ' approved=' + user.is_approved + '</div></div>';
+    el.innerHTML = '<div><div>' + escapeHtml(user.email) + '</div><div class="meta">' + escapeHtml(user.display_name || '') + ' • ' + user.role + ' • active=' + user.is_active + ' approved=' + user.is_approved + '</div></div><div class="row" style="margin-top:8px;gap:8px;"><button class="secondary" onclick="editUser(' + user.id + ')" style="width:auto;padding:6px 10px;font-size:12px;">Edit</button><button class="danger" onclick="deleteUser(' + user.id + ')" style="width:auto;padding:6px 10px;font-size:12px;">Delete</button></div>';
     box.appendChild(el);
   }
 }
@@ -1584,6 +1611,81 @@ async function approveUser(id, active) {
   const data = await res.json();
   if (!res.ok) return alert('Action failed: ' + (data.detail || 'unknown'));
   loadPending(); loadUsers();
+}
+
+let editingUserId = null;
+function openUserForm() {
+  editingUserId = null;
+  document.getElementById('userFormTitle').textContent = 'New user';
+  document.getElementById('userEmail').value = '';
+  document.getElementById('userPassword').value = '';
+  document.getElementById('userDisplayName').value = '';
+  document.getElementById('userRole').value = 'user';
+  document.getElementById('userActive').checked = true;
+  document.getElementById('userApproved').checked = true;
+  document.getElementById('userForm').classList.remove('hidden');
+}
+function closeUserForm() {
+  document.getElementById('userForm').classList.add('hidden');
+  editingUserId = null;
+}
+async function editUser(id) {
+  const res = await fetch(API + '/auth/users/' + id, { headers: authHeaders() });
+  if (!res.ok) return alert('Failed to load user');
+  const user = await res.json();
+  editingUserId = id;
+  document.getElementById('userFormTitle').textContent = 'Edit user';
+  document.getElementById('userEmail').value = user.email || '';
+  document.getElementById('userPassword').value = '';
+  document.getElementById('userDisplayName').value = user.display_name || '';
+  document.getElementById('userRole').value = user.role || 'user';
+  document.getElementById('userActive').checked = user.is_active;
+  document.getElementById('userApproved').checked = user.is_approved;
+  document.getElementById('userForm').classList.remove('hidden');
+}
+async function saveUser() {
+  const payload = {
+    email: document.getElementById('userEmail').value.trim(),
+    display_name: document.getElementById('userDisplayName').value.trim(),
+    role: document.getElementById('userRole').value,
+    is_active: document.getElementById('userActive').checked,
+    is_approved: document.getElementById('userApproved').checked
+  };
+  const pw = document.getElementById('userPassword').value;
+  if (pw) payload.password = pw;
+  if (!payload.email) return alert('Email is required');
+  if (!editingUserId && !pw) return alert('Password is required for new users');
+
+  let url = API + '/auth/users';
+  let method = 'POST';
+  if (editingUserId) {
+    url = API + '/auth/users/' + editingUserId;
+    method = 'PUT';
+  }
+
+  const res = await fetch(url, { method, headers: authHeaders(), body: JSON.stringify(payload) });
+  const data = await res.json();
+  if (!res.ok) {
+    let msg = 'Unknown error';
+    if (Array.isArray(data.detail)) {
+      msg = data.detail.map(d => d.msg || JSON.stringify(d)).join(', ');
+    } else {
+      msg = data.detail || 'unknown';
+    }
+    return alert('Failed: ' + msg);
+  }
+  closeUserForm();
+  loadUsers();
+  loadPending();
+}
+async function deleteUser(id) {
+  if (!confirm('Delete this user?')) return;
+  const res = await fetch(API + '/auth/users/' + id, { method: 'DELETE', headers: authHeaders() });
+  if (!res.ok) {
+    const data = await res.json();
+    return alert('Failed: ' + (data.detail || 'unknown'));
+  }
+  loadUsers();
 }
 let timerInterval = null;
 function startStepTimer() {
@@ -1659,7 +1761,7 @@ async function startCooking() {
   const stepPhotos = (data.step_photos || []);
   const stepsBox = document.getElementById('cookingSteps');
   stepsBox.innerHTML = steps.map((s, i) => {
-    const photos = stepPhotos.filter(sp => sp.step_index === i).map(sp => '<img src="/media/' + sp.path + '" style="max-height:80px;border-radius:8px;margin-right:8px;margin-bottom:6px;" />').join('');
+    const photos = stepPhotos.filter(sp => sp.step_index === i).map(sp => '<img src="/media/static/' + sp.path + '" style="max-height:80px;border-radius:8px;margin-right:8px;margin-bottom:6px;" />').join('');
     return '<div style="margin-bottom:12px;"><label style="display:flex;align-items:center;gap:8px;margin:6px 0;font-size:15px;"><input type="checkbox" class="step-checkbox" onchange="completeStep(this)" /> <span>' + escapeHtml(s) + '</span></label>' + (photos ? '<div class="row" style="margin-top:6px;">' + photos + '</div>' : '') + '</div>';
   }).join('');
   renderCookingNotes(data.id);
