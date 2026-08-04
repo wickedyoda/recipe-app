@@ -41,6 +41,30 @@
   body.dark button { background:#f3f3f3; color:#0b0c0f; }
   body.dark button.secondary { background:#2a2d35; color:#f3f3f3; }
   body.dark .search { background:#0f1115; }
+  body.warm .pill { background:#fef3c7; color:#78350f; }
+  body.warm button.secondary { background:#d1fae5; color:#065f46; }
+  body.warm button.danger { background:#fca5a5; }
+  body.dawn .pill { background:#ede9fe; color:#5c0a81; }
+  body.dawn button.secondary { background:#e0e7ff; color:#3730a3; }
+  body.dawn button.danger { background:#fca5a5; }
+  body.cozy .pill { background:#ffd8a8; color:#92400e; }
+  body.cozy button.secondary { background:#ffe4b5; color:#92400e; }
+  body.cozy button.danger { background:#fca5a5; }
+  body.dark.warm { background:#0b0c0f; color:#f3f3f3; }
+  body.dark.warm .card { background:#141519; }
+  body.dark.warm .pill { background:#3d1703; color:#fde68a; }
+  body.dark.warm button.secondary { background:#451a03; color:#fde68a; }
+  body.dark.warm .search { background:#16171a; }
+  body.dark.dawn { background:#0b0c0f; color:#f3f3f3; }
+  body.dark.dawn .card { background:#141519; }
+  body.dark.dawn .pill { background:#312e81; color:#c7d2fe; }
+  body.dark.dawn button.secondary { background:#312e81; color:#c7d2fe; }
+  body.dark.dawn .search { background:#16171a; }
+  body.dark.cozy { background:#0b0c0f; color:#f3f3f3; }
+  body.dark.cozy .card { background:#141519; }
+  body.dark.cozy .pill { background:#78240e; color:#ffd8a8; }
+  body.dark.cozy button.secondary { background:#78240e; color:#ffd8a8; }
+  body.dark.cozy .search { background:#16171a; }
   .dark .card { background:#141519; color:#f3f3f3; }
   .search { padding:12px; position:sticky; top:0; background:#f5f5f7; z-index:5; }
   @media print {
@@ -61,6 +85,7 @@
           <button class="secondary" onclick="logout()" style="width:auto;padding:6px 10px;font-size:12px;">Logout</button>
         </div>
         <button class="secondary" id="themeToggle" onclick="toggleTheme()" style="width:auto;padding:6px 10px;font-size:12px;">🌙</button>
+        <button class="secondary" id="themePicker" onclick="openThemePicker()" style="width:auto;padding:6px 10px;font-size:12px;">🎨</button>
       </div>
     </div>
 
@@ -416,7 +441,14 @@ async function login() {
   const res = await fetch(API + '/auth/login', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({email,password}) });
   const data = await res.json();
   if (!res.ok) return alert('Login failed: ' + (data.detail || 'unknown'));
-  token = data.access_token; localStorage.setItem('token', token); initApp();
+  token = data.access_token; localStorage.setItem('token', token);
+  if (saveLogin) {
+    const theme = localStorage.getItem('theme') || 'light.warm';
+    const [mode] = theme.split('.');
+    if (mode === 'dark') document.body.classList.add('dark');
+  }
+  applySavedTheme();
+  initApp();
 }
 function toggleLoginPassword() {
   const input = document.getElementById('loginPassword');
@@ -425,6 +457,17 @@ function toggleLoginPassword() {
   input.type = isPassword ? 'text' : 'password';
   btn.textContent = isPassword ? 'Hide' : 'Show';
 }
+applySavedTheme();
+
+window.onload = function() {
+  const saved = JSON.parse(localStorage.getItem('saved_login') || 'null');
+  if (saved) {
+    document.getElementById('loginEmail').value = saved.email || '';
+    document.getElementById('loginPassword').value = saved.password || '';
+    document.getElementById('saveLogin').checked = true;
+  }
+  applySavedTheme();
+};
 async function register() {
   const email = document.getElementById('regEmail').value.trim();
   const password = document.getElementById('regPassword').value;
@@ -1286,6 +1329,42 @@ function toggleIngredientCheck(cb) {
   else box.style.textDecoration = 'none';
   saveIngredientChecks();
 }
+function toggleTheme() {
+  const isDark = document.body.classList.toggle('dark');
+  const theme = getCurrentTheme();
+  document.body.classList.remove('warm','dawn','cozy');
+  if (isDark) document.body.classList.add('dark', theme);
+  else document.body.classList.add(theme);
+  localStorage.setItem('theme', (isDark?'dark':'light') + '.' + theme);
+  document.getElementById('themeToggle').textContent = isDark ? '☀️' : '🌙';
+}
+function getCurrentTheme() {
+  const t = localStorage.getItem('theme') || 'light.warm';
+  const parts = t.split('.');
+  if (['warm','dawn','cozy'].includes(parts[1])) return parts[1];
+  return 'warm';
+}
+function applySavedTheme() {
+  const t = localStorage.getItem('theme') || 'light.warm';
+  const [mode, theme] = t.split('.');
+  if (mode === 'dark') document.body.classList.add('dark');
+  document.body.classList.add(theme);
+  if (mode === 'dark') document.getElementById('themeToggle').textContent = '☀️';
+}
+function openThemePicker() {
+  const themes = ['warm','dawn','cozy'];
+  const current = getCurrentTheme();
+  const choice = prompt('Choose a color theme:\n' + themes.map((t,i) => (i+1) + ') ' + t).join('\n'));
+  if (!choice) return;
+  const idx = themes.findIndex(t => t.toLowerCase() === choice.trim().toLowerCase());
+  if (idx === -1) return alert('Unknown theme');
+  const isDark = document.body.classList.contains('dark');
+  const newMode = isDark ? 'dark' : 'light';
+  localStorage.setItem('theme', newMode + '.' + themes[idx]);
+  document.body.classList.remove('warm','dawn','cozy');
+  document.body.classList.add(themes[idx]);
+}
+applySavedTheme();
 function saveIngredientChecks() {
   if (!currentRecipeId) return;
   const checks = Array.from(document.querySelectorAll('#detailBody input[type="checkbox"]')).map(cb => cb.checked ? 1 : 0);
