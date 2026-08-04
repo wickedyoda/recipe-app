@@ -1881,9 +1881,11 @@ function initTheme() {
 function openThemePicker() {
   const themes = ['warm','dawn','cozy'];
   const current = getCurrentTheme();
-  const choice = prompt('Choose a color theme:\n' + themes.map((t,i) => (i+1) + ') ' + t).join('\n'));
+  const choice = prompt('Choose a color theme:\n1) warm\n2) dawn\n3) cozy\n\n(Type name or number)');
   if (!choice) return;
-  const idx = themes.findIndex(t => t.toLowerCase() === choice.trim().toLowerCase());
+  const input = choice.trim().toLowerCase();
+  let idx = themes.findIndex(t => t === input);
+  if (idx === -1 && input >= '1' && input <= '3') idx = parseInt(input) - 1;
   if (idx === -1) return alert('Unknown theme');
   const isDark = document.body.classList.contains('dark');
   const newMode = isDark ? 'dark' : 'light';
