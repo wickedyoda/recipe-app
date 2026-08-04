@@ -408,6 +408,9 @@
             <label style="font-size:13px;display:inline-flex;align-items:center;gap:6px;cursor:pointer;">
               <input type="checkbox" id="userApproved" checked style="width:auto;margin:0;" /> Approved
             </label>
+            <label style="font-size:13px;display:inline-flex;align-items:center;gap:6px;cursor:pointer;">
+              <input type="checkbox" id="userMustChange" style="width:auto;margin:0;" /> Force password change on login
+            </label>
           </div>
           <button onclick="saveUser()">Save</button>
           <button class="secondary" onclick="closeUserForm()">Cancel</button>
@@ -632,6 +635,17 @@ async function changePassword() {
   document.getElementById('changePasswordCurrent').value = '';
   document.getElementById('changePasswordNew').value = '';
   alert('Password changed successfully');
+}
+async function changeEmail() {
+  const current = document.getElementById('changeEmailCurrent').value;
+  const newEmail = document.getElementById('changeEmailNew').value;
+  if (!current || !newEmail) return alert('Both fields are required');
+  const res = await fetch(API + '/auth/change-email', { method:'POST', headers: authHeaders(), body: JSON.stringify({current_email: current, new_email: newEmail}) });
+  const data = await res.json();
+  if (!res.ok) return alert('Failed: ' + (data.detail || 'unknown'));
+  document.getElementById('changeEmailCurrent').value = '';
+  document.getElementById('changeEmailNew').value = '';
+  alert('Email changed successfully. You may need to log in again.');
 }
 
 let cookingRecipe = null;
@@ -1706,6 +1720,7 @@ function openUserForm() {
   document.getElementById('userRole').value = 'user';
   document.getElementById('userActive').checked = true;
   document.getElementById('userApproved').checked = true;
+  document.getElementById('userMustChange').checked = false;
   document.getElementById('userForm').classList.remove('hidden');
 }
 function closeUserForm() {
@@ -1724,6 +1739,7 @@ async function editUser(id) {
   document.getElementById('userRole').value = user.role || 'user';
   document.getElementById('userActive').checked = user.is_active;
   document.getElementById('userApproved').checked = user.is_approved;
+  document.getElementById('userMustChange').checked = user.must_change_password;
   document.getElementById('userForm').classList.remove('hidden');
 }
 async function saveUser() {
@@ -1732,7 +1748,8 @@ async function saveUser() {
     display_name: document.getElementById('userDisplayName').value.trim(),
     role: document.getElementById('userRole').value,
     is_active: document.getElementById('userActive').checked,
-    is_approved: document.getElementById('userApproved').checked
+    is_approved: document.getElementById('userApproved').checked,
+    must_change_password: document.getElementById('userMustChange').checked
   };
   const pw = document.getElementById('userPassword').value;
   if (pw) payload.password = pw;
