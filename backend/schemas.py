@@ -38,8 +38,58 @@ class UserOut(BaseModel):
 class UpdateProfileRequest(BaseModel):
     display_name: str | None = None
     avatar_url: str | None = None
+    email: EmailStr | None = None
     is_active: bool | None = None
     is_approved: bool | None = None
+
+
+class AdminUserUpdate(BaseModel):
+    role: str | None = None
+    is_active: bool | None = None
+    is_approved: bool | None = None
+    display_name: str | None = None
+    must_change_password: bool | None = None
+
+
+class AdminUserCreate(BaseModel):
+    email: EmailStr
+    password: str
+    display_name: str | None = None
+    role: str | None = "user"
+
+    @field_validator("password")
+    @classmethod
+    def validate_password(cls, value: str) -> str:
+        if len(value) < 6:
+            raise ValueError("Password must be at least 6 characters")
+        if len(value) > 12:
+            raise ValueError("Password must be no more than 12 characters")
+        if not any(c.isupper() for c in value):
+            raise ValueError("Password must contain at least 1 uppercase letter")
+        if not any(c in "!@#$%^&*()_+-=[]{}|;:,.<>?/" for c in value):
+            raise ValueError("Password must contain at least 1 symbol")
+        return value
+
+
+class AdminChangePassword(BaseModel):
+    new_password: str
+
+    @field_validator("new_password")
+    @classmethod
+    def validate_new_password(cls, value: str) -> str:
+        if len(value) < 6:
+            raise ValueError("Password must be at least 6 characters")
+        if len(value) > 12:
+            raise ValueError("Password must be no more than 12 characters")
+        if not any(c.isupper() for c in value):
+            raise ValueError("Password must contain at least 1 uppercase letter")
+        if not any(c in "!@#$%^&*()_+-=[]{}|;:,.<>?/" for c in value):
+            raise ValueError("Password must contain at least 1 symbol")
+        return value
+
+
+class ChangeEmailRequest(BaseModel):
+    new_email: EmailStr
 
 
 class ChangePasswordRequest(BaseModel):
