@@ -159,8 +159,8 @@ def create_user(payload: AdminUserCreate, _: User = Depends(require_role(Role.ad
         hashed_password=hash_password(payload.password),
         display_name=payload.display_name,
         role=role,
-        is_active=1,
-        is_approved=1,
+        is_active=1 if payload.is_active else 0,
+        is_approved=1 if payload.is_approved else 0,
         must_change_password=0,
         password_changed_at=datetime.utcnow(),
     )
