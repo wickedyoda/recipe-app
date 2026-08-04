@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#141519"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="24dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="CookieRue"
+        android:textSize="28sp"
+        android:textColor="#f3f3f3"
+        android:fontFamily="sans-serif"
+        android:layout_marginBottom="32dp" />
+
+    <EditText
+        android:id="@+id/urlInput"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Enter server URL (e.g. 192.168.1.100:3000)"
+        android:textColorHint="#888899"
+        android:textColor="#f3f3f3"
+        android:background="@drawable/url_input_bg"
+        android:padding="14dp"
+        android:textSize="16sp"
+        android:inputType="textUri"
+        android:imeOptions="actionGo" />
+
+    <Button
+        android:id="@+id/connectBtn"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Connect"
+        android:textColor="#f3f3f3"
+        android:textSize="16sp"
+        android:backgroundTint="#111111"
+        android:layout_marginTop="16dp" />
+
+</LinearLayout>
