@@ -8,7 +8,7 @@ from backend.config import settings
 from backend.services.auth import get_current_user, require_role
 from backend.models import User, Role
 
-router = APIRouter(prefix="/settings", tags=["settings"])
+router = APIRouter(prefix="/settings", tags=["settings"], redirect_slashes=False)
 
 
 class HostUpdate(BaseModel):
