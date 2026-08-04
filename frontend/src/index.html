@@ -31,6 +31,10 @@
   .nav { position: fixed; bottom:0; left:0; right:0; background:#fff; border-top:1px solid #e5e7eb; display:flex; justify-content:space-around; padding:8px 0; }
   .nav button { background:none; color:#555; width:auto; padding:6px 10px; font-size:12px; margin:0; border-radius:10px; }
   .nav button.active { color:#111; font-weight:600; background:#e5e7eb; }
+  @media (min-width: 600px) {
+    .nav button { font-size:14px; padding:8px 12px; }
+  }
+  .planner-chip { min-width:48px; flex-shrink:0; }
   .fab { position:fixed; bottom:72px; right:16px; width:52px; height:52px; border-radius:50%; background:#111; color:#fff; border:none; font-size:22px; padding:0; }
   .checkbox { width:20px; height:20px; accent-color:#111; }
   .empty { color:#888; font-size:13px; padding:10px 0; }
@@ -41,6 +45,12 @@
   body.dark button { background:#f3f3f3; color:#0b0c0f; }
   body.dark button.secondary { background:#2a2d35; color:#f3f3f3; }
   body.dark .search { background:#0f1115; }
+  .carousel-container { overflow-x:auto; scroll-snap-type:x mandatory; display:flex; gap:8px; padding:4px 0; }
+  .carousel-container::-webkit-scrollbar { display:none; }
+  .carousel-container img { scroll-snap-align:start; flex-shrink:0; max-width:100%; border-radius:12px; max-height:200px; object-fit:cover; }
+  .recipe-detail-gallery { margin:8px 0; }
+  .recipe-detail-gallery img { width:100%; border-radius:12px; max-height:280px; object-fit:cover; display:block; }
+  .swipe-item { touch-action:none; }
   body.warm .pill { background:#fef3c7; color:#78350f; }
   body.warm button.secondary { background:#d1fae5; color:#065f46; }
   body.warm button.danger { background:#fca5a5; }
@@ -302,7 +312,7 @@
             </div>
             <button class="secondary" onclick="closePlanDetail()" style="width:auto;padding:8px 10px;font-size:13px;">Close</button>
           </div>
-          <div id="plannerDayChips" class="row" style="margin-top:8px;overflow-x:auto;gap:8px;"></div>
+          <div id="plannerDayChips" class="row" style="margin-top:8px;overflow-x:auto;gap:8px;flex-wrap:nowrap;"></div>
           <div id="plannerSlots" style="margin-top:12px;"></div>
           <div id="plannerSummary" class="meta" style="margin-top:8px;"></div>
         </div>
@@ -893,13 +903,13 @@ async function openRecipeDetail(id) {
   if (favBtn) favBtn.textContent = favs.has(String(id)) ? '❤' : '🤍';
   renderNotes(id);
   const photoBox = document.getElementById('detailPhotos');
-  photoBox.innerHTML = (r.photos || []).map(p => '<img src="/media/' + p + '" style="max-height:120px;border-radius:8px;margin-right:8px;" />').join('');
+  photoBox.innerHTML = (r.photos || []).map(p => '<div class="recipe-detail-gallery"><img src="/media/' + p + '" /></div>').join('');
   const stepBox = document.getElementById('stepPhotos');
   const stepPhotos = (r.step_photos || []);
   const steps = (r.instructions || '').split('\n').filter(Boolean);
   stepBox.innerHTML = steps.map((_, i) => {
-    const photos = stepPhotos.filter(sp => sp.step_index === i).map(sp => '<img src="/media/' + sp.path + '" style="max-height:120px;border-radius:8px;margin-right:8px;" />').join('');
-    return photos ? '<div style="margin-top:8px;font-size:12px;color:#555;">Step ' + (i + 1) + ' photos</div><div class="row">' + photos + '</div>' : '';
+    const photos = stepPhotos.filter(sp => sp.step_index === i).map(sp => '<img src="/media/' + sp.path + '" style="max-height:80px;border-radius:8px;margin-right:8px;" />').join('');
+    return photos ? '<div style="margin-top:8px;font-size:12px;color:#555;">Step ' + (i + 1) + ' photos</div><div class="carousel-container">' + photos + '</div>' : '';
   }).join('');
 }
 async function uploadStepPhoto() {
@@ -1141,7 +1151,7 @@ async function renderPlanner(plan) {
     const chip = document.createElement('button');
     chip.className = 'secondary';
     chip.textContent = d.label;
-    chip.style.cssText = 'width:auto;padding:8px 10px;font-size:13px;border-radius:999px;';
+    chip.style.cssText = 'width:auto;padding:8px 10px;font-size:13px;border-radius:999px;min-width:56px;';
     chip.onclick = () => { selectedDay = d.key; renderPlannerSlots(selectedDay, byDay, recipeMap); };
     chipsBox.appendChild(chip);
   }
@@ -1176,11 +1186,17 @@ function renderPlannerSlots(dayKey, byDay, recipeMap) {
     const card = document.createElement('div');
     card.className = 'card';
     card.style.cssText = 'margin-bottom:10px;';
+    card.draggable = true;
+    card.dataset.meal = meal;
+    card.dataset.dayKey = dayKey;
+    card.ondragstart = function(e) { this.classList.add('drag-over'); e.dataTransfer.effectAllowed = 'move'; };
+    card.ondragend = function() { this.classList.remove('drag-over'); };
     const title = document.createElement('div');
     title.style.cssText = 'font-weight:600;margin-bottom:6px;';
     title.textContent = meal;
     card.appendChild(title);
     if (entry) {
+      card.dataset.entryId = entry.id;
       const row = document.createElement('div');
       row.style.cssText = 'display:flex;justify-content:space-between;align-items:center;gap:8px;';
       row.innerHTML = '<div><div style=\"font-weight:500;\">' + escapeHtml(recipeMap[entry.recipe_id] || ('Recipe #' + entry.recipe_id)) + '</div><div class=\"meta\">' + escapeHtml(entry.date || dayKey) + '</div></div><div style=\"display:flex;gap:8px;\"><button class=\"secondary\" onclick=\"selectPlannerRecipe(' + entry.id + ')\" style=\"width:auto;padding:8px 10px;font-size:12px;\">Change</button><button class=\"danger\" onclick=\"deleteMealEntry(' + entry.id + ')\" style=\"width:auto;padding:8px 10px;font-size:12px;\">Remove</button></div>';
@@ -1196,6 +1212,11 @@ function renderPlannerSlots(dayKey, byDay, recipeMap) {
     box.appendChild(card);
   }
   updatePlannerSummary(dayKey, byDay);
+}
+function swapMealEntry(entryId, newMeal) {
+  const plan = window._plannerPlan;
+  if (!plan) return;
+  selectPlannerRecipe(entryId);
 }
 function updatePlannerSummary(dayKey, byDay) {
   const dayEntries = (byDay[dayKey] && Object.keys(byDay[dayKey]).length) || 0;
@@ -1339,13 +1360,47 @@ async function loadGroceryItems(listId) {
   box.innerHTML = '';
   for (const it of items) {
     const el = document.createElement('div');
-    el.className = 'item';
+    el.className = 'item swipe-item';
+    el.dataset.itemId = it.id;
+    el.__itemData = it;
     const isRecipe = !!it.recipe_id;
     const badge = isRecipe ? '<span style="display:inline-block;padding:2px 8px;border-radius:999px;background:#e5e7eb;color:#111;font-size:11px;margin-left:8px;">Recipe</span>' : '';
     const borderStyle = isRecipe ? 'border-left:4px solid #d97706;padding-left:10px;background:#fdf6e3;' : '';
-    el.innerHTML = '<div style="' + borderStyle + 'flex:1;min-width:0;"><input type="checkbox" class="checkbox" ' + (it.checked ? 'checked' : '') + ' onchange="toggleGrocery(' + it.id + ', this.checked)" /><div style="margin-left:8px;flex:1;"><div style="display:flex;align-items:center;gap:4px;"><span class="item-name" style="flex:1;" contenteditable="false" data-item-id="' + it.id + '" data-field="name">' + escapeHtml(it.name) + '</span>' + badge + '<button class="secondary" onclick="editGroceryItem(' + it.id + ')" style="width:auto;padding:4px 8px;font-size:11px;">Edit</button></div><div class="meta"><input type="text" class="item-qty" data-item-id="' + it.id + '" style="font-size:13px;width:100%;border:none;background:transparent;outline:none;" value="' + escapeHtml(it.quantity||'') + '" onchange="saveGroceryItem(' + it.id + ', \'quantity\', this.value)" /></div></div></div><button class="danger" onclick="deleteGroceryItem(' + it.id + ')" style="width:auto;padding:8px 10px;font-size:12px;">Delete</button>';
+    el.innerHTML = '<div style="' + borderStyle + 'flex:1;min-width:0;"><input type="checkbox" class="checkbox" ' + (it.checked ? 'checked' : '') + ' onchange="toggleGrocery(' + it.id + ', this.checked)" /><div style="margin-left:8px;flex:1;"><div style="display:flex;align-items:center;gap:4px;"><span class="item-name" style="flex:1;" contenteditable="false" data-item-id="' + it.id + '" data-field="name">' + escapeHtml(it.name) + '</span>' + badge + '<button class="secondary" onclick="editGroceryItem(' + it.id + ')" style="width:auto;padding:4px 8px;font-size:11px;">Edit</button></div><div class="meta"><input type="text" class="item-qty" data-item-id="' + it.id + '" style="font-size:13px;width:100%;border:none;background:transparent;outline:none;" value="' + escapeHtml(it.quantity||'') + '" onchange="saveGroceryItem(' + it.id + ',\'quantity\',this.value)" /></div></div></div><button class="danger" onclick="deleteGroceryItem(' + it.id + ')" style="width:auto;padding:8px 10px;font-size:12px;">Delete</button>';
     box.appendChild(el);
   }
+  attachSwipeHandlers(box);
+}
+function attachSwipeHandlers(box) {
+  let touchStartX = 0;
+  let touchEndX = 0;
+  let activeItem = null;
+  const items = box.querySelectorAll('.item');
+  items.forEach(item => {
+    item.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; activeItem = item; }, { passive: true });
+    item.addEventListener('touchmove', e => { touchEndX = e.touches[0].clientX; }, { passive: true });
+    item.addEventListener('touchend', e => {
+      const delta = touchStartX - touchEndX;
+      if (Math.abs(delta) > 60) {
+        const id = item.dataset.itemId;
+        if (delta > 0) toggleGrocery(id, !item.querySelector('.checkbox').checked);
+        else deleteGroceryItem(id);
+      }
+      touchStartX = 0; touchEndX = 0; activeItem = null;
+    });
+    item.addEventListener('mousedown', e => { touchStartX = e.clientX; activeItem = item; });
+    item.addEventListener('mousemove', e => { if (activeItem) touchEndX = e.clientX; });
+    box.addEventListener('mouseup', () => {
+      if (!activeItem) return;
+      const delta = touchStartX - touchEndX;
+      if (Math.abs(delta) > 60) {
+        const id = activeItem.dataset.itemId;
+        if (delta > 0) toggleGrocery(id, !activeItem.querySelector('.checkbox').checked);
+        else deleteGroceryItem(id);
+      }
+      activeItem = null;
+    });
+  });
 }
 async function editGroceryItem(id) {
   const nameEl = document.querySelector('.item-name[data-item-id="' + id + '"]');
