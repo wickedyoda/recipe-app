@@ -256,6 +256,7 @@
             <button class="secondary" onclick="createGroceryFromRecipe()">Grocery list</button>
             <button class="secondary" onclick="window.print()">Print</button>
             <button class="secondary" onclick="resetIngredientChecks()">Reset checks</button>
+              <button class="secondary" onclick="duplicateCurrentRecipe()" style="width:auto;padding:8px 10px;font-size:13px;">Duplicate</button>
             <button onclick="startCooking()">Cook</button>
           </div>
           <div id="detailPhotos" class="row" style="margin-top:10px;"></div>
@@ -1017,6 +1018,18 @@ function editCurrentRecipe() {
   if (!currentRecipeId) return;
   closeRecipeDetail();
   openRecipeForm(currentRecipeId);
+}
+async function duplicateCurrentRecipe() {
+  if (!currentRecipeId) return;
+  const res = await fetch(API + '/recipes/' + currentRecipeId, { headers: authHeaders() });
+  if (!res.ok) return alert('Failed to load recipe');
+  const r = await res.json();
+  const dupRes = await fetch(API + '/recipes', { method:'POST', headers: authHeaders(), body: JSON.stringify({title: r.title + ' (copy)', description: r.description, ingredients: r.ingredients, instructions: r.instructions, source_url: r.source_url, rating: r.rating, flavor_rating: r.flavor_rating, effort_rating: r.effort_rating, prep_time_minutes: r.prep_time_minutes, cook_time_minutes: r.cook_time_minutes, servings: r.servings, difficulty: r.difficulty, category: r.category, subcategory: r.subcategory, tag_ids: (r.tag_ids || [])}) });
+  const data = await dupRes.json();
+  if (!dupRes.ok) return alert('Duplicate failed: ' + (data.detail || 'unknown'));
+  alert('Recipe duplicated as "' + (r.title + ' (copy)') + '"');
+  closeRecipeDetail();
+  renderRecipes();
 }
 async function extractRecipeFromUpload() {
   const fileInput = document.getElementById('recipeFile');
