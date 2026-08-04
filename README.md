@@ -33,9 +33,46 @@ The app is mobile-first and uses warm minimalist styling. Key screens:
 ![Cooking mode](docs/screenshots/cooking-mode.png)
 ![Grocery export](docs/screenshots/grocery-export.png)
 
-## Disclosure
+## Privacy
 
-This project was developed with AI-assisted tooling. Core implementation, design decisions, and review were performed by the repository owner. AI tools were used for iteration, prototyping, and documentation.
+CookieRue is a **self-hosted** application — all your data stays on your own server.
+
+### Data Collected
+The app stores only what you enter:
+- **Account**: email, display name, hashed password (bcrypt)
+- **Recipes**: titles, ingredients, instructions, categories, ratings
+- **Media**: videos/audio/images downloaded from source URLs, thumbnails
+- **Notes**: text notes attached to recipes
+- **Grocery lists**: items, quantities, checked state
+- **Meal plans**: planned recipes and dates
+- **Settings**: your system configuration choices
+
+### Data Rights (GDPR, CCPA)
+
+**Your data, your control:**
+- **Right to Access** — All your recipe data is accessible through the API and UI
+- **Right to Data Portability** — Download all your data: `POST /auth/me/export`
+- **Right to Erasure** — Delete your account and all associated data: `POST /auth/me/delete`
+- **Right to Rectification** — Edit your recipes, notes, and profile at any time
+
+### Third Parties
+- **No analytics, tracking, or advertising**: The app does not use Google Analytics, Mixpanel, or any third-party tracking scripts
+- **No data sharing**: Your data is never sent to external services
+- **Media ingest**: Recipe videos are downloaded from their original source URLs (TikTok, YouTube, etc.) and stored locally — source URLs are stored to attribute the original creator
+
+### Cookies
+- The app uses a single **JWT access token** (stored in browser localStorage) for authentication
+- No tracking cookies, no third-party cookies
+- You may optionally enable a cookie consent banner in settings
+
+### Hosted vs Self-Hosted
+If you host CookieRue yourself:
+- Data is stored only on your server
+- No data is transmitted to the CookieRue developers or any third party
+
+If you are using a hosted instance:
+- Contact your instance administrator for the privacy policy
+- Your data may be subject to the host's data practices
 
 ## Quick start
 

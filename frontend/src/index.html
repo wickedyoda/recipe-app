@@ -872,8 +872,8 @@ async function renderRecipes() {
     return matchesSearch && matchesCategory && matchesMeal && matchesSub && matchesFav;
   });
   const favPill = document.getElementById('favPill');
-  if (favPill) favPill.style.background = filterBox.dataset.favs ? '#111' : '';
-  if (favPill) favPill.style.color = filterBox.dataset.favs ? '#fff' : '';
+  if (favPill) favPill.classList.toggle('active', !!filterBox.dataset.favs);
+  
   if (!filtered.length) {
     let msg = 'No recipes match your filters.';
     if (q) msg = 'No recipes found for "' + escapeHtml(q) + '".';
@@ -881,7 +881,7 @@ async function renderRecipes() {
   }
   for (const r of filtered) {
     const el = document.createElement('div');
-    el.className = 'item';
+    el.className = 'recipe-list-item';
     const heart = favs.has(String(r.id)) ? '❤' : '🤍';
     const stars = r.rating ? '★'.repeat(Math.round(r.rating)) : '';
     const flavorStars = r.flavor_rating ? ' Flavor:' + '★'.repeat(Math.round(r.flavor_rating)) : '';
@@ -890,7 +890,7 @@ async function renderRecipes() {
     const meta = [r.difficulty ? r.difficulty : '', r.category ? categoryIcon(r.category) + ' ' + r.category : '', timeMeta, stars + flavorStars + effortStars].filter(Boolean).join(' • ');
     const photoUrl = (r.photos && r.photos.length > 0) ? '/media/static/' + r.photos[0] : (r.source_path ? '/media/static/' + r.source_path : categoryIcon(r.category));
     const isImg = (r.photos && r.photos.length > 0) || r.source_path;
-    el.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;"><div style="display:flex;align-items:center;gap:8px;"><img src="' + photoUrl + '" style="width:48px;height:48px;object-fit:cover;border-radius:6px;' + (isImg ? '' : 'background:#f0f0f0;padding:4px;') + '" /><span style="font-size:10px;">' + (isImg ? '' : photoUrl) + '</span><div><div style="font-weight:600;">' + escapeHtml(r.title || 'Untitled') + '</div><div class="meta">' + escapeHtml(meta) + '</div></div></div><div style="display:flex;align-items:center;gap:8px;"><button class="secondary" onclick="toggleFavorite(' + r.id + ')" style="width:auto;padding:8px 10px;font-size:13px;">' + heart + '</button><button class="secondary" onclick="openRecipeDetail(' + r.id + ')" style="width:auto;padding:8px 10px;font-size:13px;">Open</button></div></div>';
+    el.innerHTML = '<div style="display:flex;align-items:center;gap:10px;overflow:hidden;flex:1;">' + (isImg ? '<img src="' + photoUrl + '" style="width:56px;height:56px;object-fit:cover;border-radius:8px;" />' : '<span class="recipe-icon" style="font-size:28px;min-width:56px;height:56px;display:flex;align-items:center;justify-content:center;background:#f3f0e8;border-radius:8px;">' + photoUrl + '</span>') + '<div style="flex:1;min-width:0;overflow:hidden;"><div class="rl-title">' + escapeHtml(r.title || 'Untitled') + '</div><div class="rl-meta">' + escapeHtml(meta) + '</div></div></div><div style="display:flex;align-items:center;gap:6px;"><button class="secondary" onclick="toggleFavorite(' + r.id + ')" style="width:auto;padding:6px 8px;font-size:12px;">' + heart + '</button><button class="secondary" onclick="openRecipeDetail(' + r.id + ')" style="width:auto;padding:6px 8px;font-size:12px;">Open</button></div>';
     box.appendChild(el);
   }
 }
@@ -903,28 +903,28 @@ window.setCategoryFilter = function(category) {
 window.setMealFilter = function(meal) {
   const filterBox = document.getElementById('recipeCategoryFilters');
   filterBox.dataset.meal = meal || '';
-  ['mealAll','mealBreakfast','mealLunch','mealDinner'].forEach(id => { const el = document.getElementById(id); if (el) { el.style.background = ''; el.style.color = ''; } });
+  ['mealAll','mealBreakfast','mealLunch','mealDinner'].forEach(id => { const el = document.getElementById(id); if (el) el.classList.remove('active'); });
   if (meal) {
     const map = {Breakfast:'mealBreakfast',Lunch:'mealLunch',Dinner:'mealDinner'};
     const el = document.getElementById(map[meal]);
-    if (el) { el.style.background = '#111'; el.style.color = '#fff'; }
+    if (el) el.classList.add('active');
   } else {
     const el = document.getElementById('mealAll');
-    if (el) { el.style.background = '#111'; el.style.color = '#fff'; }
+    if (el) el.classList.add('active');
   }
   renderRecipes();
 };
 window.setSubFilter = function(sub) {
   const filterBox = document.getElementById('recipeCategoryFilters');
   filterBox.dataset.sub = sub || '';
-  ['subAll','subEntrees','subSnacks','subAppetizers','subDesserts'].forEach(id => { const el = document.getElementById(id); if (el) { el.style.background = ''; el.style.color = ''; } });
+  ['subAll','subEntrees','subSnacks','subAppetizers','subDesserts'].forEach(id => { const el = document.getElementById(id); if (el) el.classList.remove('active'); });
   if (sub) {
     const map = {Entrees:'subEntrees',Snacks:'subSnacks',Appetizers:'subAppetizers',Desserts:'subDesserts'};
     const el = document.getElementById(map[sub]);
-    if (el) { el.style.background = '#111'; el.style.color = '#fff'; }
+    if (el) el.classList.add('active');
   } else {
     const el = document.getElementById('subAll');
-    if (el) { el.style.background = '#111'; el.style.color = '#fff'; }
+    if (el) el.classList.add('active');
   }
   renderRecipes();
 };
