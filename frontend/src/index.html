@@ -563,7 +563,7 @@ async function loadSettings() {
   if (!res.ok) { document.getElementById('settingsStatus').textContent = 'Failed to load settings'; return; }
   const s = await res.json();
   let html = '<div class="section"><h3>Allowed hosts</h3>';
-  html += '<div style="display:flex;flex-wrap:gap;6px;gap:6px;align-items:center;">';
+  html += '<div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;">';
   (s.allowed_hosts || []).forEach(function(h) {
     const removable = !['localhost','127.0.0.1','*'].includes(h);
     html += '<span style="background:#eef;padding:4px 8px;border-radius:4px;font-size:12px;">' + escapeHtml(h) + '</span>';
