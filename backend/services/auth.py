@@ -2,6 +2,7 @@ import os
 import secrets
 from datetime import datetime, timedelta, timezone
 
+import bcrypt
 from backend.config import settings
 from backend.database import SessionLocal
 from backend.models import PasswordResetToken, Role, User
@@ -9,7 +10,6 @@ from backend.services.email import send_email
 from fastapi import Depends, Header, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import jwt
-import bcrypt
 
 SECRET_KEY = os.getenv("SECRET_KEY", "change-me")
 ALGORITHM = "HS256"
