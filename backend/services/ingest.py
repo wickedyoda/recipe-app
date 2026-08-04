@@ -291,14 +291,18 @@ def ingest_upload(file, user_id: int) -> dict:
 
     subs = []
     if audio is not None:
-        _run([
-            "whisper", str(audio),
-            "--model", os.getenv("WHISPER_MODEL", "tiny"),
-            "--language", "en",
-            "--output_format", "srt",
-            "--output_dir", str(workdir)
-        ])
-        subs = sorted([p for p in workdir.iterdir() if p.suffix.lower() == ".srt"])
+        whisper_available = shutil.which("whisper")
+        if whisper_available:
+            _run([
+                whisper_available, str(audio),
+                "--model", os.getenv("WHISPER_MODEL", "tiny"),
+                "--language", "en",
+                "--output_format", "srt",
+                "--output_dir", str(workdir)
+            ])
+            subs = sorted([p for p in workdir.iterdir() if p.suffix.lower() == ".srt"])
+        else:
+            subs = []  # whisper not installed, skip transcription
 
     subtitle_path = subs[0] if subs else None
     db = SessionLocal()

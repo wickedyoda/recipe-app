@@ -1,6 +1,7 @@
 import os
 import secrets
 import urllib.parse
+from html import escape
 
 from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.orm import Session
@@ -49,9 +50,9 @@ def _list_text(name: str, items: list[GroceryItem]) -> str:
     return "\n".join(lines)
 
 def _html(name: str, items: list[GroceryItem]) -> str:
-    body = "<h2>" + (name or "Grocery list") + "</h2><ul>"
+    body = "<h2>" + escape(name or "Grocery list") + "</h2><ul>"
     for i in items:
-        body += "<li>" + ("<s>" if i.checked else "") + (i.quantity or "") + " " + i.name + ("</s>" if i.checked else "") + "</li>"
+        body += "<li>" + ("<s>" if i.checked else "") + escape(i.quantity or "") + " " + escape(i.name) + ("</s>" if i.checked else "") + "</li>"
     body += "</ul>"
     return body
 
