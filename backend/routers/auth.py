@@ -84,7 +84,7 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)):
     if not user.is_active:
         raise HTTPException(status_code=403, detail="Account is inactive")
     token = create_access_token(user.email)
-    return TokenOut(access_token=token, user=UserOut.model_validate(user), approved=True, active=True)
+    return TokenOut(access_token=token, user=UserOut.model_validate(user), approved=True, active=True, must_change_password=bool(user.must_change_password))
 
 
 @router.get("/me", response_model=UserOut)

@@ -87,6 +87,7 @@ class TokenOut(BaseModel):
     user: UserOut
     approved: bool = False
     active: bool = False
+    must_change_password: bool = False
 
 class CookbookCreate(BaseModel):
     name: str
