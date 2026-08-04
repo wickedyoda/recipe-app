@@ -327,7 +327,6 @@
         <button onclick="logout()" class="dropdown-item logout">Logout</button>
       </div>
       <button class="secondary" id="themeToggle" onclick="toggleTheme()" style="width:auto;padding:6px 10px;font-size:12px;">🌙</button>
-      <button class="secondary" id="themePicker" onclick="openThemePicker()" style="width:auto;padding:6px 10px;font-size:12px;">🎨</button>
     </div>
   </div>
 
@@ -713,18 +712,7 @@
           </div>
           <div class="section">
             <h3>Theme</h3>
-            <div class="row" style="gap:8px;margin-bottom:10px;">
-              <button class="secondary" id="themeToggleProfile" onclick="toggleTheme()" style="flex:1;padding:10px;font-size:14px;">🌙 Dark mode</button>
-              <button class="secondary" onclick="openThemePicker()" style="flex:1;padding:10px;font-size:14px;">🎨 Color theme</button>
-            </div>
-            <div class="row" style="gap:6px;">
-              <button class="secondary" onclick="setTheme('light','warm')" style="flex:1;padding:8px;font-size:12px;">Light Warm</button>
-              <button class="secondary" onclick="setTheme('dark','warm')" style="flex:1;padding:8px;font-size:12px;">Dark Warm</button>
-              <button class="secondary" onclick="setTheme('light','dawn')" style="flex:1;padding:8px;font-size:12px;">Light Dawn</button>
-              <button class="secondary" onclick="setTheme('dark','dawn')" style="flex:1;padding:8px;font-size:12px;">Dark Dawn</button>
-              <button class="secondary" onclick="setTheme('light','cozy')" style="flex:1;padding:8px;font-size:12px;">Light Cozy</button>
-              <button class="secondary" onclick="setTheme('dark','cozy')" style="flex:1;padding:8px;font-size:12px;">Dark Cozy</button>
-            </div>
+            <button class="secondary" id="themeToggleProfile" onclick="toggleTheme()" style="width:100%;padding:10px;font-size:14px;">🌙 Dark mode</button>
           </div>
           <div class="section">
             <h3>Security</h3>
@@ -946,11 +934,11 @@ async function backupDatabase() {
   if (!res.ok) return document.getElementById('settingsStatus').textContent = 'Backup failed: ' + (data.detail || 'unknown');
   document.getElementById('settingsStatus').textContent = 'Backup saved: ' + data.backup_path + ' (' + data.size_mb + ' MB)';
 }
-function setTheme(mode, color) {
+function setTheme(mode) {
   document.body.classList.remove('dark','warm','dawn','cozy');
   if (mode === 'dark') document.body.classList.add('dark');
-  document.body.classList.add(color);
-  localStorage.setItem('theme', mode + '.' + color);
+  document.body.classList.add('warm');
+  localStorage.setItem('theme', mode);
   if (document.getElementById('themeToggle')) document.getElementById('themeToggle').textContent = mode === 'dark' ? '☀️' : '🌙';
 }
 function saveSettings() {
@@ -2350,49 +2338,40 @@ function uncheckAllIngredients() {
 }
 function toggleTheme() {
   const isDark = document.body.classList.toggle('dark');
-  const theme = getCurrentTheme();
-  document.body.classList.remove('warm','dawn','cozy');
-  if (isDark) document.body.classList.add('dark', theme);
-  else document.body.classList.add(theme);
-  localStorage.setItem('theme', (isDark?'dark':'light') + '.' + theme);
+  const mode = isDark ? 'dark' : 'light';
+  localStorage.setItem('theme', mode);
   document.getElementById('themeToggle').textContent = isDark ? '☀️' : '🌙';
   const profileToggle = document.getElementById('themeToggleProfile');
   if (profileToggle) profileToggle.textContent = isDark ? '☀️ Light mode' : '🌙 Dark mode';
 }
 function getCurrentTheme() {
-  const t = localStorage.getItem('theme') || 'light.warm';
-  const parts = t.split('.');
-  if (['warm','dawn','cozy'].includes(parts[1])) return parts[1];
   return 'warm';
 }
 function applySavedTheme() {
-  const t = localStorage.getItem('theme') || 'light.warm';
-  const [mode, theme] = t.split('.');
-  if (mode === 'dark') document.body.classList.add('dark');
-  document.body.classList.add(theme);
-  if (mode === 'dark') document.getElementById('themeToggle').textContent = '☀️';
+  const t = localStorage.getItem('theme') || 'light';
+  if (t === 'dark') document.body.classList.add('dark');
+  document.body.classList.add('warm');
+  if (t === 'dark') document.getElementById('themeToggle').textContent = '☀️';
 }
 function initTheme() {
   if (!localStorage.getItem('theme')) {
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    localStorage.setItem('theme', (prefersDark ? 'dark' : 'light') + '.warm');
+    localStorage.setItem('theme', prefersDark ? 'dark' : 'light');
   }
   applySavedTheme();
 }
 function openThemePicker() {
-  const themes = ['warm','dawn','cozy'];
-  const current = getCurrentTheme();
-  const choice = prompt('Choose a color theme:\n1) warm\n2) dawn\n3) cozy\n\n(Type name or number)');
-  if (!choice) return;
-  const input = choice.trim().toLowerCase();
-  let idx = themes.findIndex(t => t === input);
-  if (idx === -1 && input >= '1' && input <= '3') idx = parseInt(input) - 1;
-  if (idx === -1) return alert('Unknown theme');
   const isDark = document.body.classList.contains('dark');
-  const newMode = isDark ? 'dark' : 'light';
-  localStorage.setItem('theme', newMode + '.' + themes[idx]);
-  document.body.classList.remove('warm','dawn','cozy');
-  document.body.classList.add(themes[idx]);
+  const mode = isDark ? 'dark' : 'light';
+  const newMode = mode === 'dark' ? 'light' : 'dark';
+  const label = newMode === 'dark' ? 'Dark' : 'Light';
+  if (confirm('Switch to ' + label + ' mode?')) {
+    document.body.classList.toggle('dark', newMode === 'dark');
+    localStorage.setItem('theme', newMode);
+    document.getElementById('themeToggle').textContent = newMode === 'dark' ? '☀️' : '🌙';
+    const profileToggle = document.getElementById('themeToggleProfile');
+    if (profileToggle) profileToggle.textContent = newMode === 'dark' ? '☀️ Light mode' : '🌙 Dark mode';
+  }
 }
 initTheme();
 function saveIngredientChecks() {
