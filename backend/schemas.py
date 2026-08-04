@@ -21,6 +21,7 @@ class UserCreate(BaseModel):
             raise ValueError("Password must contain at least 1 symbol")
         return value
 
+
 class UserOut(BaseModel):
     id: int
     email: str
@@ -32,8 +33,8 @@ class UserOut(BaseModel):
     approved_at: datetime | None
     created_at: datetime
     must_change_password: bool = False
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
+
 
 class UpdateProfileRequest(BaseModel):
     display_name: str | None = None
@@ -131,6 +132,7 @@ class ResetPasswordConfirm(BaseModel):
             raise ValueError("Password must contain at least 1 symbol")
         return value
 
+
 class TokenOut(BaseModel):
     access_token: str
     token_type: str = "bearer"
@@ -139,17 +141,19 @@ class TokenOut(BaseModel):
     active: bool = False
     must_change_password: bool = False
 
+
 class CookbookCreate(BaseModel):
     name: str
     description: str | None = None
     store: str | None = "local"
 
+
 class CookbookOut(CookbookCreate):
     id: int
     owner_id: int
     created_at: datetime
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
+
 
 class RecipeCreate(BaseModel):
     title: str
@@ -171,6 +175,7 @@ class RecipeCreate(BaseModel):
     subcategory: str | None = None
     tag_ids: list[int] | None = None
 
+
 class RecipeOut(RecipeCreate):
     id: int
     owner_id: int
@@ -178,11 +183,12 @@ class RecipeOut(RecipeCreate):
     tags: list[str] = []
     photos: list[str] = []
     step_photos: list[dict] = []
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
+
 
 class IngestRequest(BaseModel):
     url: str
+
 
 class MediaItem(BaseModel):
     id: int
@@ -191,55 +197,61 @@ class MediaItem(BaseModel):
     source_path: str | None
     description: str | None
     created_at: datetime
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
+
 
 class NoteCreate(BaseModel):
     body: str
     recipe_id: int
+
 
 class NoteOut(NoteCreate):
     id: int
     recipe_id: int
     owner_id: int
     created_at: datetime
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
+
 
 class TagCreate(BaseModel):
     name: str
 
+
 class TagOut(TagCreate):
     id: int
     owner_id: int
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
+
 
 class MealPlanCreate(BaseModel):
     name: str
     period: str
 
+
 class MealPlanOut(MealPlanCreate):
     id: int
     owner_id: int
     created_at: datetime
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
+
 
 class MealPlanEntryCreate(BaseModel):
     meal_plan_id: int
     recipe_id: int
     meal: str
     date: str | None = None
+    position: int = 0
+
 
 class MealPlanEntryOut(MealPlanEntryCreate):
     id: int
     owner_id: int
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
+
 
 class GroceryListCreate(BaseModel):
     name: str
+
 
 class GroceryListOut(GroceryListCreate):
     id: int
@@ -247,8 +259,8 @@ class GroceryListOut(GroceryListCreate):
     share_token: str | None
     share_enabled: bool = False
     created_at: datetime
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
+
 
 class GroceryItemCreate(BaseModel):
     list_id: int
@@ -256,9 +268,9 @@ class GroceryItemCreate(BaseModel):
     name: str
     quantity: str | None = None
 
+
 class GroceryItemOut(GroceryItemCreate):
     id: int
     checked: bool
     owner_id: int
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}

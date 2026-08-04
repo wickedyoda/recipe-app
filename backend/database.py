@@ -47,6 +47,9 @@ def _migrate_sqlite(conn):
         conn.execute(text("ALTER TABLE grocery_lists ADD COLUMN share_token VARCHAR(255)"))
     if "recipe_step_photos" not in insp.get_table_names():
         conn.execute(text("CREATE TABLE recipe_step_photos (id INTEGER PRIMARY KEY AUTOINCREMENT, recipe_id INTEGER NOT NULL, owner_id INTEGER NOT NULL, step_index INTEGER NOT NULL, path VARCHAR(1024) NOT NULL, caption VARCHAR(255), created_at DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (recipe_id) REFERENCES recipes(id), FOREIGN KEY (owner_id) REFERENCES users(id))"))
+    entry_cols = {c["name"] for c in insp.get_columns("meal_plan_entries")}
+    if "position" not in entry_cols:
+        conn.execute(text("ALTER TABLE meal_plan_entries ADD COLUMN position INTEGER NOT NULL DEFAULT 0"))
 
 def _migrate_mysql(conn):
     insp = inspect(engine)
@@ -55,13 +58,7 @@ def _migrate_mysql(conn):
         conn.execute(text("ALTER TABLE users ADD COLUMN must_change_password TINYINT(1) NOT NULL DEFAULT 0 AFTER is_approved"))
     if "password_changed_at" not in users_cols:
         conn.execute(text("ALTER TABLE users ADD COLUMN password_changed_at DATETIME NULL AFTER must_change_password"))
-    tables = set(insp.get_table_names())
-    if "password_history" not in tables:
-        conn.execute(text(
-            "CREATE TABLE password_history ("
-            "id INTEGER PRIMARY KEY AUTO_INCREMENT, "
-            "user_id INTEGER NOT NULL, "
-            "hashed_password VARCHAR(255) NOT NULL, "
-            "created_at DATETIME DEFAULT CURRENT_TIMESTAMP, "
-            "FOREIGN KEY (user_id) REFERENCES users(id))"
-        ))
+    if "password_history" not in insp.get_table_names():
+        conn.execute(text("CREATE TABLE password_history (id INTEGER PRIMARY KEY AUTO_INCREMENT, user_id INTEGER NOT NULL, hashed_password VARCHAR(255) NOT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (user_id) REFERENCES users(id))"))
+    if "password_reset_tokens" not in insp.get_table_names():
+        conn.execute(text("CREATE TABLE password_reset_tokens (id INTEGER PRIMARY KEY AUTO_INCREMENT, user_id INTEGER NOT NULL, token VARCHAR(255) NOT NULL UNIQUE, expires_at DATETIME NOT NULL, used TINYINT(1) DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (user_id) REFERENCES users(id))"))

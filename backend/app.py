@@ -4,9 +4,10 @@ from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.staticfiles import StaticFiles
 
+# Import all models BEFORE Base.metadata.create_all so SQLAlchemy registers them
 from backend.config import settings
 from backend.database import Base, SessionLocal, engine, ensure_schema
-from backend.models import Role, User
+from backend.models import PasswordHistory, Role, User  # noqa: F401 (registered with Base)
 from backend.routers import router as api_router
 from backend.services.auth import hash_password
 
@@ -51,6 +52,7 @@ app.add_middleware(
 )
 app.mount("/media", StaticFiles(directory="backend/media"), name="backend-media")
 
+
 @app.middleware("http")
 async def security_headers(request, call_next):
     response = await call_next(request)
@@ -62,6 +64,7 @@ async def security_headers(request, call_next):
     return response
 
 app.include_router(api_router)
+
 
 @app.get("/health", tags=["health"])
 def health():
