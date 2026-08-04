@@ -214,6 +214,7 @@
     border: 1px solid var(--border-light); margin-bottom: 8px;
   }
   body.dark .recipe-list-item { background: #141519; border-color: #3a2a1a; }
+  .recipe-checkbox { width: 18px; height: 18px; flex-shrink: 0; cursor: pointer; accent-color: var(--orange); }
   .recipe-list-item img { width: 56px; height: 56px; object-fit: cover; border-radius: 8px; }
   .recipe-list-item .recipe-icon { font-size: 24px; min-width: 56px; height: 56px; display: flex; align-items: center; justify-content: center; background: #f3f0e8; border-radius: 8px; }
   .recipe-list-item .rl-title { font-size: 14px; font-weight: 500; color: var(--text-primary); }
@@ -466,6 +467,10 @@
             <h2 style="margin-top:0;">Recipes</h2>
             <button class="secondary" onclick="openRecipeForm()" style="width:auto;padding:8px 10px;font-size:13px;">New recipe</button>
             <button class="secondary" onclick="exportRecipes()" style="width:auto;padding:8px 10px;font-size:13px;">Export</button>
+            <button class="secondary" id="selectModeBtn" onclick="toggleSelectMode()" style="width:auto;padding:8px 10px;font-size:13px;display:none;">Select</button>
+            <button class="secondary" id="exportSelectedBtn" onclick="exportSelectedRecipes()" style="width:auto;padding:8px 10px;font-size:13px;display:none;">Export selected</button>
+            <button class="secondary" id="selectModeBtn" onclick="toggleSelectMode()" style="width:auto;padding:8px 10px;font-size:13px;display:none;">✓ Select</button>
+            <button class="secondary" id="exportSelectedBtn" onclick="exportSelectedRecipes()" style="width:auto;padding:8px 10px;font-size:13px;display:none;">Export selected</button>
             <label class="secondary" style="width:auto;padding:8px 10px;font-size:13px;display:inline-flex;align-items:center;cursor:pointer;">
               Import
               <input type="file" accept="application/json" style="display:none;" onchange="importRecipes(this)" />
@@ -813,6 +818,13 @@ function scaleIngredients() {
 }
 
 function switchTab(name) {
+  if (name === 'tabRecipes') {
+    const btn = document.getElementById('selectModeBtn');
+    if (btn) btn.style.display = 'inline-block';
+  } else {
+    const btn = document.getElementById('selectModeBtn');
+    if (btn) btn.style.display = 'none';
+  }
   document.querySelectorAll('.tab').forEach(el => el.classList.add('hidden'));
   document.getElementById(name).classList.remove('hidden');
   document.querySelectorAll('.nav button').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
@@ -1257,7 +1269,7 @@ async function renderRecipes() {
   for (const r of filtered) {
     const el = document.createElement('div');
     el.className = 'recipe-list-item';
-    el.onclick = function() { openRecipeDetail(r.id); };
+    if (!window.recipeSelectionMode) el.onclick = function() { openRecipeDetail(r.id); };
     el.style.cursor = 'pointer';
     const heart = favs.has(String(r.id)) ? '❤' : '🤍';
     const stars = r.rating ? '★'.repeat(Math.round(r.rating)) : '';
@@ -1267,7 +1279,8 @@ async function renderRecipes() {
     const meta = [r.difficulty ? r.difficulty : '', r.category ? categoryIcon(r.category) + ' ' + r.category : '', timeMeta, stars + flavorStars + effortStars].filter(Boolean).join(' • ');
     const photoUrl = (r.photos && r.photos.length > 0) ? '/media/static/' + r.photos[0] : (r.source_path ? '/media/static/' + r.source_path : categoryIcon(r.category));
     const isImg = (r.photos && r.photos.length > 0) || r.source_path;
-    el.innerHTML = '<div style="display:flex;align-items:center;gap:10px;overflow:hidden;flex:1;">' + (isImg ? '<img src="' + photoUrl + '" style="width:56px;height:56px;object-fit:cover;border-radius:8px;" />' : '<span class="recipe-icon" style="font-size:28px;min-width:56px;height:56px;display:flex;align-items:center;justify-content:center;background:#f3f0e8;border-radius:8px;">' + photoUrl + '</span>') + '<div style="flex:1;min-width:0;overflow:hidden;"><div class="rl-title">' + escapeHtml(r.title || 'Untitled') + '</div><div class="rl-meta">' + escapeHtml(meta) + '</div></div></div><div style="display:flex;align-items:center;gap:6px;"><button class="secondary" onclick="event.stopPropagation();toggleFavorite(' + r.id + ')" style="width:auto;padding:6px 8px;font-size:12px;">' + heart + '</button><button class="secondary" onclick="event.stopPropagation();openRecipeDetail(' + r.id + ')" style="width:auto;padding:6px 8px;font-size:12px;">Open</button></div>';
+    const cb = window.recipeSelectionMode ? '<input type="checkbox" class="recipe-checkbox" onchange="toggleSelection(' + r.id + ')" style="margin-right:8px;flex-shrink:0;" />' : '';
+    el.innerHTML = cb + '<div style="display:flex;align-items:center;gap:10px;overflow:hidden;flex:1;">' + (isImg ? '<img src="' + photoUrl + '" style="width:56px;height:56px;object-fit:cover;border-radius:8px;" />' : '<span class="recipe-icon" style="font-size:28px;min-width:56px;height:56px;display:flex;align-items:center;justify-content:center;background:#f3f0e8;border-radius:8px;">' + photoUrl + '</span>') + '<div style="flex:1;min-width:0;overflow:hidden;"><div class="rl-title">' + escapeHtml(r.title || 'Untitled') + '</div><div class="rl-meta">' + escapeHtml(meta) + '</div></div></div><div style="display:flex;align-items:center;gap:6px;"><button class="secondary" onclick="event.stopPropagation();toggleFavorite(' + r.id + ')" style="width:auto;padding:6px 8px;font-size:12px;">' + heart + '</button><button class="secondary" onclick="event.stopPropagation();openRecipeDetail(' + r.id + ')" style="width:auto;padding:6px 8px;font-size:12px;">Open</button></div>';
     box.appendChild(el);
   }
 }
@@ -1350,6 +1363,49 @@ async function exportRecipes() {
   a.download = 'recipes.json';
   a.click();
   window.URL.revokeObjectURL(url);
+}
+window.selectedRecipes = new Set();
+window.recipeSelectionMode = false;
+function toggleSelectMode() {
+  window.recipeSelectionMode = !window.recipeSelectionMode;
+  const btn = document.getElementById('selectModeBtn');
+  const expBtn = document.getElementById('exportSelectedBtn');
+  if (window.recipeSelectionMode) {
+    btn.textContent = 'Cancel';
+    expBtn.style.display = 'inline-block';
+    window.selectedRecipes.clear();
+  } else {
+    btn.textContent = 'Select';
+    expBtn.style.display = 'none';
+  }
+  renderRecipes();
+}
+function toggleSelection(id) {
+  if (window.selectedRecipes.has(id)) {
+    window.selectedRecipes.delete(id);
+  } else {
+    window.selectedRecipes.add(id);
+  }
+}
+async function exportSelectedRecipes() {
+  if (!window.selectedRecipes.size) return alert('No recipes selected');
+  const ids = [...window.selectedRecipes];
+  const res = await fetch(API + '/recipes/export-selected', { method:'POST', headers: authHeaders(), body: JSON.stringify({ids: ids}) });
+  if (!res.ok) return alert('Export failed');
+  const blob = await res.blob();
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'recipes-selected.json';
+  a.click();
+  window.URL.revokeObjectURL(url);
+  window.recipeSelectionMode = false;
+  window.selectedRecipes.clear();
+  const btn = document.getElementById('selectModeBtn');
+  const expBtn = document.getElementById('exportSelectedBtn');
+  if (btn) btn.textContent = 'Select';
+  if (expBtn) expBtn.style.display = 'none';
+  renderRecipes();
 }
 async function importRecipes(input) {
   const file = input.files[0];
