@@ -63,6 +63,16 @@ def delete_entry(entry_id: int, db: Session = Depends(get_db), current_user: Use
     db.commit()
     return {"deleted": True}
 
+@router.delete("/{plan_id}")
+def delete_meal_plan(plan_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    plan = db.query(MealPlan).filter(MealPlan.id==plan_id, MealPlan.owner_id==current_user.id).first()
+    if not plan:
+        raise HTTPException(status_code=404, detail="Meal plan not found")
+    db.query(MealPlanEntry).filter(MealPlanEntry.meal_plan_id==plan_id).delete()
+    db.delete(plan)
+    db.commit()
+    return {"deleted": True}
+
 class ReorderPayload(BaseModel):
     positions: list[dict]
 

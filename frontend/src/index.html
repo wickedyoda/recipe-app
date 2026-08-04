@@ -524,6 +524,7 @@
             <button class="secondary" onclick="closeRecipeDetail()" style="width:auto;padding:8px 10px;font-size:13px;">Close</button>
             <button class="secondary" id="favBtn" onclick="toggleFavoriteFromDetail()" style="width:auto;padding:8px 10px;font-size:13px;">🤍</button>
             <button class="secondary" onclick="editCurrentRecipe()" style="width:auto;padding:8px 10px;font-size:13px;">Edit</button>
+            <button class="danger" onclick="deleteCurrentRecipe()" style="width:auto;padding:8px 10px;font-size:13px;">Delete</button>
           </div>
           <div id="detailMeta"></div>
           <div id="detailHero" style="margin-bottom:8px;min-height:0;"></div>
@@ -616,6 +617,7 @@
               <button class="secondary" onclick="setPlannerView('daily')" id="plannerDayBtn" style="width:auto;padding:6px 10px;font-size:12px;">Day</button>
             </div>
             <button class="secondary" onclick="closePlanDetail()" style="width:auto;padding:8px 10px;font-size:13px;">Close</button>
+            <button class="danger" onclick="deleteCurrentPlan()" style="width:auto;padding:8px 10px;font-size:13px;">Delete</button>
           </div>
           <div id="plannerDayChips" class="row" style="margin-top:8px;overflow-x:auto;gap:8px;flex-wrap:nowrap;"></div>
           <div id="plannerSlots" style="margin-top:12px;"></div>
@@ -1218,7 +1220,7 @@ async function loadMedia() {
   for (const item of items) {
     const el = document.createElement('div');
     el.className = 'item';
-    el.innerHTML = '<div><div><strong>' + escapeHtml(item.title) + '</strong></div><div style="font-size:12px;color:#555;">' + escapeHtml(item.source_url || '') + '</div><div style="font-size:12px;color:#555;">' + escapeHtml(item.description || '') + '</div></div>';
+        el.innerHTML = '<div><div><strong onclick="openPlanDetail(' + p.id + ')" style="cursor:pointer;">' + escapeHtml(p.name) + '</strong></div><div class="meta">' + escapeHtml(p.period) + '</div></div><div style="display:flex;gap:6px;"><button class="secondary" onclick="openPlanDetail(' + p.id + ')" style="width:auto;padding:8px 10px;font-size:13px;">Open</button><button class="danger" onclick="deletePlanWithConfirm(' + p.id + ')" style="width:auto;padding:8px 10px;font-size:13px;">Delete</button></div>';
     box.appendChild(el);
   }
 }
@@ -1280,7 +1282,7 @@ async function renderRecipes() {
     const photoUrl = (r.photos && r.photos.length > 0) ? '/media/static/' + r.photos[0] : (r.source_path ? '/media/static/' + r.source_path : categoryIcon(r.category));
     const isImg = (r.photos && r.photos.length > 0) || r.source_path;
     const cb = window.recipeSelectionMode ? '<input type="checkbox" class="recipe-checkbox" onchange="toggleSelection(' + r.id + ')" style="margin-right:8px;flex-shrink:0;" />' : '';
-    el.innerHTML = cb + '<div style="display:flex;align-items:center;gap:10px;overflow:hidden;flex:1;">' + (isImg ? '<img src="' + photoUrl + '" style="width:56px;height:56px;object-fit:cover;border-radius:8px;" />' : '<span class="recipe-icon" style="font-size:28px;min-width:56px;height:56px;display:flex;align-items:center;justify-content:center;background:#f3f0e8;border-radius:8px;">' + photoUrl + '</span>') + '<div style="flex:1;min-width:0;overflow:hidden;"><div class="rl-title">' + escapeHtml(r.title || 'Untitled') + '</div><div class="rl-meta">' + escapeHtml(meta) + '</div></div></div><div style="display:flex;align-items:center;gap:6px;"><button class="secondary" onclick="event.stopPropagation();toggleFavorite(' + r.id + ')" style="width:auto;padding:6px 8px;font-size:12px;">' + heart + '</button><button class="secondary" onclick="event.stopPropagation();openRecipeDetail(' + r.id + ')" style="width:auto;padding:6px 8px;font-size:12px;">Open</button></div>';
+    el.innerHTML = cb + '<div style="display:flex;align-items:center;gap:10px;overflow:hidden;flex:1;">' + (isImg ? '<img src="' + photoUrl + '" style="width:56px;height:56px;object-fit:cover;border-radius:8px;" />' : '<span class="recipe-icon" style="font-size:28px;min-width:56px;height:56px;display:flex;align-items:center;justify-content:center;background:#f3f0e8;border-radius:8px;">' + photoUrl + '</span>') + '<div style="flex:1;min-width:0;overflow:hidden;"><div class="rl-title">' + escapeHtml(r.title || 'Untitled') + '</div><div class="rl-meta">' + escapeHtml(meta) + '</div></div></div><div style="display:flex;align-items:center;gap:6px;"><button class="secondary" onclick="event.stopPropagation();toggleFavorite(' + r.id + ')" style="width:auto;padding:6px 8px;font-size:12px;">' + heart + '</button><button class="secondary" onclick="event.stopPropagation();openRecipeDetail(' + r.id + ')" style="width:auto;padding:6px 8px;font-size:12px;">Open</button><button class="danger" onclick="event.stopPropagation();deleteRecipe(' + r.id + ')" style="width:auto;padding:6px 8px;font-size:12px;">Delete</button></div>';
     box.appendChild(el);
   }
 }
@@ -1365,6 +1367,50 @@ async function exportRecipes() {
   window.URL.revokeObjectURL(url);
 }
 window.selectedRecipes = new Set();
+
+function deleteRecipe(id) {
+  if (!confirm('Delete this recipe? This cannot be undone.')) return;
+  fetch(API + '/recipes/' + id, { method: 'DELETE', headers: authHeaders() })
+    .then(r => r.json())
+    .then(() => {
+      if (currentRecipeId == id) closeRecipeDetail();
+      renderRecipes();
+    })
+    .catch(() => alert('Delete failed'));
+}
+function deleteCurrentRecipe() {
+  if (!currentRecipeId) return;
+  if (!confirm('Delete this recipe? This cannot be undone.')) return;
+  fetch(API + '/recipes/' + currentRecipeId, { method: 'DELETE', headers: authHeaders() })
+    .then(r => r.json())
+    .then(() => {
+      closeRecipeDetail();
+      renderRecipes();
+      loadRecentRecipes();
+    })
+    .catch(() => alert('Delete failed'));
+}
+function deletePlanWithConfirm(id) {
+  if (!confirm('Delete this meal plan? All entries will be removed. This cannot be undone.')) return;
+  fetch(API + '/meal-plans/' + id, { method: 'DELETE', headers: authHeaders() })
+    .then(r => r.json())
+    .then(() => {
+      if (currentPlanId == id) closePlanDetail();
+      renderPlans();
+    })
+    .catch(() => alert('Delete failed'));
+}
+function deleteCurrentPlan() {
+  if (!currentPlanId) return;
+  if (!confirm('Delete this meal plan? All entries will be removed. This cannot be undone.')) return;
+  fetch(API + '/meal-plans/' + currentPlanId, { method: 'DELETE', headers: authHeaders() })
+    .then(r => r.json())
+    .then(() => {
+      closePlanDetail();
+      renderPlans();
+    })
+    .catch(() => alert('Delete failed'));
+}
 window.recipeSelectionMode = false;
 function toggleSelectMode() {
   window.recipeSelectionMode = !window.recipeSelectionMode;
@@ -1734,7 +1780,7 @@ async function renderPlans() {
   for (const p of items) {
     const el = document.createElement('div');
     el.className = 'item';
-    el.innerHTML = '<div><div><strong>' + escapeHtml(p.name) + '</strong></div><div class="meta">' + escapeHtml(p.period) + '</div></div><button class="secondary" onclick="openPlanDetail(' + p.id + ')" style="width:auto;padding:8px 10px;font-size:13px;">Open</button>';
+        el.innerHTML = '<div><div><strong onclick="openPlanDetail(' + p.id + ')" style="cursor:pointer;">' + escapeHtml(p.name) + '</strong></div><div class="meta">' + escapeHtml(p.period) + '</div></div><div style="display:flex;gap:6px;"><button class="secondary" onclick="openPlanDetail(' + p.id + ')" style="width:auto;padding:8px 10px;font-size:13px;">Open</button><button class="danger" onclick="deletePlanWithConfirm(' + p.id + ')" style="width:auto;padding:8px 10px;font-size:13px;">Delete</button></div>';
     box.appendChild(el);
   }
 }
