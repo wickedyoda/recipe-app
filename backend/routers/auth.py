@@ -5,7 +5,7 @@ from pydantic import BaseModel, EmailStr
 from sqlalchemy.orm import Session
 
 from backend.database import get_db
-from backend.models import Role, User
+from backend.models import PasswordHistory, Role, User
 from backend.schemas import (
     AdminChangePassword,
     AdminUserCreate,
@@ -201,6 +201,7 @@ def delete_user(user_id: int, _: User = Depends(require_role(Role.admin)), db: S
         admin_count = db.query(User).filter(User.role == Role.admin).count()
         if admin_count <= 1:
             raise HTTPException(status_code=400, detail="Cannot delete the last admin")
+    db.query(PasswordHistory).filter(PasswordHistory.user_id == user_id).delete(synchronize_session=False)
     db.delete(target)
     db.commit()
     return {"ok": True, "message": "User deleted"}
