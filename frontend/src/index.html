@@ -294,6 +294,7 @@
             <div id="cookingSteps" style="margin-top:12px;"></div>
             <div id="cookingNotes" style="margin-top:12px;"></div>
             <button class="secondary" onclick="addCookingNote()" style="width:auto;padding:8px 10px;font-size:13px;">Add note</button>
+            <button class="secondary" onclick="nextCookingStep()" style="width:auto;padding:8px 10px;font-size:13px;">Next step</button>
             <div id="cookingTimer" class="meta" style="margin-top:8px;"></div>
           </div>
         </div>
@@ -1659,7 +1660,7 @@ async function startCooking() {
   const stepsBox = document.getElementById('cookingSteps');
   stepsBox.innerHTML = steps.map((s, i) => {
     const photos = stepPhotos.filter(sp => sp.step_index === i).map(sp => '<img src="/media/' + sp.path + '" style="max-height:80px;border-radius:8px;margin-right:8px;margin-bottom:6px;" />').join('');
-    return '<div style="margin-bottom:12px;"><label style="display:flex;align-items:center;gap:8px;margin:6px 0;font-size:15px;"><input type="checkbox" onchange="completeStep(this)" /> <span>' + escapeHtml(s) + '</span></label>' + (photos ? '<div class="row" style="margin-top:6px;">' + photos + '</div>' : '') + '</div>';
+    return '<div style="margin-bottom:12px;"><label style="display:flex;align-items:center;gap:8px;margin:6px 0;font-size:15px;"><input type="checkbox" class="step-checkbox" onchange="completeStep(this)" /> <span>' + escapeHtml(s) + '</span></label>' + (photos ? '<div class="row" style="margin-top:6px;">' + photos + '</div>' : '') + '</div>';
   }).join('');
   renderCookingNotes(data.id);
   restoreCookingStepProgress();
@@ -1694,6 +1695,22 @@ function exitCooking() {
   document.getElementById('cookingTimer').innerHTML = '';
   document.getElementById('cookingMode').classList.add('hidden');
   document.getElementById('recipeDetail').classList.remove('hidden');
+}
+function nextCookingStep() {
+  const steps = document.querySelectorAll('#cookingSteps .step-checkbox');
+  if (!steps.length) return;
+  let idx = -1;
+  steps.forEach((cb, i) => { if (!cb.checked) { if (idx === -1) idx = i; } });
+  if (idx === -1) { alert('All steps complete!'); return; }
+  steps[idx].checked = true;
+  steps[idx].dispatchEvent(new Event('change'));
+  const next = idx + 1;
+  if (next < steps.length) {
+    steps[next].scrollIntoView({behavior:'smooth', block:'center'});
+    steps[next].focus();
+  } else {
+    alert('Last step! All done!');
+  }
 }
 function completeStep(cb) {
   const label = cb.closest('label');
