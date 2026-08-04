@@ -28,6 +28,7 @@ services:
       DATABASE_URL: ${DATABASE_URL:-mysql+mysqlconnector://recipes:change-me@mysql:3306/recipes}
       SECRET_KEY: ${SECRET_KEY:-change-me}
       MEDIA_ROOT: ${MEDIA_ROOT:-/media}
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS:-localhost,127.0.0.1,backend,*.ts.net}
       WHISPER_MODEL: ${WHISPER_MODEL:-tiny}
       PUBLIC_URL: ${PUBLIC_URL:-}
       SMTP_HOST: ${SMTP_HOST:-}

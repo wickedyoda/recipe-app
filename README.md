@@ -56,6 +56,7 @@ Open:
 - `SECRET_KEY` - JWT secret
 - `MEDIA_ROOT` - media storage path
 - `PUBLIC_URL` - public base URL for shared links
+- `ALLOWED_HOSTS` - comma-separated hostnames accepted by the API (add your deployment hostname)
 - `BACKEND_IMAGE` / `FRONTEND_IMAGE` - GHCR image tags
 - `BACKEND_PULL_POLICY` / `FRONTEND_PULL_POLICY` - image pull behavior, e.g. `always`
 - `GHCR_TOKEN` - optional PAT with `read:packages` for private images

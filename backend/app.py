@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.staticfiles import StaticFiles
+from sqlalchemy import func
 
 # Import all models BEFORE Base.metadata.create_all so SQLAlchemy registers them
 from backend.config import settings
@@ -15,11 +16,12 @@ from backend.services.auth import hash_password
 def _bootstrap_default_admin() -> None:
     db = SessionLocal()
     try:
-        existing = db.query(User).filter(User.email == settings.DEFAULT_ADMIN_EMAIL).first()
+        admin_email = settings.DEFAULT_ADMIN_EMAIL.strip().lower()
+        existing = db.query(User).filter(func.lower(User.email) == admin_email).first()
         if existing:
             return
         admin = User(
-            email=settings.DEFAULT_ADMIN_EMAIL,
+            email=admin_email,
             hashed_password=hash_password(settings.DEFAULT_ADMIN_PASSWORD),
             display_name=settings.DEFAULT_ADMIN_DISPLAY_NAME,
             role=Role.admin,
