@@ -170,6 +170,15 @@ def create_user(payload: AdminUserCreate, _: User = Depends(require_role(Role.ad
     return UserOut.model_validate(user)
 
 
+@router.get("/users/{user_id}", response_model=UserOut)
+def get_user(user_id: int, _: User = Depends(require_role(Role.admin)), db: Session = Depends(get_db)):
+    """Get a single user by ID (admin only)."""
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return UserOut.model_validate(user)
+
+
 @router.put("/users/{user_id}", response_model=UserOut)
 def update_user(user_id: int, payload: AdminUserUpdate, _: User = Depends(require_role(Role.admin)), db: Session = Depends(get_db)):
     target = db.query(User).filter(User.id == user_id).first()
