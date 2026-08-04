@@ -488,7 +488,7 @@
           <div>
             <input id="recipeTags" placeholder="Tags (comma separated)" />
           </div>
-          <button onclick="saveRecipe()">Save</button>
+          <button onclick="saveRecipe()">Continue</button>
           <button class="secondary" onclick="closeRecipeForm()">Cancel</button>
         </div>
         <div id="recipeDetail" class="card hidden">
@@ -1426,7 +1426,8 @@ async function saveRecipe() {
   const data = await res.json();
   if (!res.ok) return alert('Save failed: ' + (data.detail || 'unknown'));
   closeRecipeForm();
-  renderRecipes();
+  switchTab('tabRecipes');
+  setTimeout(() => openRecipeDetail(data.id), 100);
 }
 async function openRecipeDetail(id) {
   currentRecipeId = id;
