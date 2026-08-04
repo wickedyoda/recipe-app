@@ -1,12 +1,13 @@
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, EmailStr
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from backend.database import get_db
-from backend.models import PasswordHistory, Role, User
+from backend.models import GroceryList, MealPlan, Note, PasswordHistory, Recipe, Role, User
 from backend.schemas import (
     AdminChangePassword,
     AdminUserCreate,
@@ -134,6 +135,53 @@ def reset_password(payload: ResetPasswordConfirm, db: Session = Depends(get_db))
     if not ok:
         raise HTTPException(status_code=400, detail="Invalid or expired reset token")
     return {"ok": True, "message": "Password reset successful"}
+
+
+@router.post("/me/delete")
+def delete_account(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Delete own account and all associated data (GDPR right to erasure)."""
+    if current_user.role == Role.admin:
+        admin_count = db.query(User).filter(User.role == Role.admin).count()
+        if admin_count <= 1:
+            raise HTTPException(status_code=400, detail="Cannot delete the last admin")
+    db.query(PasswordHistory).filter(PasswordHistory.user_id == current_user.id).delete(synchronize_session=False)
+    db.query(User).filter(User.approved_by == current_user.id).update({"approved_by": None}, synchronize_session=False)
+    db.delete(current_user)
+    db.commit()
+    return {"ok": True, "message": "Account and all associated data deleted"}
+
+
+@router.get("/me/export")
+def export_user_data(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Export all user data (GDPR right to data portability)."""
+    user_data = {
+        "user": {
+            "email": current_user.email,
+            "display_name": current_user.display_name,
+            "role": current_user.role.value,
+            "created_at": current_user.created_at.isoformat() if current_user.created_at else None,
+        },
+        "recipes": [],
+        "grocery_lists": [],
+        "meal_plans": [],
+        "notes": [],
+    }
+    for r in db.query(Recipe).filter(Recipe.owner_id == current_user.id).all():
+        user_data["recipes"].append({
+            "title": r.title,
+            "description": r.description,
+            "ingredients": r.ingredients,
+            "instructions": r.instructions,
+            "source_url": r.source_url,
+            "created_at": r.created_at.isoformat() if r.created_at else None,
+        })
+    for g in db.query(GroceryList).filter(GroceryList.owner_id == current_user.id).all():
+        user_data["grocery_lists"].append({"name": g.name, "created_at": g.created_at.isoformat() if g.created_at else None})
+    for m in db.query(MealPlan).filter(MealPlan.owner_id == current_user.id).all():
+        user_data["meal_plans"].append({"name": m.name, "period": m.period, "created_at": m.created_at.isoformat() if m.created_at else None})
+    for n in db.query(Note).filter(Note.owner_id == current_user.id).all():
+        user_data["notes"].append({"body": n.body, "created_at": n.created_at.isoformat() if n.created_at else None})
+    return JSONResponse(user_data, headers={"Content-Disposition": "attachment; filename=user-data-export.json"})
 
 
 @router.get("/users", response_model=list[UserOut])
