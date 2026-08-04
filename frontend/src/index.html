@@ -933,9 +933,9 @@ async function openRecipeDetail(id) {
   if (r.cook_time_minutes) metaExtra.push('Cook ' + r.cook_time_minutes + ' min');
   if (r.servings) metaExtra.push('Serves ' + r.servings);
   if (r.difficulty) metaExtra.push(r.difficulty);
-  if (r.category) metaExtra.push(r.category);
+  if (r.category) metaExtra.push(categoryIcon(r.category) + ' ' + r.category);
   if (r.subcategory) metaExtra.push(r.subcategory);
-  document.getElementById('detailMetaExtra').textContent = metaExtra.join(' • ');
+  document.getElementById('detailMetaExtra').innerHTML = metaExtra.join(' • ');
   const ingredientChecks = JSON.parse(localStorage.getItem('recipe_ingredient_checks_' + id) || '[]');
   setTimeout(() => {
     document.querySelectorAll('#detailBody input[type="checkbox"]').forEach((cb, idx) => { if (ingredientChecks[idx]) cb.checked = true; });
