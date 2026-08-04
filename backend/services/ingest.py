@@ -204,6 +204,7 @@ def download_media(url: str, user_id: int) -> dict:
     subtitle_path = result.get("subtitle")
     description = str(subtitle_path) if subtitle_path else None
     db = SessionLocal()
+    db.expire_on_commit = False
     try:
         cookbook = ensure_local_cookbook(db, user_id)
         recipe = Recipe(
@@ -239,6 +240,7 @@ def extract_recipe_from_url(url: str, user_id: int) -> dict:
 
     parsed = _extract_from_transcript(result.get("subtitle"), result.get("audio"), workdir)
     db = SessionLocal()
+    db.expire_on_commit = False
     try:
         cookbook = ensure_local_cookbook(db, user_id)
         recipe = Recipe(
