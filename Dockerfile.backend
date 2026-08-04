@@ -1,15 +1,23 @@
 FROM python:3.11-slim-bookworm
 
+# Create non-root user for security
+RUN groupadd -r appgroup && useradd -r -g appgroup -d /app -s /sbin/nologin appuser
+
 WORKDIR /app
 
 COPY backend/requirements.txt backend/
 RUN apt-get update && apt-get upgrade -y --no-install-recommends \
     && apt-get install -y --no-install-recommends ffmpeg \
-    && pip install --no-cache-dir -r backend/requirements.txt \
+    && pip install --no-cache-dir --no-input -r backend/requirements.txt \
     && rm -rf /var/lib/apt/lists/*
 
 COPY backend/ /app/backend/
 COPY run.py /app/run.py
+
+# Create media directories writable by non-root user
+RUN mkdir -p /media && chown -R appuser:appgroup /app /media
+
+USER appuser
 
 EXPOSE 8000
 
