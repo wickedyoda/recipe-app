@@ -566,9 +566,8 @@ async function loadSettings() {
   html += '<div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;">';
   (s.allowed_hosts || []).forEach(function(h) {
     const removable = !['localhost','127.0.0.1','*'].includes(h);
-    const safeHost = String(h).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
     html += '<span style="background:#eef;padding:4px 8px;border-radius:4px;font-size:12px;">' + escapeHtml(h) + '</span>';
-    if (removable) html += '<button onclick="removeHost(\'' + safeHost + '\')" style="width:auto;padding:2px 6px;font-size:11px;">×</button>';
+    if (removable) html += '<button onclick="removeHost(' + JSON.stringify(h) + ')" style="width:auto;padding:2px 6px;font-size:11px;">×</button>';
   });
   html += '</div><input id="newHost" type="text" placeholder="New host (e.g. docker.tail99133.ts.net)" style="font-size:13px;" /><button onclick="addHost()">Add</button></div>';
   html += '<div class="section"><h3>Storage</h3>';
@@ -610,17 +609,6 @@ async function backupDatabase() {
   const data = await res.json();
   if (!res.ok) return document.getElementById('settingsStatus').textContent = 'Backup failed: ' + (data.detail || 'unknown');
   document.getElementById('settingsStatus').textContent = 'Backup saved: ' + data.backup_path + ' (' + data.size_mb + ' MB)';
-}
-async function changeEmail() {
-  const newEmail = document.getElementById('changeEmailNew').value.trim();
-  if (!newEmail) return alert('New email is required');
-  const res = await fetch(API + '/auth/change-email', { method:'POST', headers: authHeaders(), body: JSON.stringify({ new_email: newEmail }) });
-  const data = await res.json();
-  if (!res.ok) return alert('Failed: ' + (data.detail || 'unknown'));
-  document.getElementById('changeEmailCurrent').value = '';
-  document.getElementById('changeEmailNew').value = '';
-  alert(data.message || 'Email updated');
-  await loadProfile();
 }
 function setTheme(mode, color) {
   document.body.classList.remove('dark','warm','dawn','cozy');
