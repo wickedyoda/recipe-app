@@ -5,6 +5,7 @@ class Settings(BaseSettings):
     DATABASE_URL: str = "mysql+mysqlconnector://recipes:recipes@mysql:3306/recipes"
     SECRET_KEY: str = "change-me"
     MEDIA_ROOT: str = "/media"
+    ALLOWED_HOSTS: str = "localhost,127.0.0.1,backend,*.ts.net"
 
     SMTP_HOST: str = ""
     SMTP_PORT: int = 587
