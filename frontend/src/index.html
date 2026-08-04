@@ -90,10 +90,20 @@
   .row.space-between { justify-content: space-between; }
   .hidden { display: none !important; }
   .top { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .app-logo { color: var(--text-primary); text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
+  .app-logo:hover { opacity: 0.8; }
   .section { margin-bottom: 16px; }
   .section h3 { color: var(--text-muted); }
   body.dark .section h3 { color: #a07b5a; }
   .item { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border-light); }
+  .dropdown-item { display: flex; align-items: center; gap: 8px; padding: 8px 14px; border: none; background: none; font-size: 14px; color: #333; cursor: pointer; width: 100%; text-align: left; }
+  .dropdown-item:hover { background: rgba(0,0,0,0.05); }
+  .dropdown-item.logout { color: #c0392b; font-weight: 500; }
+  .dropdown-item.logout:hover { background: rgba(192,57,43,0.08); }
+  .dropdown-divider { height: 1px; background: #e0ddd7; margin: 4px 0; }
+  body.dark #dropdownMenu { background: #1a1a1e; border-color: #3a3a45; }
+  body.dark .dropdown-item { color: #ddd; }
+  body.dark .dropdown-item:hover { background: rgba(255,255,255,0.08); }
   body.dark .item { border-color: #3a2a1a; }
   .item:last-child { border-bottom: none; }
   .item a { color: var(--orange); text-decoration: none; word-break: break-all; }
@@ -300,21 +310,21 @@
   <div class="container" style="position:relative;">
   <div class="card">
     <div class="top">
-      <h1 style="margin:0;font-size:20px;">CookieRue</h1>
+      <h1 style="margin:0;font-size:20px;"><a href="#" onclick="switchTab('tabMenu');return false;" style="color:inherit;text-decoration:none;"><span style="font-size:18px;">🍪</span> CookieRue</a></h1>
       <div id="authArea" class="hidden">
         <span id="userEmail" style="font-size:12px;color:#555;"></span>
         <button class="secondary" id="menuBtn" onclick="toggleDropdown()" style="width:auto;padding:6px 10px;font-size:12px;">⋮</button>
       </div>
-      <div id="dropdownMenu" class="hidden" style="position:absolute;top:48px;right:8px;background:#fff;border:1px solid #ddd;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.1);z-index:100;min-width:140px;">
-        <button onclick="switchTab('tabMenu');closeDropdown()" style="display:block;width:100%;text-align:left;padding:10px 14px;border:none;background:none;font-size:14px;color:#333;cursor:pointer;">🏠 Menu</button>
-        <button onclick="switchTab('tabRecipes');closeDropdown()" style="display:block;width:100%;text-align:left;padding:10px 14px;border:none;background:none;font-size:14px;color:#333;cursor:pointer;">📋 Recipes</button>
-        <button onclick="switchTab('tabImport');closeDropdown()" style="display:block;width:100%;text-align:left;padding:10px 14px;border:none;background:none;font-size:14px;color:#333;cursor:pointer;">📥 Import</button>
-        <button onclick="switchTab('tabMeals');closeDropdown()" style="display:block;width:100%;text-align:left;padding:10px 14px;border:none;background:none;font-size:14px;color:#333;cursor:pointer;">🔥 Meal plans</button>
-        <button onclick="switchTab('tabGroceries');closeDropdown()" style="display:block;width:100%;text-align:left;padding:10px 14px;border:none;background:none;font-size:14px;color:#333;cursor:pointer;">🛒 Grocery lists</button>
-        <button onclick="switchTab('tabProfile');closeDropdown()" style="display:block;width:100%;text-align:left;padding:10px 14px;border:none;background:none;font-size:14px;color:#333;cursor:pointer;">👤 Profile</button>
-        <button onclick="openSettingsCard();toggleDropdown()" style="display:block;width:100%;text-align:left;padding:10px 14px;border:none;background:none;font-size:14px;color:#333;cursor:pointer;">⚙️ Settings</button>
-        <hr style="margin:4px 0;border:none;border-top:1px solid #eee;">
-        <button onclick="logout()" style="display:block;width:100%;text-align:left;padding:10px 14px;border:none;background:none;font-size:14px;color:#c0392b;cursor:pointer;">Logout</button>
+      <div id="dropdownMenu" class="hidden" style="position:absolute;top:56px;right:8px;background:#fcfafa;border:1px solid #e0ddd7;border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,0.12);z-index:1000;min-width:160px;">
+        <button onclick="switchTab('tabMenu');closeDropdown()" class="dropdown-item">🏠 Menu</button>
+        <button onclick="switchTab('tabRecipes');closeDropdown()" class="dropdown-item">📋 Recipes</button>
+        <button onclick="switchTab('tabImport');closeDropdown()" class="dropdown-item">📥 Import</button>
+        <button onclick="switchTab('tabMeals');closeDropdown()" class="dropdown-item">📅 Meal plans</button>
+        <button onclick="switchTab('tabGroceries');closeDropdown()" class="dropdown-item">🛒 Grocery lists</button>
+        <button onclick="switchTab('tabProfile');closeDropdown()" class="dropdown-item">👤 Profile</button>
+        <button onclick="openSettingsCard();toggleDropdown()" class="dropdown-item">⚙️ Settings</button>
+        <div class="dropdown-divider"></div>
+        <button onclick="logout()" class="dropdown-item logout">Logout</button>
       </div>
       <button class="secondary" id="themeToggle" onclick="toggleTheme()" style="width:auto;padding:6px 10px;font-size:12px;">🌙</button>
       <button class="secondary" id="themePicker" onclick="openThemePicker()" style="width:auto;padding:6px 10px;font-size:12px;">🎨</button>
@@ -359,12 +369,17 @@
               <span style="font-size:24px;margin-bottom:4px;">🏠</span>Recipes
             </button>
             <button class="secondary" onclick="switchTab('tabMeals')" style="flex-direction:column;align-items:center;padding:16px 12px;font-size:13px;">
-              <span style="font-size:24px;margin-bottom:4px;">🔥</span>Meal plans
+              <span style="font-size:24px;margin-bottom:4px;">📅</span>Meal plans
             </button>
             <button class="secondary" onclick="switchTab('tabGroceries')" style="flex-direction:column;align-items:center;padding:16px 12px;font-size:13px;">
               <span style="font-size:24px;margin-bottom:4px;">🛒</span>Grocery lists
             </button>
           </div>
+        </div>
+        <div class="card" style="padding:12px;">
+          <h3 style="margin:0 0 8px 0;font-size:14px;color:var(--text-muted);">Recent recipes</h3>
+          <div id="recentRecipesList" style="display:flex;flex-direction:column;gap:6px;"></div>
+          <button class="secondary" onclick="switchTab('tabRecipes')" style="width:100%;padding:8px;font-size:13px;margin-top:8px;">View all recipes →</button>
         </div>
         <div class="card" style="padding:12px;">
           <div style="display:flex;flex-direction:column;gap:8px;">
@@ -473,7 +488,7 @@
           <div>
             <input id="recipeTags" placeholder="Tags (comma separated)" />
           </div>
-          <button onclick="saveRecipe()">Save</button>
+          <button onclick="saveRecipe()">Continue</button>
           <button class="secondary" onclick="closeRecipeForm()">Cancel</button>
         </div>
         <div id="recipeDetail" class="card hidden">
@@ -693,42 +708,45 @@
           </div>
           <div class="section">
             <h3>Preferences</h3>
-            <div class="row">
-              <input id="defaultServings" type="number" min="1" max="20" value="4" style="flex:1;" />
-            </div>
+            <label style="font-size:13px;display:block;margin-bottom:6px;">Default servings</label>
+            <input id="defaultServings" type="number" min="1" max="20" value="4" />
           </div>
           <div class="section">
             <h3>Theme</h3>
-            <div class="row" style="gap:8px;">
-              <button class="secondary" onclick="setTheme('light','warm')" style="width:auto;padding:8px 10px;font-size:13px;">Light Warm</button>
-              <button class="secondary" onclick="setTheme('dark','warm')" style="width:auto;padding:8px 10px;font-size:13px;">Dark Warm</button>
+            <div class="row" style="gap:8px;margin-bottom:10px;">
+              <button class="secondary" id="themeToggleProfile" onclick="toggleTheme()" style="flex:1;padding:10px;font-size:14px;">🌙 Dark mode</button>
+              <button class="secondary" onclick="openThemePicker()" style="flex:1;padding:10px;font-size:14px;">🎨 Color theme</button>
             </div>
-            <div class="row" style="gap:8px;margin-top:6px;">
-              <button class="secondary" onclick="setTheme('light','dawn')" style="width:auto;padding:8px 10px;font-size:13px;">Light Dawn</button>
-              <button class="secondary" onclick="setTheme('dark','dawn')" style="width:auto;padding:8px 10px;font-size:13px;">Dark Dawn</button>
+            <div class="row" style="gap:6px;">
+              <button class="secondary" onclick="setTheme('light','warm')" style="flex:1;padding:8px;font-size:12px;">Light Warm</button>
+              <button class="secondary" onclick="setTheme('dark','warm')" style="flex:1;padding:8px;font-size:12px;">Dark Warm</button>
+              <button class="secondary" onclick="setTheme('light','dawn')" style="flex:1;padding:8px;font-size:12px;">Light Dawn</button>
+              <button class="secondary" onclick="setTheme('dark','dawn')" style="flex:1;padding:8px;font-size:12px;">Dark Dawn</button>
+              <button class="secondary" onclick="setTheme('light','cozy')" style="flex:1;padding:8px;font-size:12px;">Light Cozy</button>
+              <button class="secondary" onclick="setTheme('dark','cozy')" style="flex:1;padding:8px;font-size:12px;">Dark Cozy</button>
             </div>
-            <div class="row" style="gap:8px;margin-top:6px;">
-              <button class="secondary" onclick="setTheme('light','cozy')" style="width:auto;padding:8px 10px;font-size:13px;">Light Cozy</button>
-              <button class="secondary" onclick="setTheme('dark','cozy')" style="width:auto;padding:8px 10px;font-size:13px;">Dark Cozy</button>
-            </div>
-          </div>
           </div>
           <div class="section">
-          <h3>Security</h3>
-          <div class="row" style="gap:8px;">
-            <input id="changePasswordCurrent" type="password" placeholder="Current password" style="font-size:13px;flex:1;" />
-            <input id="changePasswordNew" type="password" placeholder="New password" style="font-size:13px;flex:1;" />
-          </div>
-          <button class="secondary" onclick="changePassword()" style="width:100%;padding:10px;font-size:14px;margin-top:6px;">Change password</button>
+            <h3>Security</h3>
+            <div style="margin-bottom:8px;">
+              <input id="changePasswordCurrent" type="password" placeholder="Current password" style="font-size:13px;width:100%;margin-bottom:6px;" />
+              <input id="changePasswordNew" type="password" placeholder="New password" style="font-size:13px;width:100%;margin-bottom:6px;" />
+              <input id="changePasswordVerify" type="password" placeholder="Verify new password" style="font-size:13px;width:100%;margin-bottom:8px;" />
+            </div>
+            <button class="secondary" onclick="changePassword()" style="width:100%;padding:10px;font-size:14px;">Change password</button>
           </div>
           <div class="section">
             <h3>Change email</h3>
-            <input id="changeEmailCurrent" type="email" placeholder="Current email" style="font-size:13px;flex:1;" />
-            <input id="changeEmailNew" type="email" placeholder="New email" style="font-size:13px;flex:1;" />
-            <button class="secondary" onclick="changeEmail()" style="width:100%;padding:10px;font-size:14px;margin-top:6px;">Change email</button>
+            <input id="changeEmailCurrent" type="email" placeholder="Current email" style="font-size:13px;width:100%;margin-bottom:6px;" />
+            <input id="changeEmailNew" type="email" placeholder="New email" style="font-size:13px;width:100%;margin-bottom:6px;" />
+            <button class="secondary" onclick="changeEmail()" style="width:100%;padding:10px;font-size:14px;">Change email</button>
+          </div>
+          <div class="section" style="border-top:1px solid var(--border-light);margin-top:16px;padding-top:16px;">
+            <h3 style="color:#c0392b;">Danger zone</h3>
+            <button class="secondary" onclick="exportUserData()" style="width:100%;padding:10px;font-size:14px;margin-bottom:8px;">📥 Export my data</button>
+            <button class="danger" onclick="deleteAccount()" style="width:100%;padding:10px;font-size:14px;">🗑️ Delete account</button>
           </div>
         </div>
-        <button onclick="saveSettings()">Save settings</button>
       </div>
     </div>
 
@@ -736,7 +754,7 @@
     <button data-tab="tabMenu" onclick="switchTab('tabMenu');closeDropdown()" aria-label="Menu">🏠</button>
     <button data-tab="tabImport" onclick="switchTab('tabImport');closeDropdown()" aria-label="Import">📥</button>
     <button data-tab="tabRecipes" onclick="switchTab('tabRecipes');closeDropdown()" aria-label="Recipes">🏠</button>
-    <button data-tab="tabMeals" onclick="switchTab('tabMeals')" aria-label="Meal plans">🔥</button>
+    <button data-tab="tabMeals" onclick="switchTab('tabMeals');closeDropdown()" aria-label="Meal plans">📅</button>
     <button data-tab="tabGroceries" onclick="switchTab('tabGroceries')" aria-label="Grocery lists">🛒</button>
     <button id="adminTabBtn" data-tab="tabAdmin" onclick="switchTab('tabAdmin')" class="hidden" aria-label="Admin">👤</button>
     <button data-tab="tabProfile" onclick="switchTab('tabProfile')" style="width:auto;padding:6px 10px;font-size:12px;" aria-label="Profile">👤</button>
@@ -792,10 +810,33 @@ function switchTab(name) {
   if (name === 'tabGroceries') renderGroceryLists();
   if (name === 'tabAdmin') { loadPending(); loadUsers(); }
   if (name === 'tabProfile') { loadProfile(); }
+  if (name === 'tabMenu') { loadRecentRecipes(); }
 }
 function toggleDropdown() {
   const menu = document.getElementById('dropdownMenu');
-  menu.classList.toggle('hidden');
+  const btn = document.getElementById('menuBtn');
+  if (menu.classList.contains('hidden')) {
+    menu.classList.remove('hidden');
+    // Position dropdown relative to the button
+    if (btn) {
+      const rect = btn.getBoundingClientRect();
+      const menuWidth = 176; // min-width is 160px + some padding
+      const spaceRight = window.innerWidth - rect.right;
+      const spaceLeft = rect.left;
+      // If not enough space on the right, align to right edge of button
+      if (spaceRight < menuWidth && spaceLeft >= menuWidth) {
+        menu.style.right = '0px';
+        menu.style.left = 'auto';
+      } else {
+        menu.style.left = (rect.right - menuWidth) + 'px';
+        menu.style.right = 'auto';
+      }
+      // Position below the button
+      menu.style.top = (rect.bottom + window.scrollY - 4) + 'px';
+    }
+  } else {
+    menu.classList.add('hidden');
+  }
 }
 function closeDropdown() {
   const menu = document.getElementById('dropdownMenu');
@@ -820,6 +861,29 @@ async function loadProfile() {
   document.getElementById('profileName').value = user.display_name || '';
   document.getElementById('profileAvatar').value = user.avatar_url || '';
   document.getElementById('defaultServings').value = (saved.defaultServings || 4);
+}
+
+async function loadRecentRecipes() {
+  const res = await fetch(API + '/recipes/?limit=5', { headers: authHeaders() });
+  if (!res.ok) return;
+  const recipes = await res.json();
+  const container = document.getElementById('recentRecipesList');
+  if (!container) return;
+  if (!recipes.length) {
+    container.innerHTML = '<div style="font-size:13px;color:var(--text-muted);padding:4px 0;">No recent recipes</div>';
+    return;
+  }
+  container.innerHTML = recipes.slice(0, 3).map(r => {
+    const img = (r.images && r.images[0]) ? r.images[0] : (r.thumbnail_url || '');
+    const rating = r.rating ? '★'.repeat(Math.round(r.rating)) : '';
+    const imgHtml = img ? '<img src="/media/static/' + escapeHtml(img) + '" style="width:32px;height:32px;border-radius:4px;object-fit:cover;flex-shrink:0;" />' : '<span style="width:32px;height:32px;border-radius:4px;background:#eee;display:inline-block;flex-shrink:0;"></span>';
+    return '<div style="display:flex;align-items:center;gap:8px;padding:4px 0;cursor:pointer;" onclick="switchTab(\'tabRecipes\');setTimeout(()=>openRecipeDetail(' + r.id + ')',100);">' +
+      imgHtml +
+      '<div style="flex:1;min-width:0;">' +
+      '<div style="font-size:13px;font-weight:500;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escapeHtml(r.title) + '</div>' +
+      (rating ? '<div style="font-size:11px;color:#f59e0b;">' + rating + '</div>' : '') +
+      '</div></div>';
+  }).join('');
 }
 
 function openSettingsCard() {
@@ -899,13 +963,16 @@ function saveSettings() {
 async function changePassword() {
   const current = document.getElementById('changePasswordCurrent').value;
   const newPass = document.getElementById('changePasswordNew').value;
-  if (!current || !newPass) return alert('Both fields are required');
+  const verify = document.getElementById('changePasswordVerify').value;
+  if (!current || !newPass) return alert('All fields are required');
+  if (newPass !== verify) return alert('New passwords do not match');
   if (newPass.length < 6) return alert('New password must be at least 6 characters');
   const res = await fetch(API + '/auth/change-password', { method:'POST', headers: authHeaders(), body: JSON.stringify({current_password: current, new_password: newPass}) });
   const data = await res.json();
   if (!res.ok) return alert('Failed: ' + (data.detail || 'unknown'));
   document.getElementById('changePasswordCurrent').value = '';
   document.getElementById('changePasswordNew').value = '';
+  document.getElementById('changePasswordVerify').value = '';
   alert('Password changed successfully');
 }
 async function changeEmail() {
@@ -934,15 +1001,18 @@ async function exportUserData() {
   alert('Data exported to cookieRue-data.json');
 }
 async function deleteAccount() {
+  if (!confirm('Are you sure? This will permanently delete your account and all your data. This cannot be undone.')) return;
+  if (!confirm('Type DELETE to confirm deletion.')) return;
   const confirmText = prompt('Type DELETE to confirm permanent deletion:');
-  if (confirmText !== 'DELETE') return alert('Confirmation did not match. Account not deleted.');
-  const res = await fetch(API + '/auth/me/delete', { method: 'DELETE', headers: authHeaders() });
+  if (confirmText !== 'DELETE') return alert('Deletion cancelled — confirmation text did not match');
+  const res = await fetch(API + '/auth/me/delete', { method:'POST', headers: authHeaders() });
   const data = await res.json();
   if (!res.ok) return alert('Failed: ' + (data.detail || 'unknown'));
-  alert('Account and all data deleted. You will be logged out.');
   localStorage.removeItem('token');
-  location.reload();
+  alert('Account deleted. You have been logged out.');
+  window.location.reload();
 }
+
 let cookingRecipe = null;
 
 if (token) initApp();
@@ -1356,7 +1426,8 @@ async function saveRecipe() {
   const data = await res.json();
   if (!res.ok) return alert('Save failed: ' + (data.detail || 'unknown'));
   closeRecipeForm();
-  renderRecipes();
+  switchTab('tabRecipes');
+  setTimeout(() => openRecipeDetail(data.id), 100);
 }
 async function openRecipeDetail(id) {
   currentRecipeId = id;
@@ -2285,6 +2356,8 @@ function toggleTheme() {
   else document.body.classList.add(theme);
   localStorage.setItem('theme', (isDark?'dark':'light') + '.' + theme);
   document.getElementById('themeToggle').textContent = isDark ? '☀️' : '🌙';
+  const profileToggle = document.getElementById('themeToggleProfile');
+  if (profileToggle) profileToggle.textContent = isDark ? '☀️ Light mode' : '🌙 Dark mode';
 }
 function getCurrentTheme() {
   const t = localStorage.getItem('theme') || 'light.warm';
