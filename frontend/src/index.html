@@ -75,7 +75,8 @@
           <input type="checkbox" id="saveLogin" style="width:auto;margin:0;" /> Save login
         </label>
       </div>
-      <button onclick="login()">Login</button>
+      <button id="loginButton" onclick="login()">Login</button>
+      <p id="loginStatus" role="alert" style="font-size:13px;color:#b91c1c;margin:8px 0 0;"></p>
       <button class="secondary" onclick="showRegister()">Create account</button>
     </div>
 
@@ -407,15 +408,36 @@ async function login() {
   const email = document.getElementById('loginEmail').value.trim();
   const password = document.getElementById('loginPassword').value;
   const saveLogin = document.getElementById('saveLogin').checked;
-  if (saveLogin) {
-    localStorage.setItem('saved_login', JSON.stringify({email,password}));
-  } else {
-    localStorage.removeItem('saved_login');
+  const status = document.getElementById('loginStatus');
+  const button = document.getElementById('loginButton');
+  status.textContent = '';
+  if (!email || !password) {
+    status.textContent = 'Enter your email and password.';
+    return;
   }
-  const res = await fetch(API + '/auth/login', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({email,password}) });
-  const data = await res.json();
-  if (!res.ok) return alert('Login failed: ' + (data.detail || 'unknown'));
-  token = data.access_token; localStorage.setItem('token', token); initApp();
+  button.disabled = true;
+  button.textContent = 'Signing in...';
+  try {
+    const res = await fetch(API + '/auth/login', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({email,password}) });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      status.textContent = data.detail || 'Unable to sign in.';
+      return;
+    }
+    if (saveLogin) {
+      localStorage.setItem('saved_login', JSON.stringify({email,password}));
+    } else {
+      localStorage.removeItem('saved_login');
+    }
+    token = data.access_token;
+    localStorage.setItem('token', token);
+    await initApp();
+  } catch (err) {
+    status.textContent = 'Unable to reach the server. Please try again.';
+  } finally {
+    button.disabled = false;
+    button.textContent = 'Login';
+  }
 }
 function toggleLoginPassword() {
   const input = document.getElementById('loginPassword');
@@ -448,11 +470,19 @@ function showLogin() {
 }
 
 async function initApp() {
-  const me = await fetch(API + '/auth/me', { headers: authHeaders() });
+  let me;
+  try {
+    me = await fetch(API + '/auth/me', { headers: authHeaders() });
+  } catch (err) {
+    document.getElementById('loginStatus').textContent = 'Unable to reach the server. Please try again.';
+    return;
+  }
   if (!me.ok) {
     const data = await me.json().catch(() => ({detail:'not authorized'}));
-    alert('Access: ' + (data.detail || 'not authorized'));
-    return logout();
+    localStorage.removeItem('token');
+    token = null;
+    document.getElementById('loginStatus').textContent = data.detail || 'Your session is no longer valid. Please sign in again.';
+    return;
   }
   const user = await me.json();
   document.getElementById('loginSection').classList.add('hidden');
@@ -1025,7 +1055,7 @@ async function addMealEntry(date, meal) {
   const plan = await planRes.json();
   await renderPlanner(plan);
 }
-function selectPlannerRecipe(entryId) {
+async function selectPlannerRecipe(entryId) {
   const recipes = window._plannerRecipes || [];
   const names = recipes.map(r => r.title).join('\n');
   const chosen = prompt('Enter new recipe name:\n' + names);

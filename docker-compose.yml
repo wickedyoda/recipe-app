@@ -54,7 +54,7 @@ services:
     pull_policy: always
     restart: unless-stopped
     ports:
-      - "${FRONTEND_PORT:-3000}:3000"
+      - "${FRONTEND_PORT:-3000}:80"
     depends_on:
       - backend
 
