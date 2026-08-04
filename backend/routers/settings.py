@@ -1,18 +1,32 @@
-from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
-from typing import Optional
 import os
 import shutil
+import subprocess
 import tempfile
+from typing import Optional
+from urllib.parse import urlparse
+
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, field_validator
+
 from backend.config import settings
-from backend.services.auth import get_current_user, require_role
-from backend.models import User, Role
+from backend.models import Role, User
+from backend.services.auth import require_role
 
 router = APIRouter(prefix="/settings", tags=["settings"])
 
 
 class HostUpdate(BaseModel):
     host: str
+
+    @field_validator("host")
+    @classmethod
+    def validate_host(cls, v: str) -> str:
+        v = v.strip()
+        if not v or "," in v or "=" in v or "\n" in v or "\r" in v:
+            raise ValueError("Invalid host: must not contain commas, equals, or newlines")
+        if "/" in v:
+            raise ValueError("Invalid host: must not contain slashes")
+        return v
 
 
 class SettingsOut(BaseModel):
@@ -67,11 +81,7 @@ def add_allowed_host(
         return {"status": "ok", "allowed_hosts": hosts, "message": "Host already in list"}
     hosts.append(payload.host)
     new_str = ",".join(hosts)
-    # Update the settings object (for runtime use)
-    settings.__dict__["_settings__fields_set"] = True
-    # Write to .env file
     _update_env("ALLOWED_HOSTS", new_str)
-    # Update runtime setting
     object.__setattr__(settings, "ALLOWED_HOSTS", new_str)
     return {"status": "ok", "allowed_hosts": settings.ALLOWED_HOSTS_LIST, "message": f"Added {payload.host}"}
 
@@ -83,9 +93,9 @@ def remove_allowed_host(
 ):
     hosts = settings.ALLOWED_HOSTS_LIST
     if host not in hosts:
-        return {"status": "ok", "allowed_hosts": hosts, "message": "Host not in list"}
+        raise HTTPException(status_code=404, detail="Host not in allowed list")
     if host in ("localhost", "127.0.0.1", "*"):
-        return {"status": "error", "message": "Cannot remove default host"}
+        raise HTTPException(status_code=400, detail="Cannot remove default host")
     hosts.remove(host)
     new_str = ",".join(hosts)
     _update_env("ALLOWED_HOSTS", new_str)
@@ -96,18 +106,17 @@ def remove_allowed_host(
 @router.get("/storage", response_model=dict)
 def get_storage_info(_: User = Depends(require_role(Role.admin))):
     media_root = settings.MEDIA_ROOT
-    usage = {"media_root": media_root, "files": 0, "total_bytes": 0, "total_gb": 0}
+    usage: dict = {"media_root": media_root, "files": 0, "total_bytes": 0, "total_gb": 0}
     try:
         if os.path.isdir(media_root):
-            for root, dirs, files in os.walk(media_root):
+            for root, _, files in os.walk(media_root):
                 for f in files:
                     fp = os.path.join(root, f)
                     usage["files"] += 1
                     usage["total_bytes"] += os.path.getsize(fp)
             usage["total_gb"] = round(usage["total_bytes"] / (1024**3), 2)
-    except Exception as e:
-        usage["error"] = str(e)
-    # Also report disk space
+    except Exception:
+        usage["error"] = "Unable to read media storage"
     disk = shutil.disk_usage(media_root if os.path.isdir(media_root) else "/")
     usage["disk_total_gb"] = round(disk.total / (1024**3), 2)
     usage["disk_used_gb"] = round(disk.used / (1024**3), 2)
@@ -120,40 +129,44 @@ def backup_database(_: User = Depends(require_role(Role.admin))):
     """Create a database backup (MySQL dump or SQLite copy)."""
     db_url = settings.DATABASE_URL
     try:
+        fd, backup_path = tempfile.mkstemp(suffix=".sql", prefix="recipe_app_backup_")
+        os.close(fd)
         if db_url.startswith("sqlite"):
             db_path = db_url.replace("sqlite:///", "")
             if not os.path.isfile(db_path):
-                raise FileNotFoundError(f"SQLite database not found at {db_path}")
-            backup_path = "/tmp/recipe_app_backup.sql"
+                raise FileNotFoundError("SQLite database not found")
             shutil.copy2(db_path, backup_path)
         elif "mysql" in db_url:
-            import re
-            # Parse connection info from DATABASE_URL
-            match = re.match(r'mysql\+mysqlconnector://([^:]+):([^@]+)@([^:]+):(\d+)/(.+)', db_url)
-            if not match:
-                raise ValueError("Could not parse MySQL DATABASE_URL")
-            user, password, host, port, db = match.groups()
-            backup_path = "/tmp/recipe_app_backup.sql"
-            import subprocess
+            parsed = urlparse(db_url)
+            user = parsed.username or ""
+            password = parsed.password or ""
+            host = parsed.hostname or "localhost"
+            port = parsed.port or 3306
+            db = parsed.path.lstrip("/")
+            env = os.environ.copy()
+            env["MYSQL_PWD"] = password
             result = subprocess.run(
-                ["mysqldump", f"-h{host}", f"-P{port}", f"-u{user}", f"-p{password}", db],
-                capture_output=True, text=True
+                ["mysqldump", f"-h{host}", f"-P{port}", f"-u{user}", db],
+                capture_output=True, text=True, env=env
             )
             if result.returncode != 0:
-                raise RuntimeError(f"mysqldump failed: {result.stderr}")
+                raise RuntimeError("Database backup failed")
             with open(backup_path, "w") as f:
                 f.write(result.stdout)
         else:
-            raise ValueError(f"Unsupported database type: {db_url[:10]}")
+            raise ValueError("Unsupported database type")
         file_size = os.path.getsize(backup_path)
         return {
             "status": "ok",
             "backup_path": backup_path,
-            "size_bytes": file_size,
             "size_mb": round(file_size / (1024**2), 2),
         }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except RuntimeError:
+        raise HTTPException(status_code=500, detail="Database backup failed")
+    except FileNotFoundError:
+        raise HTTPException(status_code=500, detail="Database file not found")
+    except Exception:
+        raise HTTPException(status_code=500, detail="Unexpected error during backup")
 
 
 def _update_env(key: str, value: str):
@@ -162,7 +175,7 @@ def _update_env(key: str, value: str):
     lines = []
     found = False
     if os.path.exists(env_path):
-        with open(env_path, "r") as f:
+        with open(env_path) as f:
             for line in f:
                 if line.strip().startswith(key + "="):
                     lines.append(f"{key}={value}\n")
