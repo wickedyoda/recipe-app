@@ -14,11 +14,12 @@ from backend.services.auth import hash_password
 def _bootstrap_default_admin() -> None:
     db = SessionLocal()
     try:
-        existing = db.query(User).filter(User.email == settings.DEFAULT_ADMIN_EMAIL).first()
+        admin_email = settings.DEFAULT_ADMIN_EMAIL.strip().lower()
+        existing = db.query(User).filter(User.email == admin_email).first()
         if existing:
             return
         admin = User(
-            email=settings.DEFAULT_ADMIN_EMAIL,
+            email=admin_email,
             hashed_password=hash_password(settings.DEFAULT_ADMIN_PASSWORD),
             display_name=settings.DEFAULT_ADMIN_DISPLAY_NAME,
             role=Role.admin,
@@ -47,7 +48,7 @@ app.add_middleware(
 )
 app.add_middleware(
     TrustedHostMiddleware,
-    allowed_hosts=["localhost", "127.0.0.1", "*.example.com"],
+    allowed_hosts=[host.strip() for host in settings.ALLOWED_HOSTS.split(",") if host.strip()],
 )
 app.mount("/media", StaticFiles(directory="backend/media"), name="backend-media")
 

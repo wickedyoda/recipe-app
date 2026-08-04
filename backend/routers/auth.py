@@ -52,11 +52,12 @@ class UpdateProfileRequest(BaseModel):
 
 @router.post("/register", response_model=dict)
 def register(payload: RegisterRequest, db: Session = Depends(get_db)):
-    existing = db.query(User).filter(User.email == payload.email).first()
+    email = payload.email.strip().lower()
+    existing = db.query(User).filter(User.email == email).first()
     if existing:
         raise HTTPException(status_code=400, detail="Email already registered")
     user = User(
-        email=payload.email,
+        email=email,
         hashed_password=hash_password(payload.password),
         display_name=payload.display_name,
         is_active=0,
@@ -76,7 +77,8 @@ def register(payload: RegisterRequest, db: Session = Depends(get_db)):
 
 @router.post("/login", response_model=TokenOut)
 def login(payload: LoginRequest, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.email == payload.email).first()
+    email = payload.email.strip().lower()
+    user = db.query(User).filter(User.email == email).first()
     if not user or not verify_password(payload.password, user.hashed_password):
         raise HTTPException(status_code=400, detail="Incorrect email or password")
     if not user.is_approved:
