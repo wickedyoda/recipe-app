@@ -1275,7 +1275,7 @@ function renderPlannerSlots(dayKey, byDay, recipeMap) {
       card.dataset.entryId = entry.id;
       const row = document.createElement('div');
       row.style.cssText = 'display:flex;justify-content:space-between;align-items:center;gap:8px;';
-      row.innerHTML = '<div><div style=\"font-weight:500;\">' + escapeHtml(recipeMap[entry.recipe_id] || ('Recipe #' + entry.recipe_id)) + '</div><div class=\"meta\">' + escapeHtml(entry.date || dayKey) + '</div></div><div style=\"display:flex;gap:8px;\"><button class=\"secondary\" onclick=\"selectPlannerRecipe(' + entry.id + ')\" style=\"width:auto;padding:8px 10px;font-size:12px;\">Change</button><button class=\"danger\" onclick=\"deleteMealEntry(' + entry.id + ')\" style=\"width:auto;padding:8px 10px;font-size:12px;\">Remove</button></div>';
+      row.innerHTML = '<div><div style=\"font-weight:500;\">' + escapeHtml(((recipeCategories[entry.recipe_id] ? categoryIcon(recipeCategories[entry.recipe_id]) + ' ' : '') + recipeMap[entry.recipe_id]) || ('Recipe #' + entry.recipe_id)) + '</div><div class=\"meta\">' + escapeHtml(entry.date || dayKey) + '</div></div><div style=\"display:flex;gap:8px;\"><button class=\"secondary\" onclick=\"selectPlannerRecipe(' + entry.id + ')\" style=\"width:auto;padding:8px 10px;font-size:12px;\">Change</button><button class=\"danger\" onclick=\"deleteMealEntry(' + entry.id + ')\" style=\"width:auto;padding:8px 10px;font-size:12px;\">Remove</button></div>';
       card.appendChild(row);
     } else {
       const addBtn = document.createElement('button');
