@@ -984,7 +984,7 @@ async function uploadRecipePhoto() {
 }
 async function addIngredientToGrocery(name) {
   if (!currentRecipeId) return;
-  const listName = prompt('Add to grocery list:', (document.getElementById('detailTitle').textContent || '') + ' groceries');
+  const listName = prompt('Add to grocery list:', (document.getElementById('detailTitle').textContent || '').trim() + ' groceries');
   if (!listName) return;
   const listRes = await fetch(API + '/grocery-lists', { method:'POST', headers: authHeaders(), body: JSON.stringify({name: listName}) });
   const list = await listRes.json();
@@ -997,7 +997,7 @@ async function addAllIngredientsToGrocery() {
   const r = await (await fetch(API + '/recipes/' + currentRecipeId, { headers: authHeaders() })).json();
   const lines = (r.ingredients || '').split('\n').filter(Boolean).slice(0, 30);
   if (!lines.length) return alert('No ingredients to add');
-  const listName = prompt('Grocery list name:', (document.getElementById('detailTitle').textContent || '') + ' groceries');
+  const listName = prompt('Grocery list name:', (document.getElementById('detailTitle').textContent || '').trim() + ' groceries');
   if (!listName) return;
   const listRes = await fetch(API + '/grocery-lists', { method:'POST', headers: authHeaders(), body: JSON.stringify({name: listName}) });
   const list = await listRes.json();
