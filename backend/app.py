@@ -40,14 +40,14 @@ app = FastAPI(title="Recipe App API", version="0.1.0")
 app.add_middleware(GZipMiddleware, minimum_size=1024)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000", "http://docker.tail99133.ts.net:3000"],
+    allow_origins=settings.ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 app.add_middleware(
     TrustedHostMiddleware,
-    allowed_hosts=["localhost", "127.0.0.1", "*.example.com"],
+    allowed_hosts=settings.ALLOWED_HOSTS,
 )
 app.mount("/media", StaticFiles(directory="backend/media"), name="backend-media")
 
