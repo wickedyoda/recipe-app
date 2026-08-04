@@ -40,7 +40,7 @@ app = FastAPI(title="Recipe App API", version="0.1.0")
 app.add_middleware(GZipMiddleware, minimum_size=1024)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000", "http://docker.tail99133.ts.net:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
