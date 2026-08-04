@@ -49,16 +49,26 @@ def create_recipe(payload: RecipeCreate, db: Session = Depends(get_db), current_
     return RecipeOut.model_validate(recipe)
 
 @router.get("", response_model=list[RecipeOut])
-def list_recipes(db: Session = Depends(get_db), current_user: User = Depends(get_current_user), q: str = ""):
+def list_recipes(db: Session = Depends(get_db), current_user: User = Depends(get_current_user), q: str = "", limit: int = 200):
     rows = db.query(Recipe).filter(Recipe.owner_id==current_user.id)
     if q:
         rows = rows.filter(Recipe.title.ilike(f"%{q}%"))
-    rows = rows.order_by(Recipe.created_at.desc()).limit(200).all()
+    rows = rows.order_by(Recipe.created_at.desc()).limit(limit).all()
+    recipe_ids = [r.id for r in rows]
+    # Batch queries to avoid N+1
+    tag_results = db.query(RecipeTag.recipe_id, Tag.name).join(Tag, Tag.id==RecipeTag.tag_id).filter(RecipeTag.recipe_id.in_(recipe_ids)).all()
+    recipe_tags = {}
+    for rid, tname in tag_results:
+        recipe_tags.setdefault(rid, []).append(tname)
+    photo_results = db.query(RecipePhoto.recipe_id, RecipePhoto.path).filter(RecipePhoto.recipe_id.in_(recipe_ids)).order_by(RecipePhoto.id.asc()).all()
+    recipe_photos = {}
+    for rid, path in photo_results:
+        recipe_photos.setdefault(rid, []).append(path)
     out = []
     for r in rows:
         data = RecipeOut.model_validate(r).model_dump()
-        data["tags"] = [t.name for t in db.query(Tag).join(RecipeTag, RecipeTag.tag_id==Tag.id).filter(RecipeTag.recipe_id==r.id).all()]
-        data["photos"] = [p.path for p in db.query(RecipePhoto).filter(RecipePhoto.recipe_id==r.id).order_by(RecipePhoto.id.asc()).all()]
+        data["tags"] = recipe_tags.get(r.id, [])
+        data["photos"] = recipe_photos.get(r.id, [])
         out.append(data)
     return out
 
@@ -179,15 +189,19 @@ def upload_step_photo(recipe_id: int, step_index: int = 0, file: UploadFile = Fi
 @router.get("/export")
 def export_recipes(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     recipes = db.query(Recipe).filter(Recipe.owner_id==current_user.id).order_by(Recipe.created_at.desc()).all()
-    tag_map = {}
-    for t in db.query(Tag).filter(Tag.owner_id==current_user.id).all():
-        tag_map[t.id] = t.name
-    photo_map = {}
-    for p in db.query(RecipePhoto).filter(RecipePhoto.owner_id==current_user.id).all():
-        photo_map.setdefault(p.recipe_id, []).append(p.path)
+    sel_ids = [r.id for r in recipes]
+    # Batch queries to avoid N+1
+    tag_name_results = db.query(RecipeTag.recipe_id, Tag.name).join(Tag, Tag.id==RecipeTag.tag_id).filter(RecipeTag.recipe_id.in_(sel_ids)).all()
+    recipe_tag_map = {}
+    for rid, tname in tag_name_results:
+        recipe_tag_map.setdefault(rid, []).append(tname)
+    photo_results = db.query(RecipePhoto.recipe_id, RecipePhoto.path).filter(RecipePhoto.recipe_id.in_(sel_ids)).order_by(RecipePhoto.id.asc()).all()
+    recipe_photo_map = {}
+    for rid, path in photo_results:
+        recipe_photo_map.setdefault(rid, []).append(path)
     payload = []
     for r in recipes:
-        recipe_tags = [t.name for t in db.query(Tag).join(RecipeTag, RecipeTag.tag_id==Tag.id).filter(RecipeTag.recipe_id==r.id).all()]
+        recipe_tags = recipe_tag_map.get(r.id, [])
         payload.append({
             "title": r.title,
             "description": r.description,
@@ -206,7 +220,7 @@ def export_recipes(db: Session = Depends(get_db), current_user: User = Depends(g
             "category": r.category,
             "subcategory": r.subcategory,
             "tags": recipe_tags,
-            "photos": photo_map.get(r.id, []),
+            "photos": recipe_photo_map.get(r.id, []),
         })
     data = json.dumps(payload, ensure_ascii=False, default=str).encode("utf-8")
     return Response(content=data, media_type="application/json", headers={"Content-Disposition": "attachment; filename=recipes.json"})
@@ -219,15 +233,19 @@ async def export_selected(request: Request, db: Session = Depends(get_db), curre
     if not ids:
         return Response(content=b'[]', media_type="application/json")
     recipes = db.query(Recipe).filter(Recipe.id.in_(ids), Recipe.owner_id==current_user.id).all()
-    tag_map = {}
-    for t in db.query(Tag).filter(Tag.owner_id==current_user.id).all():
-        tag_map[t.id] = t.name
-    photo_map = {}
-    for p in db.query(RecipePhoto).filter(RecipePhoto.owner_id==current_user.id).all():
-        photo_map.setdefault(p.recipe_id, []).append(p.path)
+    sel_ids = [r.id for r in recipes]
+    # Batch queries to avoid N+1
+    tag_name_results = db.query(RecipeTag.recipe_id, Tag.name).join(Tag, Tag.id==RecipeTag.tag_id).filter(RecipeTag.recipe_id.in_(sel_ids)).all()
+    recipe_tag_map = {}
+    for rid, tname in tag_name_results:
+        recipe_tag_map.setdefault(rid, []).append(tname)
+    photo_results = db.query(RecipePhoto.recipe_id, RecipePhoto.path).filter(RecipePhoto.recipe_id.in_(sel_ids)).order_by(RecipePhoto.id.asc()).all()
+    recipe_photo_map = {}
+    for rid, path in photo_results:
+        recipe_photo_map.setdefault(rid, []).append(path)
     payload = []
     for r in recipes:
-        recipe_tags = [t.name for t in db.query(Tag).join(RecipeTag, RecipeTag.tag_id==Tag.id).filter(RecipeTag.recipe_id==r.id).all()]
+        recipe_tags = recipe_tag_map.get(r.id, [])
         payload.append({
             "title": r.title,
             "description": r.description,
@@ -246,7 +264,7 @@ async def export_selected(request: Request, db: Session = Depends(get_db), curre
             "category": r.category,
             "subcategory": r.subcategory,
             "tags": recipe_tags,
-            "photos": photo_map.get(r.id, []),
+            "photos": recipe_photo_map.get(r.id, []),
         })
     out = json.dumps(payload, ensure_ascii=False, default=str).encode("utf-8")
     return Response(content=out, media_type="application/json", headers={"Content-Disposition": "attachment; filename=recipes-selected.json"})

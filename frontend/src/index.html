@@ -786,6 +786,10 @@ let currentPlanId = null;
 let currentGroceryId = null;
 let editingRecipeId = null;
 const viewType = localStorage.getItem('viewType') || 'list';
+let _recipeCache = null;
+let _recipeCacheTime = 0;
+let _plansCache = null;
+let _plansCacheTime = 0;
 
 function authHeaders() {
   return { 'Content-Type':'application/json', Authorization: 'Bearer ' + token };
@@ -794,6 +798,11 @@ function authHeadersNoJson() {
   const h = authHeaders();
   delete h['Content-Type'];
   return h;
+}
+async function loadRecipesFromAPI() {
+  const res = await fetch(API + '/recipes', { headers: authHeaders() });
+  if (!res.ok) return [];
+  return await res.json();
 }
 function escapeHtml(text) {
   return String(text||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -889,9 +898,15 @@ async function loadProfile() {
 }
 
 async function loadRecentRecipes() {
-  const res = await fetch(API + '/recipes/?limit=5', { headers: authHeaders() });
-  if (!res.ok) return;
-  const recipes = await res.json();
+  const now = Date.now();
+  let recipes;
+  if (_recipeCache && (now - _recipeCacheTime < 30000)) {
+    recipes = _recipeCache;
+  } else {
+    recipes = await loadRecipesFromAPI();
+    _recipeCache = recipes;
+    _recipeCacheTime = now;
+  }
   const container = document.getElementById('recentRecipesList');
   if (!container) return;
   if (!recipes.length) {
@@ -1240,10 +1255,18 @@ function categoryIcon(cat) { return (cat && categoryIcons[cat]) || '📝'; }
 
 async function renderRecipes() {
   const q = (document.getElementById('recipeSearch')?.value || '').trim().toLowerCase();
-  const res = await fetch(API + '/recipes', { headers: authHeaders() });
-  if (!res.ok) return;
-  const items = await res.json();
+  let items;
+  const now = Date.now();
+  if (_recipeCache && (now - _recipeCacheTime < 30000)) {
+    items = _recipeCache;
+  } else {
+    items = await loadRecipesFromAPI();
+    if (!items.length && _recipeCache) return;
+    _recipeCache = items;
+    _recipeCacheTime = now;
+  }
   const favs = new Set(JSON.parse(localStorage.getItem('recipe_favorites') || '[]'));
+  const favsById = new Set([...favs].map(x => parseInt(x)));
   const categories = Array.from(new Set(items.map(r => r.category).filter(Boolean))).slice(0, 20);
   const filterBox = document.getElementById('recipeCategoryFilters');
   const activeCategory = filterBox.dataset.active || '';
@@ -1258,7 +1281,7 @@ async function renderRecipes() {
     const matchesCategory = !activeCategory || r.category === activeCategory;
     const matchesMeal = !activeMeal || (r.category || '').toLowerCase() === activeMeal.toLowerCase();
     const matchesSub = !activeSub || (r.subcategory || '').toLowerCase() === activeSub.toLowerCase();
-    const matchesFav = !filterBox.dataset.favs || favs.has(String(r.id));
+    const matchesFav = !filterBox.dataset.favs || favsById.has(r.id);
     return matchesSearch && matchesCategory && matchesMeal && matchesSub && matchesFav;
   });
   const favPill = document.getElementById('favPill');
@@ -1273,7 +1296,7 @@ async function renderRecipes() {
     el.className = 'recipe-list-item';
     if (!window.recipeSelectionMode) el.onclick = function() { openRecipeDetail(r.id); };
     el.style.cursor = 'pointer';
-    const heart = favs.has(String(r.id)) ? '❤' : '🤍';
+    const heart = favsById.has(r.id) ? '❤' : '🤍';
     const stars = r.rating ? '★'.repeat(Math.round(r.rating)) : '';
     const flavorStars = r.flavor_rating ? ' Flavor:' + '★'.repeat(Math.round(r.flavor_rating)) : '';
     const effortStars = r.effort_rating ? ' Effort:' + '★'.repeat(Math.round(r.effort_rating)) : '';
@@ -1341,6 +1364,7 @@ window.toggleViewType = function() {
   }
 };
 window.toggleFavorite = function(id) {
+  _recipeCacheTime = 0; // invalidate cache
   const favs = new Set(JSON.parse(localStorage.getItem('recipe_favorites') || '[]'));
   if (favs.has(String(id))) favs.delete(String(id)); else favs.add(String(id));
   localStorage.setItem('recipe_favorites', JSON.stringify([...favs]));
@@ -1369,6 +1393,7 @@ async function exportRecipes() {
 window.selectedRecipes = new Set();
 
 function deleteRecipe(id) {
+  _recipeCacheTime = 0;
   if (!confirm('Delete this recipe? This cannot be undone.')) return;
   fetch(API + '/recipes/' + id, { method: 'DELETE', headers: authHeaders() })
     .then(r => r.json())
@@ -1379,6 +1404,7 @@ function deleteRecipe(id) {
     .catch(() => alert('Delete failed'));
 }
 function deleteCurrentRecipe() {
+  _recipeCacheTime = 0;
   if (!currentRecipeId) return;
   if (!confirm('Delete this recipe? This cannot be undone.')) return;
   fetch(API + '/recipes/' + currentRecipeId, { method: 'DELETE', headers: authHeaders() })
@@ -1391,6 +1417,7 @@ function deleteCurrentRecipe() {
     .catch(() => alert('Delete failed'));
 }
 function deletePlanWithConfirm(id) {
+  _plansCacheTime = 0;
   if (!confirm('Delete this meal plan? All entries will be removed. This cannot be undone.')) return;
   fetch(API + '/meal-plans/' + id, { method: 'DELETE', headers: authHeaders() })
     .then(r => r.json())
@@ -1401,6 +1428,7 @@ function deletePlanWithConfirm(id) {
     .catch(() => alert('Delete failed'));
 }
 function deleteCurrentPlan() {
+  _plansCacheTime = 0;
   if (!currentPlanId) return;
   if (!confirm('Delete this meal plan? All entries will be removed. This cannot be undone.')) return;
   fetch(API + '/meal-plans/' + currentPlanId, { method: 'DELETE', headers: authHeaders() })
@@ -1769,8 +1797,16 @@ async function deleteNote(id) {
 }
 
 async function renderPlans() {
-  const res = await fetch(API + '/meal-plans', { headers: authHeaders() });
-  const items = await res.json();
+  let items;
+  const now = Date.now();
+  if (_plansCache && (now - _plansCacheTime < 30000)) {
+    items = _plansCache;
+  } else {
+    const res = await fetch(API + '/meal-plans', { headers: authHeaders() });
+    items = await res.json();
+    _plansCache = items;
+    _plansCacheTime = now;
+  }
   const box = document.getElementById('planList');
   box.innerHTML = '';
   if (!items.length) {
@@ -1787,6 +1823,7 @@ async function renderPlans() {
 function openPlanForm() { document.getElementById('planForm').classList.remove('hidden'); }
 function closePlanForm() { document.getElementById('planForm').classList.add('hidden'); }
 async function savePlan() {
+  _plansCacheTime = 0;
   const name = document.getElementById('planName').value.trim();
   const period = document.getElementById('planPeriod').value;
   const res = await fetch(API + '/meal-plans', { method:'POST', headers: authHeaders(), body: JSON.stringify({name,period}) });

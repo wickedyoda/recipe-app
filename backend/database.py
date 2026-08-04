@@ -50,6 +50,51 @@ def _migrate_sqlite(conn):
     entry_cols = {c["name"] for c in insp.get_columns("meal_plan_entries")}
     if "position" not in entry_cols:
         conn.execute(text("ALTER TABLE meal_plan_entries ADD COLUMN position INTEGER NOT NULL DEFAULT 0"))
+    try:
+        _ensure_indexes(conn, insp)
+    except Exception:
+        pass
+
+
+def _ensure_indexes(conn, insp):
+    """Create indexes on frequently queried columns if they don't exist."""
+    idx_map = {
+        "idx_recipes_owner": ("recipes", "owner_id"),
+        "idx_recipes_cookbook": ("recipes", "cookbook_id"),
+        "idx_recipe_tags_recipe": ("recipe_tags", "recipe_id"),
+        "idx_recipe_tags_tag": ("recipe_tags", "tag_id"),
+        "idx_recipe_photos_recipe": ("recipe_photos", "recipe_id"),
+        "idx_recipe_photos_owner": ("recipe_photos", "owner_id"),
+        "idx_recipe_step_photos_recipe": ("recipe_step_photos", "recipe_id"),
+        "idx_notes_recipe": ("notes", "recipe_id"),
+        "idx_meal_plans_owner": ("meal_plans", "owner_id"),
+        "idx_entries_plan": ("meal_plan_entries", "meal_plan_id"),
+        "idx_entries_recipe": ("meal_plan_entries", "recipe_id"),
+        "idx_grocery_lists_owner": ("grocery_lists", "owner_id"),
+        "idx_grocery_lists_share_token": ("grocery_lists", "share_token"),
+        "idx_grocery_items_list": ("grocery_items", "list_id"),
+        "idx_grocery_items_recipe": ("grocery_items", "recipe_id"),
+        "idx_tags_owner": ("tags", "owner_id"),
+        "idx_cookbooks_owner": ("cookbooks", "owner_id"),
+    }
+    existing = set()
+    try:
+        for t in insp.get_indexes("recipes") + insp.get_indexes("meal_plans") + insp.get_indexes("meal_plan_entries"):
+            existing.add(t["name"])
+        for t in insp.get_indexes("recipe_tags") + insp.get_indexes("recipe_photos") + insp.get_indexes("notes"):
+            existing.add(t["name"])
+        for t in insp.get_indexes("grocery_lists") + insp.get_indexes("grocery_items") + insp.get_indexes("tags"):
+            existing.add(t["name"])
+        try:
+            for t in insp.get_indexes("cookbooks") + insp.get_indexes("recipe_step_photos"):
+                existing.add(t["name"])
+        except Exception:
+            pass
+    except Exception:
+        pass
+    for idx_name, (table, col) in idx_map.items():
+        if idx_name not in existing and table in insp.get_table_names():
+            conn.execute(text(f"CREATE INDEX IF NOT EXISTS {idx_name} ON {table}({col})"))
 
 def _migrate_mysql(conn):
     insp = inspect(engine)
@@ -64,3 +109,7 @@ def _migrate_mysql(conn):
         conn.execute(text("CREATE TABLE password_reset_tokens (id INTEGER PRIMARY KEY AUTO_INCREMENT, user_id INTEGER NOT NULL, token VARCHAR(255) NOT NULL UNIQUE, expires_at DATETIME NOT NULL, used TINYINT(1) DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (user_id) REFERENCES users(id))"))
     if "position" not in {c["name"] for c in insp.get_columns("meal_plan_entries")}:
         conn.execute(text("ALTER TABLE meal_plan_entries ADD COLUMN position INTEGER NOT NULL DEFAULT 0"))
+    try:
+        _ensure_indexes(conn, insp)
+    except Exception:
+        pass
