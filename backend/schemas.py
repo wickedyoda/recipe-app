@@ -57,6 +57,8 @@ class AdminUserCreate(BaseModel):
     password: str
     display_name: str | None = None
     role: str | None = "user"
+    is_active: bool = True
+    is_approved: bool = True
 
     @field_validator("password")
     @classmethod
