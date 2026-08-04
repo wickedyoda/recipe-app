@@ -1,10 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel
 from typing import Optional
 import os
 import shutil
+import tempfile
 from backend.config import settings
-from backend.services.auth import require_role
+from backend.services.auth import get_current_user, require_role
 from backend.models import User, Role
 
 router = APIRouter(prefix="/settings", tags=["settings"], redirect_slashes=False)
@@ -12,16 +13,6 @@ router = APIRouter(prefix="/settings", tags=["settings"], redirect_slashes=False
 
 class HostUpdate(BaseModel):
     host: str
-
-    @field_validator("host")
-    @classmethod
-    def validate_host(cls, v: str) -> str:
-        v = v.strip()
-        if not v or "," in v or "=" in v or "\n" in v or "\r" in v:
-            raise ValueError("Invalid host: must not contain commas, equals, or newlines")
-        if "/" in v:
-            raise ValueError("Invalid host: must not contain slashes")
-        return v
 
 
 class SettingsOut(BaseModel):
@@ -76,7 +67,11 @@ def add_allowed_host(
         return {"status": "ok", "allowed_hosts": hosts, "message": "Host already in list"}
     hosts.append(payload.host)
     new_str = ",".join(hosts)
+    # Update the settings object (for runtime use)
+    settings.__dict__["_settings__fields_set"] = True
+    # Write to .env file
     _update_env("ALLOWED_HOSTS", new_str)
+    # Update runtime setting
     object.__setattr__(settings, "ALLOWED_HOSTS", new_str)
     return {"status": "ok", "allowed_hosts": settings.ALLOWED_HOSTS_LIST, "message": f"Added {payload.host}"}
 
@@ -88,9 +83,9 @@ def remove_allowed_host(
 ):
     hosts = settings.ALLOWED_HOSTS_LIST
     if host not in hosts:
-        raise HTTPException(status_code=404, detail="Host not in allowed list")
+        return {"status": "ok", "allowed_hosts": hosts, "message": "Host not in list"}
     if host in ("localhost", "127.0.0.1", "*"):
-        raise HTTPException(status_code=400, detail="Cannot remove default host")
+        return {"status": "error", "message": "Cannot remove default host"}
     hosts.remove(host)
     new_str = ",".join(hosts)
     _update_env("ALLOWED_HOSTS", new_str)
@@ -110,8 +105,9 @@ def get_storage_info(_: User = Depends(require_role(Role.admin))):
                     usage["files"] += 1
                     usage["total_bytes"] += os.path.getsize(fp)
             usage["total_gb"] = round(usage["total_bytes"] / (1024**3), 2)
-    except Exception:
-        usage["error"] = "Unable to read media storage"
+    except Exception as e:
+        usage["error"] = str(e)
+    # Also report disk space
     disk = shutil.disk_usage(media_root if os.path.isdir(media_root) else "/")
     usage["disk_total_gb"] = round(disk.total / (1024**3), 2)
     usage["disk_used_gb"] = round(disk.used / (1024**3), 2)
@@ -122,52 +118,42 @@ def get_storage_info(_: User = Depends(require_role(Role.admin))):
 @router.post("/backup", response_model=dict)
 def backup_database(_: User = Depends(require_role(Role.admin))):
     """Create a database backup (MySQL dump or SQLite copy)."""
-    import tempfile
-    import subprocess
-    from urllib.parse import urlparse
-
     db_url = settings.DATABASE_URL
     try:
         if db_url.startswith("sqlite"):
             db_path = db_url.replace("sqlite:///", "")
             if not os.path.isfile(db_path):
-                raise FileNotFoundError("SQLite database not found")
-            fd, backup_path = tempfile.mkstemp(suffix=".sql", prefix="recipe_app_backup_")
-            os.close(fd)
+                raise FileNotFoundError(f"SQLite database not found at {db_path}")
+            backup_path = "/tmp/recipe_app_backup.sql"
             shutil.copy2(db_path, backup_path)
         elif "mysql" in db_url:
-            parsed = urlparse(db_url)
-            user = parsed.username or ""
-            password = parsed.password or ""
-            host = parsed.hostname or "localhost"
-            port = parsed.port or 3306
-            db = parsed.path.lstrip("/")
-            fd, backup_path = tempfile.mkstemp(suffix=".sql", prefix="recipe_app_backup_")
-            os.close(fd)
-            env = os.environ.copy()
-            env["MYSQL_PWD"] = password
+            import re
+            # Parse connection info from DATABASE_URL
+            match = re.match(r'mysql\+mysqlconnector://([^:]+):([^@]+)@([^:]+):(\d+)/(.+)', db_url)
+            if not match:
+                raise ValueError("Could not parse MySQL DATABASE_URL")
+            user, password, host, port, db = match.groups()
+            backup_path = "/tmp/recipe_app_backup.sql"
+            import subprocess
             result = subprocess.run(
-                ["mysqldump", f"-h{host}", f"-P{port}", f"-u{user}", db],
-                capture_output=True, text=True, env=env
+                ["mysqldump", f"-h{host}", f"-P{port}", f"-u{user}", f"-p{password}", db],
+                capture_output=True, text=True
             )
             if result.returncode != 0:
-                raise RuntimeError("Database backup failed")
+                raise RuntimeError(f"mysqldump failed: {result.stderr}")
             with open(backup_path, "w") as f:
                 f.write(result.stdout)
         else:
-            raise ValueError("Unsupported database type")
+            raise ValueError(f"Unsupported database type: {db_url[:10]}")
         file_size = os.path.getsize(backup_path)
         return {
             "status": "ok",
             "backup_path": backup_path,
+            "size_bytes": file_size,
             "size_mb": round(file_size / (1024**2), 2),
         }
-    except RuntimeError:
-        raise HTTPException(status_code=500, detail="Database backup failed")
-    except FileNotFoundError:
-        raise HTTPException(status_code=500, detail="Database file not found")
-    except Exception:
-        raise HTTPException(status_code=500, detail="Unexpected error during backup")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 def _update_env(key: str, value: str):
