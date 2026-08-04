@@ -1259,9 +1259,16 @@ async function renderGroceryLists() {
   for (const g of items) {
     const el = document.createElement('div');
     el.className = 'item';
-    el.innerHTML = '<div><div><strong>' + escapeHtml(g.name) + '</strong></div></div><button class="secondary" onclick="openGroceryDetail(' + g.id + ')" style="width:auto;padding:8px 10px;font-size:13px;">Open</button>';
+    el.innerHTML = '<div><div><strong>' + escapeHtml(g.name) + '</strong></div></div><div style="display:flex;gap:8px;"><button class="secondary" onclick="editGroceryList(' + g.id + ')" style="width:auto;padding:8px 10px;font-size:13px;">Edit</button><button class="secondary" onclick="openGroceryDetail(' + g.id + ')" style="width:auto;padding:8px 10px;font-size:13px;">Open</button></div>';
     box.appendChild(el);
   }
+}
+async function editGroceryList(id) {
+  const newName = prompt('List name:');
+  if (!newName) return;
+  const res = await fetch(API + '/grocery-lists/' + id, { method:'PATCH', headers: authHeaders(), body: JSON.stringify({name: newName}) });
+  if (!res.ok) return alert('Update failed');
+  renderGroceryLists();
 }
 function openGroceryForm() { document.getElementById('groceryForm').classList.remove('hidden'); }
 function closeGroceryForm() { document.getElementById('groceryForm').classList.add('hidden'); }
@@ -1332,11 +1339,26 @@ async function loadGroceryItems(listId) {
     el.className = 'item';
     const isRecipe = !!it.recipe_id;
     const badge = isRecipe ? '<span style="display:inline-block;padding:2px 8px;border-radius:999px;background:#e5e7eb;color:#111;font-size:11px;margin-left:8px;">Recipe</span>' : '';
-    const borderStyle = isRecipe ? 'border-left:4px solid #d97706;padding-left:10px;' : '';
-    const bgStyle = isRecipe ? 'background:#fdf6e3;' : '';
-    el.innerHTML = '<div style="' + borderStyle + bgStyle + 'flex:1;min-width:0;"><input type="checkbox" class="checkbox" ' + (it.checked ? 'checked' : '') + ' onchange="toggleGrocery(' + it.id + ', this.checked)" /><div style="margin-left:8px;flex:1;"><div style="display:flex;align-items:center;gap:4px;">' + escapeHtml(it.name) + badge + '</div><div class="meta">' + escapeHtml(it.quantity||'') + '</div></div></div><button class="danger" onclick="deleteGroceryItem(' + it.id + ')" style="width:auto;padding:8px 10px;font-size:12px;">Delete</button>';
+    const borderStyle = isRecipe ? 'border-left:4px solid #d97706;padding-left:10px;background:#fdf6e3;' : '';
+    el.innerHTML = '<div style="' + borderStyle + 'flex:1;min-width:0;"><input type="checkbox" class="checkbox" ' + (it.checked ? 'checked' : '') + ' onchange="toggleGrocery(' + it.id + ', this.checked)" /><div style="margin-left:8px;flex:1;"><div style="display:flex;align-items:center;gap:4px;"><span class="item-name" style="flex:1;" contenteditable="false" data-item-id="' + it.id + '" data-field="name">' + escapeHtml(it.name) + '</span>' + badge + '<button class="secondary" onclick="editGroceryItem(' + it.id + ')" style="width:auto;padding:4px 8px;font-size:11px;">Edit</button></div><div class="meta"><input type="text" class="item-qty" data-item-id="' + it.id + '" style="font-size:13px;width:100%;border:none;background:transparent;outline:none;" value="' + escapeHtml(it.quantity||'') + '" onchange="saveGroceryItem(' + it.id + ', \'quantity\', this.value)" /></div></div></div><button class="danger" onclick="deleteGroceryItem(' + it.id + ')" style="width:auto;padding:8px 10px;font-size:12px;">Delete</button>';
     box.appendChild(el);
   }
+}
+async function editGroceryItem(id) {
+  const nameEl = document.querySelector('.item-name[data-item-id="' + id + '"]');
+  if (!nameEl) return;
+  const currentName = nameEl.textContent.trim();
+  const newName = prompt('Item name:', currentName);
+  if (!newName) return;
+  const res = await fetch(API + '/grocery-lists/items/' + id, { method:'PATCH', headers: authHeaders(), body: JSON.stringify({name: newName}) });
+  if (!res.ok) return alert('Update failed');
+  nameEl.textContent = newName;
+}
+async function saveGroceryItem(id, field, value) {
+  const payload = {};
+  payload[field] = value;
+  const res = await fetch(API + '/grocery-lists/items/' + id, { method:'PATCH', headers: authHeaders(), body: JSON.stringify(payload) });
+  if (!res.ok) return alert('Update failed');
 }
 async function addGroceryItem() {
   const name = document.getElementById('groceryItemName').value.trim();
