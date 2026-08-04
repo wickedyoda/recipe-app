@@ -381,17 +381,21 @@
         <div class="card">
           <div class="top">
             <h2 style="margin-top:0;">Admin</h2>
-            <button class="secondary" onclick="loadPending();loadUsers();openUserForm()" style="width:auto;padding:8px 10px;font-size:13px;">New user</button>
+            <div style="display:flex;gap:8px;">
+              <button class="secondary" onclick="openUserForm()" style="width:auto;padding:8px 10px;font-size:13px;">New user</button>
+              <button class="secondary" onclick="openSettingsCard()" style="width:auto;padding:8px 10px;font-size:13px;">Settings</button>
+            </div>
           </div>
           <h3 style="margin-top:0;font-size:16px;">Pending approvals</h3>
           <div id="pendingList"></div>
           <h3 style="margin-top:16px;font-size:16px;">All users</h3>
           <div id="userList"></div>
         </div>
+
         <div id="userForm" class="card hidden">
           <h2 style="margin-top:0;" id="userFormTitle">New user</h2>
           <input id="userEmail" type="email" placeholder="Email" />
-          <input id="userPassword" type="password" placeholder="Password" />
+          <input id="userPassword" type="password" placeholder="Password (min 6 chars, uppercase, symbol)" />
           <input id="userDisplayName" placeholder="Display name" />
           <select id="userRole">
             <option value="user">User</option>
@@ -407,6 +411,18 @@
           </div>
           <button onclick="saveUser()">Save</button>
           <button class="secondary" onclick="closeUserForm()">Cancel</button>
+        </div>
+
+        <div id="settingsCard" class="card hidden">
+          <div class="top">
+            <h2 style="margin-top:0;">System Settings</h2>
+            <button class="secondary" onclick="loadSettings()" style="width:auto;padding:8px 10px;font-size:13px;">Refresh</button>
+          </div>
+          <div id="settingsContent"></div>
+          <button onclick="addHost()">Add host</button>
+          <button onclick="backupDatabase()" class="secondary" style="margin-left:8px;">Backup database</button>
+          <p id="settingsStatus" style="font-size:12px;color:#555;margin-top:8px;"></p>
+        </div>
       </div>
       <div id="tabProfile" class="tab hidden">
         <div class="card">
@@ -448,6 +464,12 @@
             <input id="changePasswordNew" type="password" placeholder="New password" style="font-size:13px;flex:1;" />
           </div>
           <button class="secondary" onclick="changePassword()" style="width:100%;padding:10px;font-size:14px;margin-top:6px;">Change password</button>
+          </div>
+          <div class="section">
+            <h3>Change email</h3>
+            <input id="changeEmailCurrent" type="email" placeholder="Current email" style="font-size:13px;flex:1;" />
+            <input id="changeEmailNew" type="email" placeholder="New email" style="font-size:13px;flex:1;" />
+            <button class="secondary" onclick="changeEmail()" style="width:100%;padding:10px;font-size:14px;margin-top:6px;">Change email</button>
           </div>
         </div>
         <button onclick="saveSettings()">Save settings</button>
@@ -523,6 +545,67 @@ async function loadProfile() {
   document.getElementById('profileName').value = user.display_name || '';
   document.getElementById('profileAvatar').value = user.avatar_url || '';
   document.getElementById('defaultServings').value = (saved.defaultServings || 4);
+}
+
+function openSettingsCard() {
+  document.getElementById('userForm').classList.add('hidden');
+  document.getElementById('settingsCard').classList.remove('hidden');
+  loadSettings();
+}
+function closeSettingsCard() {
+  document.getElementById('settingsCard').classList.add('hidden');
+}
+async function loadSettings() {
+  const res = await fetch(API + '/settings', { headers: authHeaders() });
+  if (!res.ok) { document.getElementById('settingsStatus').textContent = 'Failed to load settings'; return; }
+  const s = await res.json();
+  let html = '<div class="section"><h3>Allowed hosts</h3>';
+  html += '<div style="display:flex;flex-wrap:gap;6px;gap:6px;align-items:center;">';
+  (s.allowed_hosts || []).forEach(function(h) {
+    const removable = !['localhost','127.0.0.1','*'].includes(h);
+    html += '<span style="background:#eef;padding:4px 8px;border-radius:4px;font-size:12px;">' + escapeHtml(h) + '</span>';
+    if (removable) html += '<button onclick="removeHost(\'' + h + '\')" style="width:auto;padding:2px 6px;font-size:11px;">×</button>';
+  });
+  html += '</div><input id="newHost" type="text" placeholder="New host (e.g. docker.tail99133.ts.net)" style="font-size:13px;" /><button onclick="addHost()">Add</button></div>';
+  html += '<div class="section"><h3>Storage</h3>';
+  html += '<div class="meta">' + escapeHtml(s.media_root || '') + '</div>';
+  if (s.disk_usage_gb !== null) html += '<div class="meta">Media usage: ' + s.disk_usage_gb + ' GB</div>';
+  if (s.disk_total_gb) html += '<div class="meta">Disk: ' + s.disk_used_gb + ' / ' + s.disk_total_gb + ' GB (' + s.disk_free_gb + ' free)</div>';
+  html += '</div>';
+  html += '<div class="section"><h3>Network</h3>';
+  html += '<div class="meta">Frontend port: ' + (s.frontend_port || 3000) + '</div>';
+  html += '<div class="meta">Backend port: ' + (s.backend_port || 8000) + '</div>';
+  html += '<div class="meta">Public URL: ' + escapeHtml(s.public_url || '(not set)') + '</div>';
+  html += '</div>';
+  html += '<div class="section"><h3>Email (SMTP)</h3>';
+  html += '<div class="meta">SMTP host: ' + escapeHtml(s.smtp_host || '(not configured)') + '</div>';
+  html += '<div class="meta">SMTP port: ' + (s.smtp_port || '—') + '</div>';
+  if (s.smtp_from_email) html += '<div class="meta">From: ' + escapeHtml(s.smtp_from_email) + '</div>';
+  html += '</div>';
+  document.getElementById('settingsContent').innerHTML = html;
+  document.getElementById('settingsStatus').textContent = '';
+}
+async function addHost() {
+  const host = document.getElementById('newHost').value.trim();
+  if (!host) return alert('Enter a host name');
+  const res = await fetch(API + '/settings/allowed-hosts', { method: 'POST', headers: authHeaders(), body: JSON.stringify({host}) });
+  const data = await res.json();
+  document.getElementById('settingsStatus').textContent = data.message || (res.ok ? 'Host added' : 'Failed');
+  if (res.ok) { document.getElementById('newHost').value = ''; loadSettings(); }
+}
+async function removeHost(host) {
+  if (!confirm('Remove host ' + host + '?')) return;
+  const res = await fetch(API + '/settings/allowed-hosts/' + encodeURIComponent(host), { method: 'DELETE', headers: authHeaders() });
+  const data = await res.json();
+  document.getElementById('settingsStatus').textContent = data.message || (res.ok ? 'Host removed' : 'Failed');
+  if (res.ok) loadSettings();
+}
+async function backupDatabase() {
+  document.getElementById('settingsStatus').textContent = 'Backing up...';
+  const res = await fetch(API + '/settings/backup', { method: 'POST', headers: authHeaders() });
+  const data = await res.json();
+  if (!res.ok) return document.getElementById('settingsStatus').textContent = 'Backup failed: ' + (data.detail || 'unknown');
+  document.getElementById('settingsStatus').textContent = 'Backup saved: ' + data.backup_path + ' (' + data.size_mb + ' MB)';
 }
 function setTheme(mode, color) {
   document.body.classList.remove('dark','warm','dawn','cozy');

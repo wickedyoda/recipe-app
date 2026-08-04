@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     MEDIA_ROOT: str = "/media"
     PUBLIC_URL: str = ""
     BACKEND_PORT: int = 8000
+    FRONTEND_PORT: int = 3000
 
     ALLOWED_ORIGINS: str = "http://localhost:3000,http://127.0.0.1:3000"
     ALLOWED_HOSTS: str = "localhost,127.0.0.1,*"
