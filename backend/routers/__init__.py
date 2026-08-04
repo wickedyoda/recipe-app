@@ -6,9 +6,8 @@ from backend.routers import mealplans as mealplans_router
 from backend.routers import media as media_router
 from backend.routers import notes as notes_router
 from backend.routers import recipes as recipes_router
-from backend.routers import tags as tags_router
-
 from backend.routers import settings as settings_router
+from backend.routers import tags as tags_router
 
 router = APIRouter()
 router.include_router(auth_router.router)
