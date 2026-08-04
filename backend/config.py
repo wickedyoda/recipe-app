@@ -7,8 +7,8 @@ class Settings(BaseSettings):
     MEDIA_ROOT: str = "/media"
     PUBLIC_URL: str = ""
 
-    ALLOWED_ORIGINS: str = "http://localhost:3000,http://127.0.0.1:3000,http://docker.tail99133.ts.net:3010,https://docker.tail99133.ts.net:3010"
-    ALLOWED_HOSTS: str = "localhost,127.0.0.1,*,docker.tail99133.ts.net"
+    ALLOWED_ORIGINS: str = "http://localhost:3000,http://127.0.0.1:3000"
+    ALLOWED_HOSTS: str = "localhost,127.0.0.1,*"
 
     @property
     def ALLOWED_ORIGINS_LIST(self) -> list[str]:
