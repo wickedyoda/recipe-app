@@ -9,9 +9,8 @@ from backend.services.email import send_email
 from fastapi import Depends, Header, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import jwt
-from passlib.context import CryptContext
+import bcrypt
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 SECRET_KEY = os.getenv("SECRET_KEY", "change-me")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE = timedelta(minutes=60*24)
@@ -19,11 +18,14 @@ PASSWORD_RESET_EXPIRE = timedelta(hours=1)
 
 
 def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
+    return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
 
 
 def verify_password(plain: str, hashed: str) -> bool:
-    return pwd_context.verify(plain, hashed)
+    try:
+        return bcrypt.checkpw(plain.encode(), hashed.encode())
+    except ValueError:
+        return False
 
 
 def create_access_token(email: str, expires_delta: timedelta | None = None):
