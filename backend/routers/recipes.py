@@ -3,7 +3,7 @@ import os
 import time
 import uuid
 
-from fastapi import APIRouter, Depends, File, HTTPException, Response, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, Request, Response, UploadFile
 from sqlalchemy.orm import Session
 
 from backend.database import get_db
@@ -210,6 +210,46 @@ def export_recipes(db: Session = Depends(get_db), current_user: User = Depends(g
         })
     data = json.dumps(payload, ensure_ascii=False, default=str).encode("utf-8")
     return Response(content=data, media_type="application/json", headers={"Content-Disposition": "attachment; filename=recipes.json"})
+
+@router.post("/export-selected")
+async def export_selected(request: Request, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    body = await request.body()
+    data = json.loads(body)
+    ids = data.get("ids", [])
+    if not ids:
+        return Response(content=b'[]', media_type="application/json")
+    recipes = db.query(Recipe).filter(Recipe.id.in_(ids), Recipe.owner_id==current_user.id).all()
+    tag_map = {}
+    for t in db.query(Tag).filter(Tag.owner_id==current_user.id).all():
+        tag_map[t.id] = t.name
+    photo_map = {}
+    for p in db.query(RecipePhoto).filter(RecipePhoto.owner_id==current_user.id).all():
+        photo_map.setdefault(p.recipe_id, []).append(p.path)
+    payload = []
+    for r in recipes:
+        recipe_tags = [t.name for t in db.query(Tag).join(RecipeTag, RecipeTag.tag_id==Tag.id).filter(RecipeTag.recipe_id==r.id).all()]
+        payload.append({
+            "title": r.title,
+            "description": r.description,
+            "ingredients": r.ingredients,
+            "instructions": r.instructions,
+            "source_url": r.source_url,
+            "store": r.store.value,
+            "cookbook_id": r.cookbook_id,
+            "rating": r.rating,
+            "flavor_rating": r.flavor_rating,
+            "effort_rating": r.effort_rating,
+            "prep_time_minutes": r.prep_time_minutes,
+            "cook_time_minutes": r.cook_time_minutes,
+            "servings": r.servings,
+            "difficulty": r.difficulty,
+            "category": r.category,
+            "subcategory": r.subcategory,
+            "tags": recipe_tags,
+            "photos": photo_map.get(r.id, []),
+        })
+    out = json.dumps(payload, ensure_ascii=False, default=str).encode("utf-8")
+    return Response(content=out, media_type="application/json", headers={"Content-Disposition": "attachment; filename=recipes-selected.json"})
 
 @router.post("/import")
 def import_recipes(file: UploadFile = File(...), db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
