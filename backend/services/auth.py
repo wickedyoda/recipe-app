@@ -3,13 +3,14 @@ import secrets
 from datetime import datetime, timedelta, timezone
 
 import bcrypt
+import jwt as _jwt
 from backend.config import settings
 from backend.database import SessionLocal
 from backend.models import PasswordHistory, PasswordResetToken, Role, User
 from backend.services.email import send_email
 from fastapi import Depends, Header, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from jose import jwt
+from jwt import PyJWTError
 
 SECRET_KEY = os.getenv("SECRET_KEY", "change-me")
 ALGORITHM = "HS256"
@@ -33,7 +34,7 @@ def create_access_token(email: str, expires_delta: timedelta | None = None):
     payload = {"sub": email, "type": "access"}
     expire = datetime.now(timezone.utc) + (expires_delta or ACCESS_TOKEN_EXPIRE)
     payload["exp"] = int(expire.timestamp())
-    return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+    return _jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
 
 
 def create_password_reset_token(user_id: int) -> str:
@@ -190,11 +191,11 @@ def get_current_user(
     if not token:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing bearer token")
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = _jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         email = payload.get("sub")
         if not email:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
-    except Exception:
+    except PyJWTError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
     db = SessionLocal()
     user = db.query(User).filter(User.email == email).first()
