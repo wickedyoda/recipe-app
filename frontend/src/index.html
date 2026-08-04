@@ -986,11 +986,13 @@ async function renderNotes(recipeId) {
     box.innerHTML = '<div class="empty">No notes yet. Tap "Add note" to get started.</div>';
     return;
   }
+  localStorage.setItem('recipe_notes_' + recipeId, JSON.stringify(items));
   box.innerHTML = '';
   for (const n of items) {
     const el = document.createElement('div');
     el.className = 'item';
-    el.innerHTML = '<div><div style="font-size:14px;">' + escapeHtml(n.body) + '</div><div class="meta">' + (n.created_at ? new Date(n.created_at).toLocaleString() : 'Just now') + '</div></div><button class="danger" onclick="deleteNote(' + n.id + ')" style="width:auto;padding:8px 10px;font-size:12px;">Delete</button>';
+    const when = n.created_at ? new Date(n.created_at).toLocaleString() : 'Just now';
+    el.innerHTML = '<div><div style="font-size:14px;" contenteditable="false" data-note-id="' + n.id + '">' + escapeHtml(n.body) + '</div><div class="meta">' + when + '</div></div><button class="secondary" onclick="editNote(' + n.id + ')" style="width:auto;padding:8px 10px;font-size:12px;">Edit</button><button class="danger" onclick="deleteNote(' + n.id + ')" style="width:auto;padding:8px 10px;font-size:12px;">Delete</button>';
     box.appendChild(el);
   }
 }
@@ -1001,6 +1003,44 @@ async function addNoteFromDetail() {
   const data = await res.json();
   if (!res.ok) return alert('Failed: ' + (data.detail || 'unknown'));
   renderNotes(currentRecipeId);
+}
+async function editNote(id) {
+  const el = document.querySelector('[data-note-id="' + id + '"]');
+  if (!el) return;
+  const currentBody = el.textContent.trim();
+  el.contentEditable = 'true';
+  el.focus();
+  const range = document.createRange();
+  range.selectNodeContents(el);
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+  const cleanup = function() {
+    el.contentEditable = 'false';
+    el.removeEventListener('blur', onBlur);
+    el.removeEventListener('keydown', onKeyDown);
+  };
+  async function onBlur() {
+    const newBody = el.textContent.trim();
+    cleanup();
+    if (newBody === currentBody || !newBody) return renderNotes(currentRecipeId);
+    const res = await fetch(API + '/notes/' + id, { method:'PATCH', headers: authHeaders(), body: JSON.stringify({body: newBody, recipe_id: currentRecipeId}) });
+    if (!res.ok) alert('Update failed');
+    renderNotes(currentRecipeId);
+  }
+  function onKeyDown(e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      el.blur();
+    }
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      el.textContent = currentBody;
+      cleanup();
+    }
+  }
+  el.addEventListener('blur', onBlur);
+  el.addEventListener('keydown', onKeyDown);
 }
 async function deleteNote(id) {
   if (!confirm('Delete this note?')) return;
