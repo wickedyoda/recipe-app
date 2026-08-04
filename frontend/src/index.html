@@ -928,7 +928,7 @@ async function openRecipeDetail(id) {
   document.getElementById('detailTitle').innerHTML = (r.category ? categoryIcon(r.category) + ' ' : '') + escapeHtml(r.title || 'Untitled');
   document.getElementById('detailMeta').innerHTML = '<div class="meta">' + escapeHtml(r.description||'') + '</div>' + (r.rating ? '<div class="stars">' + '★'.repeat(Math.round(r.rating)) + '</div>' : '') + (r.flavor_rating ? '<div class="meta">Flavor: ' + '★'.repeat(Math.round(r.flavor_rating)) + '</div>' : '') + (r.effort_rating ? '<div class="meta">Effort: ' + '★'.repeat(Math.round(r.effort_rating)) + '</div>' : '') + '<div class="meta">' + (r.tags||[]).map(t=>'<span class="pill">'+escapeHtml(t)+'</span>').join(' ') + '</div>';
   const scaleVal = parseFloat(document.getElementById('recipeScale')?.value || '1') || 1;
-  document.getElementById('detailBody').innerHTML = '<div style="display:flex;flex-direction:column;gap:8px;"><div>' + (r.ingredients||'').split('\n').filter(Boolean).map(line => '<label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" onchange="toggleIngredientCheck(this)" /> <span style="white-space:pre-wrap;">' + scaleIngredientLine(escapeHtml(line), scaleVal) + '</span></label>').join('') + '</div><div style="white-space:pre-wrap;font-size:14px;margin-top:8px;">' + escapeHtml(r.instructions||'') + '</div></div><div id="ingredientActions" class="row" style="margin-top:8px;"><button class="secondary" onclick="addAllIngredientsToGrocery()">Add ingredients to grocery list</button></div>';
+  document.getElementById('detailBody').innerHTML = '<div style="display:flex;flex-direction:column;gap:8px;"><div>' + (r.ingredients||'').split('\n').filter(Boolean).map(line => '<label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" onchange="toggleIngredientCheck(this)" /> <span style="white-space:pre-wrap;">' + scaleIngredientLine(escapeHtml(line), scaleVal) + '</span></label>').join('') + '</div><div style="white-space:pre-wrap;font-size:14px;margin-top:8px;">' + escapeHtml(r.instructions||'') + '</div></div><div id="ingredientActions" class="row" style="margin-top:8px;"><button class="secondary" onclick="checkAllIngredients()">Check all</button><button class="secondary" onclick="uncheckAllIngredients()">Uncheck all</button><button class="secondary" onclick="addAllIngredientsToGrocery()">Add ingredients to grocery list</button></div>';
   const metaExtra = [];
   if (r.prep_time_minutes) metaExtra.push('Prep ' + r.prep_time_minutes + ' min');
   if (r.cook_time_minutes) metaExtra.push('Cook ' + r.cook_time_minutes + ' min');
@@ -1740,6 +1740,12 @@ function toggleIngredientCheck(cb) {
   if (cb.checked) box.style.textDecoration = 'line-through';
   else box.style.textDecoration = 'none';
   saveIngredientChecks();
+}
+function checkAllIngredients() {
+  document.querySelectorAll('#detailBody input[type="checkbox"]').forEach(cb => { cb.checked = true; toggleIngredientCheck(cb); });
+}
+function uncheckAllIngredients() {
+  document.querySelectorAll('#detailBody input[type="checkbox"]').forEach(cb => { cb.checked = false; toggleIngredientCheck(cb); });
 }
 function toggleTheme() {
   const isDark = document.body.classList.toggle('dark');
