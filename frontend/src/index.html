@@ -210,7 +210,19 @@
           <div class="row">
             <input id="recipeServings" type="number" min="0" placeholder="Servings" value="4" />
             <input id="recipeDifficulty" placeholder="Difficulty" />
-            <input id="recipeCategory" placeholder="Category / cuisine" />
+            <input id="recipeCategory" placeholder="Category / cuisine" list="categoryOptions" />
+            <datalist id="categoryOptions">
+              <option value="Breakfast">🳑 Breakfast</option>
+              <option value="Entrees">🍽️ Entrees</option>
+              <option value="Snacks">🍏 Snacks</option>
+              <option value="Appetizers">🥟 Appetizers</option>
+              <option value="Desserts">🍰 Desserts</option>
+              <option value="Soups">🍲 Soups</option>
+              <option value="Salads">🥗 Salads</option>
+              <option value="Bread">🍞 Bread</option>
+              <option value="Pasta">🍝 Pasta</option>
+              <option value="Drinks">☕ Drinks</option>
+            </datalist>
             <input id="recipeSubcategory" placeholder="Subcategory / type" />
           </div>
           <div>
@@ -1394,7 +1406,7 @@ async function loadGroceryItems(listId) {
     el.dataset.itemId = it.id;
     el.__itemData = it;
     const isRecipe = !!it.recipe_id;
-    const badge = isRecipe ? '<span style="display:inline-block;padding:2px 8px;border-radius:999px;background:#e5e7eb;color:#111;font-size:11px;margin-left:8px;">Recipe</span>' : '';
+    const badge = isRecipe ? '<span style="display:inline-block;padding:2px 8px;border-radius:999px;background:#d97706;color:#fff;font-size:11px;margin-left:8px;">🍽️</span>' : '';
     const borderStyle = isRecipe ? 'border-left:4px solid #d97706;padding-left:10px;background:#fdf6e3;' : '';
     el.innerHTML = '<div style="' + borderStyle + 'flex:1;min-width:0;"><input type="checkbox" class="checkbox" ' + (it.checked ? 'checked' : '') + ' onchange="toggleGrocery(' + it.id + ', this.checked)" /><div style="margin-left:8px;flex:1;"><div style="display:flex;align-items:center;gap:4px;"><span class="item-name" style="flex:1;" contenteditable="false" data-item-id="' + it.id + '" data-field="name">' + escapeHtml(it.name) + '</span>' + badge + '<button class="secondary" onclick="editGroceryItem(' + it.id + ')" style="width:auto;padding:4px 8px;font-size:11px;">Edit</button></div><div class="meta"><input type="text" class="item-qty" data-item-id="' + it.id + '" style="font-size:13px;width:100%;border:none;background:transparent;outline:none;" value="' + escapeHtml(it.quantity||'') + '" onchange="saveGroceryItem(' + it.id + ',\'quantity\',this.value)" /></div></div></div><button class="danger" onclick="deleteGroceryItem(' + it.id + ')" style="width:auto;padding:8px 10px;font-size:12px;">Delete</button>';
     box.appendChild(el);
