@@ -96,9 +96,11 @@
   body.dark .nav { background: #1a0f02; border-color: #3a2a1a; }
   .nav button {
     background: none; color: var(--text-secondary);
-    width: auto; padding: 6px 12px; font-size: 12px; margin: 0; border-radius: 10px; font-weight: 500;
+    width: auto; padding: 6px 12px; font-size: 16px; margin: 0;
+    border-radius: 10px; font-weight: 500; min-width: 48px;
   }
   .nav button.active { color: var(--orange-dark); font-weight: 600; background: var(--beige); }
+  .nav button span { font-size: 10px; display: block; }
   body.dark .nav button.active { background: var(--beige); }
   @media (min-width: 600px) {
     .nav button { font-size: 14px; padding: 8px 16px; }
@@ -176,6 +178,10 @@
   .recipe-list-item .rl-meta { font-size: 11px; color: var(--text-muted); }
   body.dark .recipe-list-item .rl-meta { color: #a07b5a; }
   .recipe-list-item .rl-rating { color: #f59e0b; font-size: 13px; }
+  .recipe-list-view { display: flex; flex-direction: column; }
+  .recipe-list-view.grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .recipe-list-view.grid .recipe-list-item { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding: 12px; }
+  .recipe-list-view.grid .recipe-list-item img { width: 100%; height: 100px; border-radius: 10px; }
   .share-modal {
     position: fixed; inset: 0;
     background: rgba(0,0,0,0.6);
@@ -225,6 +231,13 @@
     background: var(--beige); display: flex; align-items: center; justify-content: center; font-size: 20px;
   }
   .profile-name { font-weight: 600; font-size: 15px; }
+  .detail-meta-labels { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+  .meta-label { display: flex; flex-direction: column; min-width: 80px; }
+  .meta-label-name { font-size: 11px; color: var(--text-muted); font-weight: 500; }
+  .meta-label-val { font-size: 14px; color: var(--text-primary); font-weight: 600; }
+  body.dark .meta-label-name { color: #a07b5a; }
+  body.dark .meta-label-val { color: #f3f3f3; }
+  .detail-tags { margin: 6px 0; }
   .search {
     padding: 12px; position: sticky; top: 0;
     background: var(--warm-bg); z-index: 5;
@@ -322,22 +335,26 @@
 
       <div id="tabRecipes" class="tab hidden">
         <div class="search">
-          <input id="recipeSearch" placeholder="Search recipes..." oninput="renderRecipes()" />
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:18px;">🔍</span>
+            <input id="recipeSearch" placeholder="Search recipes..." oninput="renderRecipes()" style="flex:1;" />
+            <button class="secondary" onclick="toggleViewType()" id="viewToggle" style="width:auto;padding:6px 10px;font-size:13px;">⊡</button>
+          </div>
         </div>
-        <div class="row" style="padding:8px 12px;gap:8px;flex-wrap:wrap;">
-          <span class="pill" style="cursor:pointer;font-weight:600;" onclick="setMealFilter('')" id="mealAll">All</span>
-          <span class="pill" style="cursor:pointer;" onclick="setMealFilter('Breakfast')" id="mealBreakfast">Breakfast</span>
-          <span class="pill" style="cursor:pointer;" onclick="setMealFilter('Lunch')" id="mealLunch">Lunch</span>
-          <span class="pill" style="cursor:pointer;" onclick="setMealFilter('Dinner')" id="mealDinner">Dinner</span>
+        <div class="filter-row">
+          <span class="filter-pill active" onclick="setMealFilter('')" id="mealAll">All</span>
+          <span class="filter-pill" onclick="setMealFilter('Breakfast')" id="mealBreakfast">Breakfast</span>
+          <span class="filter-pill" onclick="setMealFilter('Lunch')" id="mealLunch">Lunch</span>
+          <span class="filter-pill" onclick="setMealFilter('Dinner')" id="mealDinner">Dinner</span>
         </div>
-        <div class="row" style="padding:4px 12px 8px;gap:8px;flex-wrap:wrap;">
-          <span class="pill" style="cursor:pointer;font-weight:600;" onclick="setSubFilter('')" id="subAll">All types</span>
-          <span class="pill" style="cursor:pointer;" onclick="setSubFilter('Entrees')" id="subEntrees">Entrees</span>
-          <span class="pill" style="cursor:pointer;" onclick="setSubFilter('Snacks')" id="subSnacks">Snacks</span>
-          <span class="pill" style="cursor:pointer;" onclick="setSubFilter('Appetizers')" id="subAppetizers">Appetizers</span>
-          <span class="pill" style="cursor:pointer;" onclick="setSubFilter('Desserts')" id="subDesserts">Desserts</span>
+        <div class="filter-row">
+          <span class="filter-pill active" onclick="setSubFilter('')" id="subAll">All types</span>
+          <span class="filter-pill" onclick="setSubFilter('Entrees')" id="subEntrees">Entrees</span>
+          <span class="filter-pill" onclick="setSubFilter('Snacks')" id="subSnacks">Snacks</span>
+          <span class="filter-pill" onclick="setSubFilter('Appetizers')" id="subAppetizers">Appetizers</span>
+          <span class="filter-pill" onclick="setSubFilter('Desserts')" id="subDesserts">Desserts</span>
         </div>
-        <div id="recipeCategoryFilters" class="row" style="padding:8px 12px;flex-wrap:wrap;gap:8px;"></div>
+        <div id="recipeCategoryFilters" class="filter-row"></div>
         <div class="card">
           <div class="top">
             <h2 style="margin-top:0;">Recipes</h2>
@@ -348,7 +365,7 @@
               <input type="file" accept="application/json" style="display:none;" onchange="importRecipes(this)" />
             </label>
           </div>
-          <div id="recipeList"></div>
+          <div id="recipeList" class="recipe-list-view"></div>
         </div>
         <div id="recipeForm" class="card hidden">
           <h2 style="margin-top:0;" id="recipeFormTitle">New recipe</h2>
@@ -647,12 +664,12 @@
     </div>
 
   <div id="nav" class="nav hidden">
-    <button data-tab="tabImport" onclick="switchTab('tabImport')">Import</button>
-    <button data-tab="tabRecipes" onclick="switchTab('tabRecipes')">Recipes</button>
-    <button data-tab="tabMeals" onclick="switchTab('tabMeals')">Meals</button>
-    <button data-tab="tabGroceries" onclick="switchTab('tabGroceries')">Groceries</button>
-    <button data-tab="tabProfile" onclick="switchTab('tabProfile')" style="width:auto;padding:6px 10px;font-size:12px;">Profile</button>
-    <button id="adminTabBtn" data-tab="tabAdmin" onclick="switchTab('tabAdmin')" class="hidden">Admin</button>
+    <button data-tab="tabImport" onclick="switchTab('tabImport')">📥</button>
+    <button data-tab="tabRecipes" onclick="switchTab('tabRecipes')">🏠</button>
+    <button data-tab="tabMeals" onclick="switchTab('tabMeals')">🔥</button>
+    <button data-tab="tabGroceries" onclick="switchTab('tabGroceries')">🛒</button>
+    <button id="adminTabBtn" data-tab="tabAdmin" onclick="switchTab('tabAdmin')" class="hidden">👤</button>
+    <button data-tab="tabProfile" onclick="switchTab('tabProfile')">👤</button>
   </div>
 
 <script>
@@ -883,17 +900,6 @@ async function login() {
     button.disabled = false;
     button.textContent = 'Login';
   }
-  const res = await fetch(API + '/auth/login', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({email,password}) });
-  const data = await res.json();
-  if (!res.ok) return alert('Login failed: ' + (data.detail || 'unknown'));
-  token = data.access_token; localStorage.setItem('token', token);
-  if (saveLogin) {
-    const theme = localStorage.getItem('theme') || 'light.warm';
-    const [mode] = theme.split('.');
-    if (mode === 'dark') document.body.classList.add('dark');
-  }
-  initTheme();
-  initApp();
 }
 function toggleLoginPassword() {
   const input = document.getElementById('loginPassword');
@@ -1049,7 +1055,7 @@ async function renderRecipes() {
   const activeCategory = filterBox.dataset.active || '';
   const activeMeal = (filterBox.dataset.meal || '').trim();
   const activeSub = (filterBox.dataset.sub || '').trim();
-  filterBox.innerHTML = '<span class="pill" style="cursor:pointer;" onclick="setCategoryFilter(\'\')">All</span>' + categories.map(c => '<span class="pill" style="cursor:pointer;" onclick="setCategoryFilter(\'' + escapeHtml(c) + '\')">' + escapeHtml(categoryIcon(c)) + ' ' + escapeHtml(c) + '</span>').join('');
+  filterBox.innerHTML = '<span class="filter-pill" onclick="setCategoryFilter(' + '\'\' + ')">All</span>' + categories.map(c => '<span class="filter-pill" onclick="setCategoryFilter(' + '\'' + escapeHtml(c) + '\')">' + escapeHtml(categoryIcon(c)) + ' ' + escapeHtml(c) + '</span>').join('');
   const box = document.getElementById('recipeList');
   box.innerHTML = '';
   const filtered = items.filter(r => {
@@ -1120,6 +1126,13 @@ window.toggleFavoritesFilter = function() {
   const filterBox = document.getElementById('recipeCategoryFilters');
   filterBox.dataset.favs = filterBox.dataset.favs ? '' : '1';
   renderRecipes();
+};
+window.toggleViewType = function() {
+  const box = document.getElementById('recipeList');
+  box.classList.toggle('grid');
+  const toggle = document.getElementById('viewToggle');
+  if (toggle) toggle.textContent = box.classList.contains('grid') ? '☰' : '⊡';
+  localStorage.setItem('viewType', box.classList.contains('grid') ? 'grid' : 'list');
 };
 window.toggleFavorite = function(id) {
   const favs = new Set(JSON.parse(localStorage.getItem('recipe_favorites') || '[]'));
@@ -1241,7 +1254,7 @@ async function openRecipeDetail(id) {
   if (!res.ok) return alert('Recipe not found');
   const r = await res.json();
   document.getElementById('detailTitle').innerHTML = (r.category ? categoryIcon(r.category) + ' ' : '') + escapeHtml(r.title || 'Untitled');
-  document.getElementById('detailMeta').innerHTML = '<div class="meta">' + escapeHtml(r.description||'') + '</div>' + (r.rating ? '<div class="stars">' + '★'.repeat(Math.round(r.rating)) + '</div>' : '') + (r.flavor_rating ? '<div class="meta">Flavor: ' + '★'.repeat(Math.round(r.flavor_rating)) + '</div>' : '') + (r.effort_rating ? '<div class="meta">Effort: ' + '★'.repeat(Math.round(r.effort_rating)) + '</div>' : '') + '<div class="meta">' + (r.tags||[]).map(t=>'<span class="pill">'+escapeHtml(t)+'</span>').join(' ') + '</div>';
+  document.getElementById('detailMeta').innerHTML = '<div class="meta">' + escapeHtml(r.description||'') + '</div>' + (r.rating ? '<div class="stars">' + '★'.repeat(Math.round(r.rating)) + '</div>' : '') + (r.flavor_rating ? '<div class="meta">Flavor: ' + '★'.repeat(Math.round(r.flavor_rating)) + '</div>' : '') + (r.effort_rating ? '<div class="meta">Effort: ' + '★'.repeat(Math.round(r.effort_rating)) + '</div>' : '') + '<div class="detail-tags">' + (r.tags||[]).map(t=>'<span class="pill">'+escapeHtml(t)+'</span>').join(' ') + '</div>' + (r.prep_time_minutes || r.cook_time_minutes || r.servings || r.difficulty ? '<div class="detail-meta-labels">' + (r.prep_time_minutes ? '<span class="meta-label"><span class="meta-label-name">Prep Time</span><span class="meta-label-val">' + r.prep_time_minutes + ' min</span></span>' : '') + (r.cook_time_minutes ? '<span class="meta-label"><span class="meta-label-name">Cook Time</span><span class="meta-label-val">' + r.cook_time_minutes + ' min</span></span>' : '') + (r.servings ? '<span class="meta-label"><span class="meta-label-name">Servings</span><span class="meta-label-val">' + r.servings + '</span></span>' : '') + (r.difficulty ? '<span class="meta-label"><span class="meta-label-name">Difficulty</span><span class="meta-label-val">' + escapeHtml(r.difficulty) + '</span></span>' : '') + '</div>' : '');
   const scaleVal = parseFloat(document.getElementById('recipeScale')?.value || '1') || 1;
   const heroBox = document.getElementById('detailHero');
   if (r.photos && r.photos.length > 0) {
