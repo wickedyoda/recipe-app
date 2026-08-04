@@ -611,6 +611,17 @@ async function backupDatabase() {
   if (!res.ok) return document.getElementById('settingsStatus').textContent = 'Backup failed: ' + (data.detail || 'unknown');
   document.getElementById('settingsStatus').textContent = 'Backup saved: ' + data.backup_path + ' (' + data.size_mb + ' MB)';
 }
+async function changeEmail() {
+  const newEmail = document.getElementById('changeEmailNew').value.trim();
+  if (!newEmail) return alert('New email is required');
+  const res = await fetch(API + '/auth/change-email', { method:'POST', headers: authHeaders(), body: JSON.stringify({ new_email: newEmail }) });
+  const data = await res.json();
+  if (!res.ok) return alert('Failed: ' + (data.detail || 'unknown'));
+  document.getElementById('changeEmailCurrent').value = '';
+  document.getElementById('changeEmailNew').value = '';
+  alert(data.message || 'Email updated');
+  await loadProfile();
+}
 function setTheme(mode, color) {
   document.body.classList.remove('dark','warm','dawn','cozy');
   if (mode === 'dark') document.body.classList.add('dark');
