@@ -358,6 +358,7 @@
             <input id="groceryItemQty" placeholder="Qty" />
           </div>
           <button onclick="addGroceryItem()">Add item</button>
+          <button class="secondary" onclick="clearCompletedGroceries()" style="width:auto;padding:8px 10px;font-size:13px;">Clear completed</button>
           <h3 style="margin-top:12px;font-size:15px;color:#444;">Items</h3>
           <div id="groceryItems"></div>
           <div id="grocerySharePanel" class="hidden" style="margin-top:12px;padding:12px;background:#f5f5f7;border-radius:12px;">
@@ -1488,6 +1489,16 @@ async function addGroceryItem() {
   if (!res.ok) return alert('Failed: ' + (data.detail || 'unknown'));
   document.getElementById('groceryItemName').value='';
   document.getElementById('groceryItemQty').value='';
+  loadGroceryItems(currentGroceryId);
+}
+async function clearCompletedGroceries() {
+  if (!currentGroceryId) return;
+  if (!confirm('Remove all checked items?')) return;
+  const items = await (await fetch(API + '/grocery-lists/' + currentGroceryId + '/items', { headers: authHeaders() })).json();
+  const checked = items.filter(it => it.checked);
+  for (const it of checked) {
+    await fetch(API + '/grocery-lists/items/' + it.id, { method:'DELETE', headers: authHeaders() });
+  }
   loadGroceryItems(currentGroceryId);
 }
 async function createGroceryFromRecipe() {
