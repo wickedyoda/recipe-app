@@ -49,7 +49,7 @@
   .carousel-container::-webkit-scrollbar { display:none; }
   .carousel-container img { scroll-snap-align:start; flex-shrink:0; max-width:100%; border-radius:12px; max-height:200px; object-fit:cover; }
   .recipe-detail-gallery { margin:8px 0; }
-  .recipe-detail-gallery img { width:100%; border-radius:12px; max-height:280px; object-fit:cover; display:block; }
+  .recipe-detail-gallery img { width:100%; border-radius:12px; max-height:280px; object-fit:cover; display:block; cursor:zoom-in; }
   .swipe-item { touch-action:none; }
   body.warm .pill { background:#fef3c7; color:#78350f; }
   body.warm button.secondary { background:#d1fae5; color:#065f46; }
@@ -944,7 +944,7 @@ async function openRecipeDetail(id) {
   if (favBtn) favBtn.textContent = favs.has(String(id)) ? '❤' : '🤍';
   renderNotes(id);
   const photoBox = document.getElementById('detailPhotos');
-  photoBox.innerHTML = (r.photos || []).map(p => '<div class="recipe-detail-gallery"><img src="/media/' + p + '" /></div>').join('');
+  photoBox.innerHTML = (r.photos || []).map(p => '<div class="recipe-detail-gallery" onclick="openGalleryModal(this)"><img src="/media/' + p + '" /></div>').join('');
   const stepBox = document.getElementById('stepPhotos');
   const stepPhotos = (r.step_photos || []);
   const steps = (r.instructions || '').split('\n').filter(Boolean);
@@ -1032,6 +1032,25 @@ async function extractRecipeFromUpload() {
     if (data.recipe_id) openRecipeDetail(data.recipe_id);
     fileInput.value='';
   } catch (err) { status.textContent = 'Error: ' + err.message; }
+}
+
+let galleryModal = null;
+function openGalleryModal(galleryDiv) {
+  const img = galleryDiv.querySelector('img');
+  if (!img || !img.src) return;
+  if (!galleryModal) {
+    galleryModal = document.createElement('div');
+    galleryModal.id = 'galleryModal';
+    galleryModal.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.9);display:flex;align-items:center;justify-content:center;z-index:9999;cursor:zoom-in;';
+    galleryModal.innerHTML = '<img id="galleryModalImg" style="max-width:90vw;max-height:90vh;object-fit:contain;" />';
+    galleryModal.onclick = closeGalleryModal;
+    document.body.appendChild(galleryModal);
+  }
+  document.getElementById('galleryModalImg').src = img.src;
+  galleryModal.classList.remove('hidden');
+}
+function closeGalleryModal() {
+  if (galleryModal) galleryModal.classList.add('hidden');
 }
 async function renderNotes(recipeId) {
   const res = await fetch(API + '/notes?recipe_id=' + recipeId, { headers: authHeaders() });
