@@ -1654,6 +1654,7 @@ async function saveUser() {
   const pw = document.getElementById('userPassword').value;
   if (pw) payload.password = pw;
   if (!payload.email) return alert('Email is required');
+  if (!editingUserId && !pw) return alert('Password is required for new users');
 
   let url = API + '/auth/users';
   let method = 'POST';
@@ -1664,9 +1665,18 @@ async function saveUser() {
 
   const res = await fetch(url, { method, headers: authHeaders(), body: JSON.stringify(payload) });
   const data = await res.json();
-  if (!res.ok) return alert('Failed: ' + (data.detail || 'unknown'));
+  if (!res.ok) {
+    let msg = 'Unknown error';
+    if (Array.isArray(data.detail)) {
+      msg = data.detail.map(d => d.msg || JSON.stringify(d)).join(', ');
+    } else {
+      msg = data.detail || 'unknown';
+    }
+    return alert('Failed: ' + msg);
+  }
   closeUserForm();
   loadUsers();
+  loadPending();
 }
 async function deleteUser(id) {
   if (!confirm('Delete this user?')) return;
