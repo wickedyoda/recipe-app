@@ -400,6 +400,14 @@
               <button class="secondary" onclick="setTheme('light','cozy')" style="width:auto;padding:8px 10px;font-size:13px;">Light Cozy</button>
               <button class="secondary" onclick="setTheme('dark','cozy')" style="width:auto;padding:8px 10px;font-size:13px;">Dark Cozy</button>
             </div>
+          <div class="section">
+          <h3>Security</h3>
+          <div class="row" style="gap:8px;">
+            <input id="changePasswordCurrent" type="password" placeholder="Current password" style="font-size:13px;flex:1;" />
+            <input id="changePasswordNew" type="password" placeholder="New password" style="font-size:13px;flex:1;" />
+          </div>
+          <button class="secondary" onclick="changePassword()" style="width:100%;padding:10px;font-size:14px;margin-top:6px;">Change password</button>
+          </div>
           </div>
         </div>
         <button onclick="saveSettings()">Save settings</button>
@@ -487,6 +495,18 @@ function saveSettings() {
   existing.defaultServings = isNaN(servings) ? 4 : servings;
   localStorage.setItem('settings', JSON.stringify(existing));
   alert('Settings saved');
+}
+async function changePassword() {
+  const current = document.getElementById('changePasswordCurrent').value;
+  const newPass = document.getElementById('changePasswordNew').value;
+  if (!current || !newPass) return alert('Both fields are required');
+  if (newPass.length < 6) return alert('New password must be at least 6 characters');
+  const res = await fetch(API + '/auth/change-password', { method:'POST', headers: authHeaders(), body: JSON.stringify({current_password: current, new_password: newPass}) });
+  const data = await res.json();
+  if (!res.ok) return alert('Failed: ' + (data.detail || 'unknown'));
+  document.getElementById('changePasswordCurrent').value = '';
+  document.getElementById('changePasswordNew').value = '';
+  alert('Password changed successfully');
 }
 
 let cookingRecipe = null;
