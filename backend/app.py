@@ -5,9 +5,10 @@ from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import func
 
+# Import all models BEFORE Base.metadata.create_all so SQLAlchemy registers them
 from backend.config import settings
 from backend.database import Base, SessionLocal, engine, ensure_schema
-from backend.models import Role, User
+from backend.models import PasswordHistory, Role, User  # noqa: F401 (registered with Base)
 from backend.routers import router as api_router
 from backend.services.auth import hash_password
 
@@ -42,16 +43,17 @@ app = FastAPI(title="Recipe App API", version="0.1.0")
 app.add_middleware(GZipMiddleware, minimum_size=1024)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000", "http://docker.tail99133.ts.net:3000"],
+    allow_origins=settings.ALLOWED_ORIGINS_LIST,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 app.add_middleware(
     TrustedHostMiddleware,
-    allowed_hosts=[host.strip() for host in settings.ALLOWED_HOSTS.split(",") if host.strip()],
+    allowed_hosts=settings.ALLOWED_HOSTS_LIST,
 )
 app.mount("/media", StaticFiles(directory="backend/media"), name="backend-media")
+
 
 @app.middleware("http")
 async def security_headers(request, call_next):
@@ -64,6 +66,7 @@ async def security_headers(request, call_next):
     return response
 
 app.include_router(api_router)
+
 
 @app.get("/health", tags=["health"])
 def health():

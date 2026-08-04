@@ -22,5 +22,7 @@ ignore = [
   "UP045", # Optional kept for compatibility in this module
   "PLW1510", # subprocess.run handled explicitly via returncode checks below
   "PLR2004", # small magic numbers in parser are acceptable
+  "PLR0913", # FastAPI route signatures can have many params
+  "PLR0917", # FastAPI route signatures can have many params
   "PIE810", # startswith tuple optimization not applied in parser for clarity
 ]

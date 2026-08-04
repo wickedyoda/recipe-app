@@ -5,7 +5,7 @@ from datetime import datetime, timedelta, timezone
 import bcrypt
 from backend.config import settings
 from backend.database import SessionLocal
-from backend.models import PasswordResetToken, Role, User
+from backend.models import PasswordHistory, PasswordResetToken, Role, User
 from backend.services.email import send_email
 from fastapi import Depends, Header, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -13,8 +13,9 @@ from jose import jwt
 
 SECRET_KEY = os.getenv("SECRET_KEY", "change-me")
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE = timedelta(minutes=60*24)
+ACCESS_TOKEN_EXPIRE = timedelta(minutes=60 * 24)
 PASSWORD_RESET_EXPIRE = timedelta(hours=1)
+PASSWORD_HISTORY_LIMIT = 5
 
 
 def hash_password(password: str) -> str:
@@ -61,6 +62,9 @@ def consume_password_reset_token(token: str, new_password: str) -> bool:
         user = db.query(User).filter(User.id == entry.user_id).first()
         if not user:
             return False
+        if is_password_reused(new_password, user.id, db):
+            raise HTTPException(status_code=400, detail="New password must not match the last 5 passwords")
+        record_password_history(user.id, user.hashed_password, db)
         user.hashed_password = hash_password(new_password)
         user.must_change_password = 0
         user.password_changed_at = datetime.now(timezone.utc)
@@ -74,7 +78,7 @@ def consume_password_reset_token(token: str, new_password: str) -> bool:
 
 
 def send_password_reset_email(to_email: str, token: str) -> bool:
-    reset_url = f"{settings.MEDIA_ROOT or 'http://localhost:3000'}/reset-password?token={token}"
+    reset_url = f"{settings.PUBLIC_URL or 'http://localhost:3000'}/reset-password?token={token}"
     body = f"""
     <html><body>
     <p>Click the link below to reset your password. This link expires in 1 hour.</p>
@@ -97,18 +101,69 @@ def request_password_reset(email: str) -> bool:
         db.close()
 
 
-def change_password(user: User, current_password: str, new_password: str) -> None:
+def is_password_reused(new_password: str, user_id: int, db) -> bool:
+    """Check if the new password matches any of the last PASSWORD_HISTORY_LIMIT passwords."""
+    history = db.query(PasswordHistory).filter(PasswordHistory.user_id == user_id).order_by(PasswordHistory.id.desc()).limit(PASSWORD_HISTORY_LIMIT).all()
+    for entry in history:
+        if verify_password(new_password, entry.hashed_password):
+            return True
+    return False
+
+
+def record_password_history(user_id: int, hashed_password: str, db) -> None:
+    """Record a password hash into history."""
+    entry = PasswordHistory(
+        user_id=user_id,
+        hashed_password=hashed_password,
+    )
+    db.add(entry)
+    db.commit()
+
+
+def change_password(user: User, current_password: str, new_password: str, db) -> None:
     if not verify_password(current_password, user.hashed_password):
         raise HTTPException(status_code=400, detail="Current password is incorrect")
-    user.hashed_password = hash_password(new_password)
+    if verify_password(new_password, user.hashed_password):
+        raise HTTPException(status_code=400, detail="New password must be different from current password")
+    if is_password_reused(new_password, user.id, db):
+        raise HTTPException(
+            status_code=400,
+            detail=f"New password must not match the last {PASSWORD_HISTORY_LIMIT} passwords",
+        )
+    new_hash = hash_password(new_password)
+    record_password_history(user.id, user.hashed_password, db)
+    user.hashed_password = new_hash
     user.must_change_password = 0
     user.password_changed_at = datetime.now(timezone.utc)
-    db = SessionLocal()
-    try:
-        db.add(user)
-        db.commit()
-    finally:
-        db.close()
+    db.add(user)
+    db.commit()
+
+
+def change_password_admin(target: User, new_password: str, db) -> None:
+    """Admin-forced password change — no current password required."""
+    if verify_password(new_password, target.hashed_password):
+        raise HTTPException(status_code=400, detail="New password must be different from current password")
+    if is_password_reused(new_password, target.id, db):
+        raise HTTPException(
+            status_code=400,
+            detail=f"New password must not match the last {PASSWORD_HISTORY_LIMIT} passwords",
+        )
+    new_hash = hash_password(new_password)
+    record_password_history(target.id, target.hashed_password, db)
+    target.hashed_password = new_hash
+    target.must_change_password = 0
+    target.password_changed_at = datetime.now(timezone.utc)
+    db.add(target)
+    db.commit()
+
+
+def change_email(user: User, new_email: str, db) -> None:
+    existing = db.query(User).filter(User.email == new_email).first()
+    if existing and existing.id != user.id:
+        raise HTTPException(status_code=400, detail="Email already in use")
+    user.email = new_email
+    db.add(user)
+    db.commit()
 
 
 def get_db():

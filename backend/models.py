@@ -30,6 +30,15 @@ class User(Base):
     must_change_password = Column(Integer, default=0, nullable=False)
     password_changed_at = Column(DateTime(timezone=True), nullable=True)
 
+
+class PasswordHistory(Base):
+    __tablename__ = "password_history"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    hashed_password = Column(String(255), nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
 class Cookbook(Base):
     __tablename__ = "cookbooks"
     id = Column(Integer, primary_key=True, index=True)
@@ -116,6 +125,7 @@ class MealPlanEntry(Base):
     recipe_id = Column(Integer, ForeignKey("recipes.id"), nullable=False)
     meal = Column(String(50), nullable=False)
     date = Column(String(20), nullable=True)
+    position = Column(Integer, default=0, nullable=False)
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
 
 class GroceryList(Base):
