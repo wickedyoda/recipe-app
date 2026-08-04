@@ -105,8 +105,8 @@ def get_storage_info(_: User = Depends(require_role(Role.admin))):
                     usage["files"] += 1
                     usage["total_bytes"] += os.path.getsize(fp)
             usage["total_gb"] = round(usage["total_bytes"] / (1024**3), 2)
-    except Exception as e:
-        usage["error"] = str(e)
+    except Exception:
+        usage["error"] = "Unable to read storage details."
     # Also report disk space
     disk = shutil.disk_usage(media_root if os.path.isdir(media_root) else "/")
     usage["disk_total_gb"] = round(disk.total / (1024**3), 2)
