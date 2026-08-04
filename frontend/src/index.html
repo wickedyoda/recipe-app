@@ -415,6 +415,7 @@
               <button class="secondary" onclick="setTheme('light','cozy')" style="width:auto;padding:8px 10px;font-size:13px;">Light Cozy</button>
               <button class="secondary" onclick="setTheme('dark','cozy')" style="width:auto;padding:8px 10px;font-size:13px;">Dark Cozy</button>
             </div>
+          </div>
           <div class="section">
           <h3>Security</h3>
           <div class="row" style="gap:8px;">
@@ -422,7 +423,6 @@
             <input id="changePasswordNew" type="password" placeholder="New password" style="font-size:13px;flex:1;" />
           </div>
           <button class="secondary" onclick="changePassword()" style="width:100%;padding:10px;font-size:14px;margin-top:6px;">Change password</button>
-          </div>
           </div>
         </div>
         <button onclick="saveSettings()">Save settings</button>
@@ -493,7 +493,7 @@ async function loadProfile() {
   const res = await fetch(API + '/auth/me', { headers: authHeaders() });
   if (!res.ok) return;
   const user = await res.json();
-  document.getElementById('profileInfo').innerHTML = '<div style="font-weight:600;">' + escapeHtml(user.display_name || user.email) + '</div><div class="meta">' + escapeHtml(user.email) + ' • ' + escapeHtml(user.role || '') + '</div>';
+  document.getElementById('profileInfo').innerHTML = '<div style="font-weight:600;">' + escapeHtml(user.display_name || user.email) + '</div><div class="meta">' + escapeHtml(user.email) + ' • ' + escapeHtml(user.role || '') + '</div>' + (user.must_change_password ? '<div class="meta" style="color:#b91c1c;margin-top:4px;">⚠ Password must be changed</div>' : '');
   const saved = JSON.parse(localStorage.getItem('settings') || '{}');
   document.getElementById('defaultServings').value = (saved.defaultServings || 4);
 }
