@@ -1,4 +1,4 @@
-# Recipe App
+# CookieRu
 
 Self-hosted recipe/media app with:
 - User auth (`admin` / `user` roles)
