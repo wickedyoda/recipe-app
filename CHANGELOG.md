@@ -47,7 +47,7 @@ and this project uses modified MIT licensing with attribution to upstream tool o
 - Security headers: X-Content-Type-Options, X-Frame-Options, X-XSS-Protection
 
 ### Changed
-- Top navigation bar consolidated into a single compact header row with icon buttons and hamburger menu (☰)
+- Top navigation bar consolidated into a compact single header row centered under the logo with icon buttons and hamburger dropdown menu (☰)
 
 ### Removed
 - SMS share option from frontend and backend
