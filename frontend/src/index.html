@@ -2526,11 +2526,48 @@ async function deleteGroceryItem(id) {
 
 async function addToMealPlan() {
   if (!currentRecipeId) return;
-  const planName = prompt('Meal plan name:');
-  if (!planName) return;
-  const res = await fetch(API + '/meal-plans', { method:'POST', headers: authHeaders(), body: JSON.stringify({name: planName, period: 'weekly'}) });
-  const plan = await res.json();
-  await fetch(API + '/meal-plans/entries', { method:'POST', headers: authHeaders(), body: JSON.stringify({meal_plan_id: plan.id, recipe_id: currentRecipeId, meal: 'Dinner', date: ''}) });
+  // Fetch existing meal plans
+  let plans = [];
+  try {
+    const res = await fetch(API + '/meal-plans', { headers: authHeaders() });
+    plans = await res.json();
+  } catch (e) {}
+  // Build numbered prompt: existing plans + option to create new
+  let msg = 'Select a meal plan (enter number):\n';
+  plans.forEach((p, i) => { msg += (i + 1) + '. ' + p.name + '\n'; });
+  msg += (plans.length + 1) + '. Create new meal plan';
+  const choice = prompt(msg, '1');
+  if (!choice) return;
+  const idx = parseInt(choice) - 1;
+  let planId;
+  if (idx >= 0 && idx < plans.length) {
+    planId = plans[idx].id;
+  } else if (idx === plans.length) {
+    const planName = prompt('Meal plan name:', 'My Meal Plan');
+    if (!planName) return;
+    const res = await fetch(API + '/meal-plans', { method:'POST', headers: authHeaders(), body: JSON.stringify({name: planName, period: 'weekly'}) });
+    const plan = await res.json();
+    if (!res.ok) return alert('Failed: ' + (plan.detail || 'unknown'));
+    planId = plan.id;
+  } else {
+    return;
+  }
+  // Prompt for day
+  const today = new Date();
+  const defaultDate = today.toISOString().split('T')[0];
+  const dateInput = prompt('Enter the date (YYYY-MM-DD):', defaultDate);
+  if (!dateInput) return;
+  // Prompt for time of day
+  const timeChoice = prompt('Enter time of day:\n1. Breakfast\n2. Lunch\n3. Dinner\n4. Snack\n(Enter number or custom text)', '3');
+  if (!timeChoice) return;
+  let meal;
+  const timeIdx = parseInt(timeChoice);
+  if (timeIdx === 1) meal = 'Breakfast';
+  else if (timeIdx === 2) meal = 'Lunch';
+  else if (timeIdx === 3) meal = 'Dinner';
+  else if (timeIdx === 4) meal = 'Snack';
+  else meal = timeChoice;
+  await fetch(API + '/meal-plans/entries', { method:'POST', headers: authHeaders(), body: JSON.stringify({meal_plan_id: planId, recipe_id: currentRecipeId, meal: meal, date: dateInput}) });
   alert('Added to meal plan');
 }
 
