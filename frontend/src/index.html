@@ -427,23 +427,12 @@
       <div id="tabImport" class="tab hidden">
         <div class="card">
           <h2 style="margin-top:0;">Add recipe</h2>
-          <input id="videoUrl" placeholder="TikTok / YouTube / Facebook / Reels URL" />
-          <button onclick="ingestUrl()">Extract from URL</button>
-          <p id="ingestStatus" style="font-size:13px;color:#555;margin-top:8px;"></p>
-          <div style="margin-top:12px; padding-top:12px; border-top:1px solid #eee;">
-            <p style="font-size:13px;color:#555;margin-top:0;margin-bottom:8px;">Or upload a video file directly:</p>
-            <input id="videoFile" type="file" accept="video/*" />
-            <button onclick="ingestFile()">Upload & process</button>
-            <p id="uploadStatus" style="font-size:13px;color:#555;margin-top:8px;"></p>
-          </div>
-        </div>
-        <div class="card">
-          <h2 style="margin-top:0;">Extract recipe from video</h2>
-          <input id="recipeUrl" placeholder="Paste TikTok / YouTube / Reels URL" />
-          <button onclick="extractRecipe()">Extract recipe from URL</button>
+          <p style="font-size:13px;color:#555;margin:0 0 8px;">Paste a TikTok, YouTube, Facebook, or Reels URL. The video will be examined, the recipe extracted, and automatically added to your recipe book.</p>
+          <input id="recipeUrl" placeholder="TikTok / YouTube / Facebook / Reels URL" />
+          <button onclick="extractRecipe()">Extract recipe from video</button>
           <p id="recipeStatus" style="font-size:13px;color:#555;margin-top:8px;"></p>
           <div style="margin-top:12px; padding-top:12px; border-top:1px solid #eee;">
-            <p style="font-size:13px;color:#555;margin-top:0;margin-bottom:8px;">Or upload a video file:</p>
+            <p style="font-size:13px;color:#555;margin-top:0;margin-bottom:8px;">Or upload a video file directly:</p>
             <input id="recipeFile" type="file" accept="video/*" />
             <button onclick="extractRecipeFromUpload()">Extract recipe from file</button>
             <p id="recipeUploadStatus" style="font-size:13px;color:#555;margin-top:8px;"></p>
@@ -1298,12 +1287,12 @@ async function extractRecipe() {
   const url = document.getElementById('recipeUrl').value.trim();
   const status = document.getElementById('recipeStatus');
   if (!url) return;
-  status.textContent = 'Extracting recipe...';
+  status.textContent = 'Examining video and extracting recipe...';
   try {
     const res = await fetch(API + '/media/recipe', { method:'POST', headers: authHeaders(), body: JSON.stringify({url}) });
     const data = await res.json();
     if (!res.ok) throw new Error(data.detail || data.error || 'unknown');
-    status.textContent = 'Done. Saved recipe: ' + (data.title || data.recipe_id);
+    status.textContent = 'Done. Recipe added: ' + (data.title || 'ID ' + data.recipe_id);
     if (data.recipe_id) openRecipeDetail(data.recipe_id);
   } catch (err) { status.textContent = 'Error: ' + err.message; }
 }
