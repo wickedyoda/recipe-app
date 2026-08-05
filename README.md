@@ -26,7 +26,7 @@ Self-hosted recipe/media app with:
 - 5 color themes (light, dark, dawn, cozy, high-contrast) with high contrast option
 - Per-user profiles with avatar upload or 10 vegetable avatar selections
 - Guest/demo account with read-only access (admin can enable/disable)
-- Top navigation bar with text labels
+- Top navigation bar with text labels (compact single-row header with icon buttons + 3-line hamburger menu)
 - Admin-only settings page for server config and user management
 - Grocery list sharing via link, email, and text copy (SMS removed)
 - Recipe multi-select export

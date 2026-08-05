@@ -39,6 +39,9 @@ and this project uses modified MIT licensing with attribution to upstream tool o
 - CSP updated to include `img-src 'self' data: https:`
 - Security headers: X-Content-Type-Options, X-Frame-Options, X-XSS-Protection
 
+### Changed
+- Top navigation bar consolidated into a single compact header row with icon buttons and hamburger menu (☰)
+
 ### Removed
 - SMS share option from frontend and backend
 - JSON file export from recipe multi-select and grocery share
