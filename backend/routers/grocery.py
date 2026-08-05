@@ -169,10 +169,10 @@ def share_list(list_id: int, db: Session = Depends(get_db), current_user: User =
     return {
         "share_token": gl.share_token,
         "link": link,
-        "sms": sms,
         "mailto": mailto,
         "text": text,
         "html": html,
+        "list_name": gl.name,
     }
 
 @router.get("/public/{share_token}")

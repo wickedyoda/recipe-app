@@ -262,7 +262,6 @@
     font-family: 'Inter', sans-serif; font-weight: 500;
   }
   .share-btn.copy { background: #1e3a8a; color: #fff; }
-  .share-btn.sms { background: #fb9b36; color: #0b0c0f; }
   .share-btn.email { background: #e5e7eb; color: #374151; }
   .share-btn.text { background: #fbbf24; color: #451a03; }
   .share-btn.txt { background: #fde68a; color: #78350f; }
@@ -686,7 +685,6 @@
               </div>
               <div class="share-body">
                 <button class="share-btn copy" onclick="copyGroceryLink()">Copy link</button>
-                <button class="share-btn sms" onclick="shareGrocerySms()">SMS</button>
                 <button class="share-btn email" onclick="shareGroceryEmail()">Email</button>
                 <button class="share-btn text" onclick="copyGroceryText()">Copy text</button>
                 <button class="share-btn txt" onclick="exportGrocery('text')">Export .txt</button>
@@ -2184,6 +2182,8 @@ async function openGroceryShare() {
   groceryShareData = data;
   document.getElementById('grocerySharePanel').classList.remove('hidden');
   document.getElementById('groceryShareStatus').textContent = 'Share ready. Use one of the options below.';
+  // Grey out email button if SMTP not configured
+  _checkSmtpAndToggleEmailBtn();
 }
 function closeGroceryShare() {
   document.getElementById('grocerySharePanel').classList.add('hidden');
@@ -2191,12 +2191,29 @@ function closeGroceryShare() {
 }
 function copyGroceryLink() {
   if (!groceryShareData) return;
-  const link = location.origin + groceryShareData.link;
-  navigator.clipboard.writeText(link).then(() => setShareStatus('Link copied'));
+  navigator.clipboard.writeText(groceryShareData.link).then(() => setShareStatus('Link copied'));
 }
-function shareGrocerySms() {
-  if (!groceryShareData) return;
-  window.location.href = groceryShareData.sms;
+async function _checkSmtpAndToggleEmailBtn() {
+  const emailBtn = document.querySelector('.share-btn.email');
+  if (!emailBtn) return;
+  try {
+    const res = await fetch(API + '/settings/', { headers: authHeaders() });
+    if (res.ok) {
+      const s = await res.json();
+      const hasSmtp = s.smtp_host && s.smtp_from_email;
+      emailBtn.style.opacity = hasSmtp ? '1' : '0.4';
+      emailBtn.style.pointerEvents = hasSmtp ? 'auto' : 'none';
+      if (!hasSmtp) {
+        emailBtn.title = 'Configure SMTP settings in .env to enable email sharing';
+      } else {
+        emailBtn.title = '';
+      }
+    }
+  } catch (e) {
+    // If settings fetch fails, grey out email button
+    emailBtn.style.opacity = '0.4';
+    emailBtn.style.pointerEvents = 'none';
+  }
 }
 function shareGroceryEmail() {
   if (!groceryShareData) return;
@@ -2206,10 +2223,18 @@ function copyGroceryText() {
   if (!groceryShareData) return;
   navigator.clipboard.writeText(groceryShareData.text).then(() => setShareStatus('Text copied'));
 }
-function exportGrocery(fmt) {
+async function exportGrocery(fmt) {
   if (!currentGroceryId) return;
   const url = API + '/grocery-lists/' + currentGroceryId + '/export?fmt=' + (fmt === 'html' ? 'html' : 'text');
-  window.open(url, '_blank');
+  const res = await fetch(url, { headers: authHeaders() });
+  if (!res.ok) return alert('Export failed');
+  const blob = await res.blob();
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  const ext = fmt === 'html' ? 'html' : 'txt';
+  a.download = (groceryShareData ? (groceryShareData.list_name || 'grocery-list') : 'grocery-list') + '.' + ext;
+  a.click();
+  setShareStatus('Exported as .' + ext);
 }
 function setShareStatus(msg) {
   document.getElementById('groceryShareStatus').textContent = msg;

@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, File, HTTPException, Request, Response, 
 from sqlalchemy.orm import Session
 
 from backend.database import get_db
-from backend.models import Recipe, RecipePhoto, RecipeStepPhoto, RecipeTag, Store, Tag, User
+from backend.models import Recipe, RecipeMedia, RecipePhoto, RecipeStepPhoto, RecipeTag, Store, Tag, User
 from backend.schemas import RecipeCreate, RecipeOut
 from backend.services.auth import get_current_user
 
@@ -52,7 +52,19 @@ def create_recipe(payload: RecipeCreate, db: Session = Depends(get_db), current_
 def list_recipes(db: Session = Depends(get_db), current_user: User = Depends(get_current_user), q: str = "", limit: int = 200):
     rows = db.query(Recipe).filter(Recipe.owner_id==current_user.id)
     if q:
-        rows = rows.filter(Recipe.title.ilike(f"%{q}%"))
+        # Search recipe title, description, ingredients, instructions, AND extracted media text
+        media_subq = db.query(RecipeMedia.recipe_id).filter(
+            RecipeMedia.owner_id == current_user.id,
+            RecipeMedia.extracted_text.is_not(None),
+            RecipeMedia.extracted_text.like(f"%{q}%"),
+        ).subquery()
+        rows = rows.filter(
+            (Recipe.title.ilike(f"%{q}%"))
+            | (Recipe.description.ilike(f"%{q}%"))
+            | (Recipe.ingredients.ilike(f"%{q}%"))
+            | (Recipe.instructions.ilike(f"%{q}%"))
+            | (Recipe.id.in_(media_subq))
+        )
     rows = rows.order_by(Recipe.created_at.desc()).limit(limit).all()
     recipe_ids = [r.id for r in rows]
     # Batch queries to avoid N+1
