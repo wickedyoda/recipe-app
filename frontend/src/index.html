@@ -131,6 +131,7 @@
   .nav-icon { font-size: 22px; }
   .picker-item { display:flex; align-items:center; gap:10px; padding:8px; border-radius:8px; cursor:pointer; transition:background 0.15s; }
   .picker-item:hover { background:rgba(0,0,0,0.05); }
+  .readonly-badge { font-size:10px; font-weight:700; color:#b91c1c; background:rgba(185,28,28,0.15); border:1px solid rgba(185,28,28,0.3); border-radius:4px; padding:2px 6px; margin-left:6px; }
   .nav-label { font-size: 11px; font-weight: 500; }
   body.dark .nav-square { background: #1a1a1e; border-color: #3a3a45; color: #c8a78a; }
   body.dark .nav-square:hover { background: #2a2a2e; }
@@ -261,7 +262,6 @@
     font-family: 'Inter', sans-serif; font-weight: 500;
   }
   .share-btn.copy { background: #1e3a8a; color: #fff; }
-  .share-btn.sms { background: #fb9b36; color: #0b0c0f; }
   .share-btn.email { background: #e5e7eb; color: #374151; }
   .share-btn.text { background: #fbbf24; color: #451a03; }
   .share-btn.txt { background: #fde68a; color: #78350f; }
@@ -561,6 +561,16 @@
           </div>
           <div id="detailPhotos" class="row" style="margin-top:10px;"></div>
           <div id="stepPhotos" class="row" style="margin-top:10px;"></div>
+          <div id="mediaSection" style="margin-top:16px;">
+            <div class="top" style="display:flex;justify-content:space-between;align-items:center;">
+              <h3 style="margin:0;">Recipe Media</h3>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <button class="secondary" id="uploadRecipeMediaBtn" onclick="document.getElementById('recipeMediaInput').click()" style="width:auto;padding:6px 10px;font-size:12px;">📎 Add Media</button>
+                <input type="file" id="recipeMediaInput" accept=".jpg,.jpeg,.png,.webp,.gif,.bmp,.pdf,.docx,.doc,.txt,.md,.csv" style="display:none;" onchange="uploadRecipeMedia()" />
+              </div>
+            </div>
+            <div id="recipeMediaGallery"></div>
+          </div>
           <h3 style="margin-top:16px;">Notes</h3>
           <div id="detailNotes"></div>
         </div>
@@ -682,10 +692,10 @@
             <div class="share-card">
               <div class="share-header">
                 <h3>Share / Export</h3>
+                <button class="secondary" onclick="closeGroceryShare()" style="width:auto;padding:4px 8px;font-size:14px;">✕</button>
               </div>
               <div class="share-body">
                 <button class="share-btn copy" onclick="copyGroceryLink()">Copy link</button>
-                <button class="share-btn sms" onclick="shareGrocerySms()">SMS</button>
                 <button class="share-btn email" onclick="shareGroceryEmail()">Email</button>
                 <button class="share-btn text" onclick="copyGroceryText()">Copy text</button>
                 <button class="share-btn txt" onclick="exportGrocery('text')">Export .txt</button>
@@ -853,6 +863,25 @@ function scaleIngredients() {
   openRecipeDetail(currentRecipeId);
 }
 
+function _updateReadonlyButtons() {
+  const isReadonly = localStorage.getItem('isReadonly') === '1';
+  const writeIds = ['selectModeBtn', 'exportSelectedBtn', 'addRecipeBtn'];
+  writeIds.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.toggle('hidden', isReadonly);
+  });
+  // Hide Delete buttons
+  document.querySelectorAll('button').forEach(btn => {
+    if (btn.textContent.trim().includes('Delete')) btn.classList.toggle('hidden', isReadonly);
+  });
+  // Hide Add/Change buttons in plan detail
+  if (isReadonly) {
+    document.querySelectorAll('[onclick*="addMealEntry"], [onclick*="changeMealSlot"]').forEach(el => {
+      el.closest('.action-row')?.classList.add('hidden');
+    });
+  }
+}
+
 function switchTab(name) {
   if (name === 'tabRecipes') {
     const btn = document.getElementById('selectModeBtn');
@@ -870,6 +899,7 @@ function switchTab(name) {
   if (name === 'tabAdmin') { loadPending(); loadUsers(); }
   if (name === 'tabProfile') { loadProfile(); }
   if (name === 'tabMenu') { loadRecentRecipes(); }
+  _updateReadonlyButtons();
 }
 function toggleDropdown() {
   const menu = document.getElementById('dropdownMenu');
@@ -912,6 +942,22 @@ document.addEventListener('click', function(e) {
 });
 
 async function loadProfile() {
+  const readonly = localStorage.getItem('isReadonly') === '1';
+  if (readonly) {
+    document.getElementById('readonlyNotice').classList.remove('hidden');
+    // Hide edit form, show read-only message
+    document.getElementById('profileForm').classList.add('hidden');
+    document.getElementById('changePasswordForm').classList.add('hidden');
+    document.getElementById('exportActions').classList.remove('hidden');
+    // Hide delete account button
+    const delBtn = document.querySelector('#profileSection button.danger');
+    if (delBtn) delBtn.classList.add('hidden');
+  } else {
+    document.getElementById('readonlyNotice').classList.add('hidden');
+    document.getElementById('profileForm').classList.remove('hidden');
+    document.getElementById('changePasswordForm').classList.remove('hidden');
+    document.getElementById('exportActions').classList.add('hidden');
+  }
   const res = await fetch(API + '/auth/me', { headers: authHeaders() });
   if (!res.ok) return;
   const user = await res.json();
@@ -1197,9 +1243,18 @@ async function initApp() {
   document.getElementById('appSection').classList.remove('hidden');
   document.getElementById('nav').classList.remove('hidden');
   document.getElementById('authArea').classList.remove('hidden');
+  localStorage.setItem('isReadonly', user.is_readonly ? '1' : '0');
   document.getElementById('userEmail').textContent = user.email + ' (' + user.role + ')';
+  if (user.is_readonly) {
+    const badge = document.createElement('span');
+    badge.className = 'readonly-badge';
+    badge.textContent = 'READ-ONLY';
+    badge.style.cssText = 'margin-left:6px;font-size:10px;font-weight:700;color:#b91c1c;background:rgba(185,28,28,0.15);border:1px solid rgba(185,28,28,0.3);border-radius:4px;padding:2px 6px;';
+    document.getElementById('userEmail').appendChild(badge);
+  }
   if (user.role === 'admin') document.getElementById('adminTabBtn').classList.remove('hidden');
   switchTab('tabMenu');
+  _updateReadonlyButtons();
   await loadTags();
 }
 
@@ -1638,7 +1693,104 @@ async function openRecipeDetail(id) {
     const photos = stepPhotos.filter(sp => sp.step_index === i).map(sp => '<img src="/media/static/' + sp.path + '" style="max-height:80px;border-radius:8px;margin-right:8px;" />').join('');
     return photos ? '<div style="margin-top:8px;font-size:12px;color:#555;">Step ' + (i + 1) + ' photos</div><div class="carousel-container">' + photos + '</div>' : '';
   }).join('');
+  // Recipe media gallery (images, PDFs, documents)
+  const mediaBox = document.getElementById('recipeMediaGallery');
+  const allMedia = (r.media || []);
+  if (allMedia.length > 0) {
+    mediaBox.innerHTML = allMedia.map(m => {
+      const isImage = m.media_type === 'image';
+      const isPdf = m.media_type === 'pdf';
+      const isDoc = m.media_type === 'document';
+      let preview = '';
+      if (isImage && m.thumbnail_path) {
+        preview = '<img src="/media/static/' + m.thumbnail_path + '" style="max-width:100px;max-height:100px;object-fit:cover;border-radius:8px;" />';
+      } else if (isImage) {
+        preview = '<img src="/media/static/' + m.file_path + '" style="max-width:100px;max-height:100px;object-fit:cover;border-radius:8px;" />';
+      } else if (isPdf) {
+        preview = '<div style="width:100px;height:100px;display:flex;align-items:center;justify-content:center;background:#f3f4f6;border-radius:8px;font-size:24px;">📄</div>';
+      } else if (isDoc) {
+        preview = '<div style="width:100px;height:100px;display:flex;align-items:center;justify-content:center;background:#f3f4f6;border-radius:8px;font-size:24px;">📎</div>';
+      } else {
+        preview = '<div style="width:100px;height:100px;display:flex;align-items:center;justify-content:center;background:#f3f4f6;border-radius:8px;font-size:24px;">📄</div>';
+      }
+      return '<div style="display:inline-flex;align-items:center;gap:8px;margin:4px;vertical-align:top;">' + preview + '<div style="display:flex;flex-direction:column;gap:4px;"><div style="font-size:12px;font-weight:500;max-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escapeHtml(m.original_filename) + '</div><button class="secondary" onclick="deleteRecipeMedia(' + m.id + ')" style="font-size:10px;padding:2px 6px;">🗑️</button></div></div>';
+    }).join('');
+  } else {
+    mediaBox.innerHTML = '<p style="font-size:12px;color:var(--text-muted);">No media files attached.</p>';
+  }
+  _updateRecipeMediaUI();
 }
+function _updateRecipeMediaUI() {
+  // Hide/show media upload button based on read-only status
+  const isReadonly = localStorage.getItem('isReadonly') === '1';
+  const uploadBtn = document.getElementById('uploadRecipeMediaBtn');
+  if (uploadBtn) {
+    uploadBtn.style.display = isReadonly ? 'none' : 'inline-block';
+  }
+}
+function _renderMediaOnDetail(r) {
+  const mediaBox = document.getElementById('recipeMediaGallery');
+  if (!mediaBox) return;
+  const allMedia = (r.media || []);
+  if (allMedia.length > 0) {
+    mediaBox.innerHTML = allMedia.map(m => {
+      const isImage = m.media_type === 'image';
+      const isPdf = m.media_type === 'pdf';
+      let preview = '';
+      if (isImage && m.thumbnail_path) {
+        preview = '<img src="/media/static/' + m.thumbnail_path + '" style="max-width:100px;max-height:100px;object-fit:cover;border-radius:8px;" />';
+      } else if (isImage) {
+        preview = '<img src="/media/static/' + m.file_path + '" style="max-width:100px;max-height:100px;object-fit:cover;border-radius:8px;" />';
+      } else if (isPdf || m.media_type === 'document' || m.media_type === 'text') {
+        preview = '<div style="width:100px;height:100px;display:flex;align-items:center;justify-content:center;background:#f3f4f6;border-radius:8px;font-size:24px;">📄</div>';
+      }
+      return '<div style="display:inline-flex;align-items:center;gap:8px;margin:4px;vertical-align:top;">' + preview + '<div style="display:flex;flex-direction:column;gap:4px;"><div style="font-size:12px;font-weight:500;max-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="' + escapeHtml(m.original_filename) + '">' + escapeHtml(m.original_filename) + '</div><button class="secondary" onclick="deleteRecipeMedia(' + m.id + ')" style="font-size:10px;padding:2px 6px;">🗑️</button></div></div>';
+    }).join('');
+  } else {
+    mediaBox.innerHTML = '<p style="font-size:12px;color:var(--text-muted);">No media files attached.</p>';
+  }
+  _updateRecipeMediaUI();
+}
+async function uploadRecipeMedia() {
+  const input = document.getElementById('recipeMediaInput');
+  const file = input.files[0];
+  if (!file || !currentRecipeId) return;
+  const form = new FormData();
+  form.append('file', file);
+  const res = await fetch(API + '/recipes/' + currentRecipeId + '/media', {
+    method: 'POST',
+    headers: authHeadersNoJson(),
+    body: form,
+  });
+  if (!res.ok) {
+    const err = await res.json();
+    return alert('Upload failed: ' + (err.detail || 'unknown error'));
+  }
+  const result = await res.json();
+  setShareStatus('Media uploaded successfully');
+  _renderMediaOnDetail({media: [result]});
+  // Re-fetch to get full list
+  const fullRes = await fetch(API + '/recipes/' + currentRecipeId, { headers: authHeaders() });
+  if (fullRes.ok) {
+    const full = await fullRes.json();
+    _renderMediaOnDetail(full);
+  }
+}
+async function deleteRecipeMedia(mediaId) {
+  if (!confirm('Remove this media file?')) return;
+  const res = await fetch(API + '/recipes/' + currentRecipeId + '/media/' + mediaId, {
+    method: 'DELETE',
+    headers: authHeaders(),
+  });
+  if (!res.ok) return alert('Delete failed');
+  // Re-fetch recipe to refresh media gallery
+  const fullRes = await fetch(API + '/recipes/' + currentRecipeId, { headers: authHeaders() });
+  if (fullRes.ok) {
+    const full = await fullRes.json();
+    _renderMediaOnDetail(full);
+  }
+}
+
 async function uploadStepPhoto() {
   const input = document.getElementById('stepPhotoInput');
   const file = input.files[0];
@@ -2006,18 +2158,27 @@ function renderPickerRecipes() {
   if (query) {
     filtered = recipes.filter(r => r.title.toLowerCase().includes(query));
   }
-  if (!query) {
-    filtered = filtered.slice(0, 5);
-  }
   const list = document.getElementById('recipePickerList');
   if (!list) return;
-  list.innerHTML = filtered.map(r => {
-    const img = (r.photos && r.photos.length > 0) ? '/media/static/' + r.photos[0] : (r.source_path ? '/media/static/' + r.source_path : '');
-    const imgTag = img ? '<img src="' + img + '" style="width:40px;height:40px;object-fit:cover;border-radius:6px;" />' : '<span style="width:40px;height:40px;border-radius:6px;background:#eee;display:inline-block;flex-shrink:0;"></span>';
-    return '<div onclick="pickRecipe(' + r.id + ')" class="picker-item">' + imgTag + '<div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:500;">' + escapeHtml(r.title) + '</div><div class="meta" style="font-size:11px;color:#999;">' + escapeHtml(r.category || '') + '</div></div></div>';
-  }).join('');
-  if (!filtered.length) {
+  if (!query && recipes.length) {
+    // Show Recent Recipes section
+    const recent5 = recipes.slice(0, 5);
+    list.innerHTML = '<h4 style="font-size:12px;color:var(--text-muted);margin:0 4px 8px 4px;">Recent recipes</h4>' + recent5.map(r => {
+      const img = (r.photos && r.photos.length > 0) ? '/media/static/' + r.photos[0] : (r.source_path ? '/media/static/' + r.source_path : '');
+      const imgTag = img ? '<img src="' + img + '" style="width:40px;height:40px;object-fit:cover;border-radius:6px;" />' : '<span style="width:40px;height:40px;border-radius:6px;background:#eee;display:inline-block;flex-shrink:0;"></span>';
+      return '<div onclick="pickRecipe(' + r.id + ')" class="picker-item">' + imgTag + '<div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:500;">' + escapeHtml(r.title) + '</div><div class="meta" style="font-size:11px;color:#999;">' + escapeHtml(r.category || '') + '</div></div></div>';
+    }).join('');
+    if (recipes.length > 5) {
+      list.innerHTML += '<div style="padding:6px 8px;font-size:11px;color:#999;text-align:right;">+ ' + (recipes.length - 5) + ' more...</div>';
+    }
+  } else if (!filtered.length) {
     list.innerHTML = '<div style="padding:16px;text-align:center;color:#999;font-size:13px;">No recipes found</div>';
+  } else {
+    list.innerHTML = filtered.map(r => {
+      const img = (r.photos && r.photos.length > 0) ? '/media/static/' + r.photos[0] : (r.source_path ? '/media/static/' + r.source_path : '');
+      const imgTag = img ? '<img src="' + img + '" style="width:40px;height:40px;object-fit:cover;border-radius:6px;" />' : '<span style="width:40px;height:40px;border-radius:6px;background:#eee;display:inline-block;flex-shrink:0;"></span>';
+      return '<div onclick="pickRecipe(' + r.id + ')" class="picker-item">' + imgTag + '<div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:500;">' + escapeHtml(r.title) + '</div><div class="meta" style="font-size:11px;color:#999;">' + escapeHtml(r.category || '') + '</div></div></div>';
+    }).join('');
   }
 }
 function filterPickerRecipes() {
@@ -2129,6 +2290,8 @@ async function openGroceryShare() {
   groceryShareData = data;
   document.getElementById('grocerySharePanel').classList.remove('hidden');
   document.getElementById('groceryShareStatus').textContent = 'Share ready. Use one of the options below.';
+  // Grey out email button if SMTP not configured
+  _checkSmtpAndToggleEmailBtn();
 }
 function closeGroceryShare() {
   document.getElementById('grocerySharePanel').classList.add('hidden');
@@ -2136,12 +2299,29 @@ function closeGroceryShare() {
 }
 function copyGroceryLink() {
   if (!groceryShareData) return;
-  const link = location.origin + groceryShareData.link;
-  navigator.clipboard.writeText(link).then(() => setShareStatus('Link copied'));
+  navigator.clipboard.writeText(groceryShareData.link).then(() => setShareStatus('Link copied'));
 }
-function shareGrocerySms() {
-  if (!groceryShareData) return;
-  window.location.href = groceryShareData.sms;
+async function _checkSmtpAndToggleEmailBtn() {
+  const emailBtn = document.querySelector('.share-btn.email');
+  if (!emailBtn) return;
+  try {
+    const res = await fetch(API + '/settings/', { headers: authHeaders() });
+    if (res.ok) {
+      const s = await res.json();
+      const hasSmtp = s.smtp_host && s.smtp_from_email;
+      emailBtn.style.opacity = hasSmtp ? '1' : '0.4';
+      emailBtn.style.pointerEvents = hasSmtp ? 'auto' : 'none';
+      if (!hasSmtp) {
+        emailBtn.title = 'Configure SMTP settings in .env to enable email sharing';
+      } else {
+        emailBtn.title = '';
+      }
+    }
+  } catch (e) {
+    // If settings fetch fails, grey out email button
+    emailBtn.style.opacity = '0.4';
+    emailBtn.style.pointerEvents = 'none';
+  }
 }
 function shareGroceryEmail() {
   if (!groceryShareData) return;
@@ -2151,10 +2331,18 @@ function copyGroceryText() {
   if (!groceryShareData) return;
   navigator.clipboard.writeText(groceryShareData.text).then(() => setShareStatus('Text copied'));
 }
-function exportGrocery(fmt) {
+async function exportGrocery(fmt) {
   if (!currentGroceryId) return;
   const url = API + '/grocery-lists/' + currentGroceryId + '/export?fmt=' + (fmt === 'html' ? 'html' : 'text');
-  window.open(url, '_blank');
+  const res = await fetch(url, { headers: authHeaders() });
+  if (!res.ok) return alert('Export failed');
+  const blob = await res.blob();
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  const ext = fmt === 'html' ? 'html' : 'txt';
+  a.download = (groceryShareData ? (groceryShareData.list_name || 'grocery-list') : 'grocery-list') + '.' + ext;
+  a.click();
+  setShareStatus('Exported as .' + ext);
 }
 function setShareStatus(msg) {
   document.getElementById('groceryShareStatus').textContent = msg;

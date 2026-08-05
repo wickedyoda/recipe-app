@@ -29,6 +29,7 @@ class User(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     must_change_password = Column(Integer, default=0, nullable=False)
     password_changed_at = Column(DateTime(timezone=True), nullable=True)
+    is_readonly = Column(Integer, default=0, nullable=False)
 
 
 class PasswordHistory(Base):
@@ -105,6 +106,22 @@ class RecipeStepPhoto(Base):
     __table_args__ = (Index("idx_recipe_step_photos_recipe_id", "recipe_id"),)
     caption = Column(String(255), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class RecipeMedia(Base):
+    __tablename__ = "recipe_media"
+    id = Column(Integer, primary_key=True, index=True)
+    recipe_id = Column(Integer, ForeignKey("recipes.id", ondelete="CASCADE"), nullable=False, index=True)
+    owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    file_path = Column(String(1024), nullable=False)
+    thumbnail_path = Column(String(1024), nullable=True)
+    original_filename = Column(String(255), nullable=False)
+    media_type = Column(String(20), nullable=False)
+    file_size = Column(Integer, nullable=True)
+    extracted_text = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    __table_args__ = (Index("idx_recipe_media_recipe_id", "recipe_id"), Index("idx_recipe_media_owner", "owner_id"))
+
 
 class Note(Base):
     __tablename__ = "notes"

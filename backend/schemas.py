@@ -33,6 +33,7 @@ class UserOut(BaseModel):
     approved_at: datetime | None
     created_at: datetime
     must_change_password: bool = False
+    is_readonly: bool = False
     model_config = {"from_attributes": True}
 
 
@@ -185,6 +186,7 @@ class RecipeOut(RecipeCreate):
     tags: list[str] = []
     photos: list[str] = []
     step_photos: list[dict] = []
+    media: list = []
     model_config = {"from_attributes": True}
 
 
@@ -200,6 +202,23 @@ class MediaItem(BaseModel):
     description: str | None
     created_at: datetime
     model_config = {"from_attributes": True}
+
+
+class RecipeMediaItem(BaseModel):
+    id: int
+    recipe_id: int
+    file_path: str
+    thumbnail_path: str | None
+    original_filename: str
+    media_type: str
+    file_size: int | None
+    extracted_text: str | None
+    created_at: datetime
+    model_config = {"from_attributes": True}
+
+
+class RecipeMediaCreate(BaseModel):
+    pass
 
 
 class NoteCreate(BaseModel):
