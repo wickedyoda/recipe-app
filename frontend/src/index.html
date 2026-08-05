@@ -2644,7 +2644,7 @@ async function loadUsers() {
   for (const user of items) {
     const el = document.createElement('div');
     el.className = 'item';
-    el.innerHTML = '<div><div>' + escapeHtml(user.email) + '</div><div class="meta">' + escapeHtml(user.display_name || '') + ' • ' + user.role + ' • active=' + user.is_active + ' approved=' + user.is_approved + '</div></div><div class="row" style="margin-top:8px;gap:8px;"><button class="secondary" onclick="editUser(' + user.id + ')" style="width:auto;padding:6px 10px;font-size:12px;">Edit</button><button class="danger" onclick="deleteUser(' + user.id + ')" style="width:auto;padding:6px 10px;font-size:12px;">Delete</button></div>';
+    el.innerHTML = '<div><div>' + escapeHtml(user.email) + '</div><div class="meta">' + escapeHtml(user.display_name || '') + ' • ' + user.role + ' • ' + (user.is_active ? 'active' : 'inactive') + ' • ' + (user.is_approved ? 'approved' : 'pending') + '</div></div><div class="row" style="margin-top:8px;gap:8px;"><button class="secondary" onclick="editUser(' + user.id + ')" style="width:auto;padding:6px 10px;font-size:12px;">Edit</button><button class="secondary" onclick="resetUserPassword(' + user.id + ')" style="width:auto;padding:6px 10px;font-size:12px;">Reset Password</button><button class="danger" onclick="deleteUser(' + user.id + ')" style="width:auto;padding:6px 10px;font-size:12px;">Delete</button></div>';
     box.appendChild(el);
   }
 }
@@ -2731,6 +2731,14 @@ async function deleteUser(id) {
     return alert('Failed: ' + (data.detail || 'unknown'));
   }
   loadUsers();
+}
+async function resetUserPassword(id) {
+  const pw = prompt('Enter new password for this user:');
+  if (!pw || pw.length < 6) return alert('Password must be at least 6 characters');
+  const res = await fetch(API + '/auth/users/' + id + '/password', { method: 'PATCH', headers: authHeaders(), body: JSON.stringify({new_password: pw}) });
+  const data = await res.json();
+  if (!res.ok) return alert('Failed: ' + (data.detail || 'unknown'));
+  alert('Password reset successfully');
 }
 let timerInterval = null;
 function startStepTimer() {
