@@ -38,6 +38,8 @@ class SettingsOut(BaseModel):
     backend_port: int
     smtp_host: Optional[str] = None
     smtp_port: int
+    smtp_username: Optional[str] = None
+    smtp_password: Optional[str] = None
     smtp_from_email: Optional[str] = None
     smtp_use_tls: bool
     public_url: Optional[str]
@@ -66,6 +68,8 @@ def get_settings(_: User = Depends(require_role(Role.admin))):
         backend_port=settings.BACKEND_PORT,
         smtp_host=settings.SMTP_HOST or None,
         smtp_port=settings.SMTP_PORT,
+        smtp_username=settings.SMTP_USERNAME or None,
+        smtp_password=None,  # Never return password in API response (write-only)
         smtp_from_email=settings.SMTP_FROM_EMAIL or None,
         smtp_use_tls=settings.SMTP_USE_TLS,
         public_url=settings.PUBLIC_URL or None,
@@ -77,6 +81,22 @@ def get_settings(_: User = Depends(require_role(Role.admin))):
 
 class GuestLoginToggle(BaseModel):
     enabled: bool = True
+
+
+class SmtpSettings(BaseModel):
+    smtp_host: Optional[str] = None
+    smtp_port: Optional[int] = None
+    smtp_username: Optional[str] = None
+    smtp_password: Optional[str] = None
+    smtp_from_email: Optional[str] = None
+    smtp_use_tls: Optional[bool] = True
+
+    @field_validator("smtp_port")
+    @classmethod
+    def validate_port(cls, v):
+        if v is not None and (v < 1 or v > 65535):
+            raise ValueError("Port must be between 1 and 65535")
+        return v
 
 
 @router.post("/guest-login", response_model=dict)
@@ -211,3 +231,40 @@ def _update_env(key: str, value: str):
         lines.append(f"{key}={value}\n")
     with open(env_path, "w") as f:
         f.writelines(lines)
+
+
+@router.post("/smtp", response_model=dict)
+def update_smtp_settings(
+    payload: SmtpSettings,
+    _: User = Depends(require_role(Role.admin)),
+):
+    """Update SMTP/email configuration and write to .env file."""
+    updates = {}
+    if payload.smtp_host is not None:
+        updates["SMTP_HOST"] = payload.smtp_host.strip()
+        object.__setattr__(settings, "SMTP_HOST", payload.smtp_host.strip())
+    if payload.smtp_port is not None:
+        updates["SMTP_PORT"] = str(payload.smtp_port)
+        object.__setattr__(settings, "SMTP_PORT", payload.smtp_port)
+    if payload.smtp_username is not None:
+        updates["SMTP_USERNAME"] = payload.smtp_username.strip()
+        object.__setattr__(settings, "SMTP_USERNAME", payload.smtp_username.strip())
+    if payload.smtp_password is not None:
+        updates["SMTP_PASSWORD"] = payload.smtp_password
+        object.__setattr__(settings, "SMTP_PASSWORD", payload.smtp_password)
+    if payload.smtp_from_email is not None:
+        updates["SMTP_FROM_EMAIL"] = payload.smtp_from_email.strip()
+        object.__setattr__(settings, "SMTP_FROM_EMAIL", payload.smtp_from_email.strip())
+    if payload.smtp_use_tls is not None:
+        updates["SMTP_USE_TLS"] = "true" if payload.smtp_use_tls else "false"
+        object.__setattr__(settings, "SMTP_USE_TLS", payload.smtp_use_tls)
+    for key, value in updates.items():
+        _update_env(key, value)
+    return {
+        "status": "ok",
+        "message": "SMTP settings updated. Restart the backend container to apply changes.",
+        "smtp_host": settings.SMTP_HOST,
+        "smtp_port": settings.SMTP_PORT,
+        "smtp_from_email": settings.SMTP_FROM_EMAIL,
+        "smtp_use_tls": settings.SMTP_USE_TLS,
+    }
