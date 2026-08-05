@@ -2006,18 +2006,27 @@ function renderPickerRecipes() {
   if (query) {
     filtered = recipes.filter(r => r.title.toLowerCase().includes(query));
   }
-  if (!query) {
-    filtered = filtered.slice(0, 5);
-  }
   const list = document.getElementById('recipePickerList');
   if (!list) return;
-  list.innerHTML = filtered.map(r => {
-    const img = (r.photos && r.photos.length > 0) ? '/media/static/' + r.photos[0] : (r.source_path ? '/media/static/' + r.source_path : '');
-    const imgTag = img ? '<img src="' + img + '" style="width:40px;height:40px;object-fit:cover;border-radius:6px;" />' : '<span style="width:40px;height:40px;border-radius:6px;background:#eee;display:inline-block;flex-shrink:0;"></span>';
-    return '<div onclick="pickRecipe(' + r.id + ')" class="picker-item">' + imgTag + '<div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:500;">' + escapeHtml(r.title) + '</div><div class="meta" style="font-size:11px;color:#999;">' + escapeHtml(r.category || '') + '</div></div></div>';
-  }).join('');
-  if (!filtered.length) {
+  if (!query && recipes.length) {
+    // Show Recent Recipes section
+    const recent5 = recipes.slice(0, 5);
+    list.innerHTML = '<h4 style="font-size:12px;color:var(--text-muted);margin:0 4px 8px 4px;">Recent recipes</h4>' + recent5.map(r => {
+      const img = (r.photos && r.photos.length > 0) ? '/media/static/' + r.photos[0] : (r.source_path ? '/media/static/' + r.source_path : '');
+      const imgTag = img ? '<img src="' + img + '" style="width:40px;height:40px;object-fit:cover;border-radius:6px;" />' : '<span style="width:40px;height:40px;border-radius:6px;background:#eee;display:inline-block;flex-shrink:0;"></span>';
+      return '<div onclick="pickRecipe(' + r.id + ')" class="picker-item">' + imgTag + '<div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:500;">' + escapeHtml(r.title) + '</div><div class="meta" style="font-size:11px;color:#999;">' + escapeHtml(r.category || '') + '</div></div></div>';
+    }).join('');
+    if (recipes.length > 5) {
+      list.innerHTML += '<div style="padding:6px 8px;font-size:11px;color:#999;text-align:right;">+ ' + (recipes.length - 5) + ' more...</div>';
+    }
+  } else if (!filtered.length) {
     list.innerHTML = '<div style="padding:16px;text-align:center;color:#999;font-size:13px;">No recipes found</div>';
+  } else {
+    list.innerHTML = filtered.map(r => {
+      const img = (r.photos && r.photos.length > 0) ? '/media/static/' + r.photos[0] : (r.source_path ? '/media/static/' + r.source_path : '');
+      const imgTag = img ? '<img src="' + img + '" style="width:40px;height:40px;object-fit:cover;border-radius:6px;" />' : '<span style="width:40px;height:40px;border-radius:6px;background:#eee;display:inline-block;flex-shrink:0;"></span>';
+      return '<div onclick="pickRecipe(' + r.id + ')" class="picker-item">' + imgTag + '<div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:500;">' + escapeHtml(r.title) + '</div><div class="meta" style="font-size:11px;color:#999;">' + escapeHtml(r.category || '') + '</div></div></div>';
+    }).join('');
   }
 }
 function filterPickerRecipes() {
