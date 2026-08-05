@@ -1940,9 +1940,9 @@ async function openRecipeDetail(id) {
   const scaleVal = parseFloat(document.getElementById('recipeScale')?.value || '1') || 1;
   const heroBox = document.getElementById('detailHero');
   if (r.photos && r.photos.length > 0) {
-    heroBox.innerHTML = '<img src="/media/static/' + r.photos[0] + '" style="width:100%;height:240px;object-fit:cover;border-radius:10px;" />';
+    heroBox.innerHTML = '<img src="/media/static/' + escapeHtml(r.photos[0]) + '" style="width:100%;height:240px;object-fit:cover;border-radius:10px;" />';
   } else if (r.source_path) {
-    heroBox.innerHTML = '<img src="/media/static/' + r.source_path + '" style="width:100%;height:240px;object-fit:cover;border-radius:10px;" />';
+    heroBox.innerHTML = '<img src="/media/static/' + escapeHtml(r.source_path) + '" style="width:100%;height:240px;object-fit:cover;border-radius:10px;" />';
   } else {
     heroBox.innerHTML = '';
   }
@@ -1967,12 +1967,12 @@ async function openRecipeDetail(id) {
   if (favBtn) favBtn.textContent = favs.has(String(id)) ? '❤' : '🤍';
   renderNotes(id);
   const photoBox = document.getElementById('detailPhotos');
-  photoBox.innerHTML = (r.photos || []).map(p => '<div class="recipe-detail-gallery" onclick="openGalleryModal(this)"><img src="/media/static/' + p + '" /></div>').join('');
+  photoBox.innerHTML = (r.photos || []).map(p => '<div class="recipe-detail-gallery" onclick="openGalleryModal(this)"><img src="/media/static/' + escapeHtml(p) + '" /></div>').join('');
   const stepBox = document.getElementById('stepPhotos');
   const stepPhotos = (r.step_photos || []);
   const steps = (r.instructions || '').split('\n').filter(Boolean);
   stepBox.innerHTML = steps.map((_, i) => {
-    const photos = stepPhotos.filter(sp => sp.step_index === i).map(sp => '<img src="/media/static/' + sp.path + '" style="max-height:80px;border-radius:8px;margin-right:8px;" />').join('');
+    const photos = stepPhotos.filter(sp => sp.step_index === i).map(sp => '<img src="/media/static/' + escapeHtml(sp.path) + '" style="max-height:80px;border-radius:8px;margin-right:8px;" />').join('');
     return photos ? '<div style="margin-top:8px;font-size:12px;color:#555;">Step ' + (i + 1) + ' photos</div><div class="carousel-container">' + photos + '</div>' : '';
   }).join('');
   // Recipe media gallery (images, PDFs, documents)
@@ -1985,9 +1985,9 @@ async function openRecipeDetail(id) {
       const isDoc = m.media_type === 'document';
       let preview = '';
       if (isImage && m.thumbnail_path) {
-        preview = '<img src="/media/static/' + m.thumbnail_path + '" style="max-width:100px;max-height:100px;object-fit:cover;border-radius:8px;" />';
+        preview = '<img src="/media/static/' + escapeHtml(m.thumbnail_path) + '" style="max-width:100px;max-height:100px;object-fit:cover;border-radius:8px;" />';
       } else if (isImage) {
-        preview = '<img src="/media/static/' + m.file_path + '" style="max-width:100px;max-height:100px;object-fit:cover;border-radius:8px;" />';
+        preview = '<img src="/media/static/' + escapeHtml(m.file_path) + '" style="max-width:100px;max-height:100px;object-fit:cover;border-radius:8px;" />';
       } else if (isPdf) {
         preview = '<div style="width:100px;height:100px;display:flex;align-items:center;justify-content:center;background:#f3f4f6;border-radius:8px;font-size:24px;">📄</div>';
       } else if (isDoc) {
@@ -2046,9 +2046,9 @@ function _renderMediaOnDetail(r) {
       const isPdf = m.media_type === 'pdf';
       let preview = '';
       if (isImage && m.thumbnail_path) {
-        preview = '<img src="/media/static/' + m.thumbnail_path + '" style="max-width:100px;max-height:100px;object-fit:cover;border-radius:8px;" />';
+        preview = '<img src="/media/static/' + escapeHtml(m.thumbnail_path) + '" style="max-width:100px;max-height:100px;object-fit:cover;border-radius:8px;" />';
       } else if (isImage) {
-        preview = '<img src="/media/static/' + m.file_path + '" style="max-width:100px;max-height:100px;object-fit:cover;border-radius:8px;" />';
+        preview = '<img src="/media/static/' + escapeHtml(m.file_path) + '" style="max-width:100px;max-height:100px;object-fit:cover;border-radius:8px;" />';
       } else if (isPdf || m.media_type === 'document' || m.media_type === 'text') {
         preview = '<div style="width:100px;height:100px;display:flex;align-items:center;justify-content:center;background:#f3f4f6;border-radius:8px;font-size:24px;">📄</div>';
       }
@@ -3066,7 +3066,7 @@ async function startCooking() {
   const stepPhotos = (data.step_photos || []);
   const stepsBox = document.getElementById('cookingSteps');
   stepsBox.innerHTML = steps.map((s, i) => {
-    const photos = stepPhotos.filter(sp => sp.step_index === i).map(sp => '<img src="/media/static/' + sp.path + '" style="max-height:80px;border-radius:8px;margin-right:8px;margin-bottom:6px;" />').join('');
+    const photos = stepPhotos.filter(sp => sp.step_index === i).map(sp => '<img src="/media/static/' + escapeHtml(sp.path) + '" style="max-height:80px;border-radius:8px;margin-right:8px;margin-bottom:6px;" />').join('');
     return '<div style="margin-bottom:12px;"><label style="display:flex;align-items:center;gap:8px;margin:6px 0;font-size:15px;"><input type="checkbox" class="step-checkbox" onchange="completeStep(this)" /> <span>' + escapeHtml(s) + '</span></label>' + (photos ? '<div class="row" style="margin-top:6px;">' + photos + '</div>' : '') + '</div>';
   }).join('');
   renderCookingNotes(data.id);
