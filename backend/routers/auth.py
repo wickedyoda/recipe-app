@@ -37,7 +37,6 @@ from backend.services.auth import (
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
-
 class RegisterRequest(BaseModel):
     email: EmailStr
     password: str

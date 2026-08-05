@@ -1,7 +1,9 @@
 import logging
+import time
+from collections import defaultdict
 
 import jwt as _jwt
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
@@ -545,6 +547,39 @@ app.add_middleware(
     allowed_hosts=settings.ALLOWED_HOSTS_LIST,
 )
 app.mount("/media/static", StaticFiles(directory="backend/media"), name="backend-media")
+
+# Simple in-memory rate limiter for auth-sensitive endpoints
+_rate_limit_store: dict[str, list[float]] = defaultdict(list)
+
+@app.middleware("http")
+async def rate_limit_auth(request: Request, call_next):
+    """Rate limit auth-sensitive endpoints to prevent brute force."""
+    path = request.url.path
+    client_ip = request.client.host if request.client else "unknown"
+
+    limits = {
+        "/auth/login": (10, 60),        # 10 per minute
+        "/auth/register": (5, 60),      # 5 per minute
+        "/auth/forgot-password": (5, 60),  # 5 per minute
+        "/auth/reset-password": (5, 60),  # 5 per minute
+        "/settings/backup": (3, 60),    # 3 per minute (admin only)
+    }
+
+    if path in limits:
+        max_requests, window = limits[path]
+        now = time.time()
+        window_start = now - window
+        # Clean old entries
+        _rate_limit_store[client_ip] = [t for t in _rate_limit_store[client_ip] if t > window_start]
+        if len(_rate_limit_store[client_ip]) >= max_requests:
+            return JSONResponse(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                headers={"Retry-After": str(window)},
+                content={"detail": "Rate limit exceeded. Please try again later."},
+            )
+        _rate_limit_store[client_ip].append(now)
+
+    return await call_next(request)
 
 
 @app.middleware("http")
