@@ -437,11 +437,6 @@
             <button onclick="extractRecipeFromUpload()">Extract recipe from file</button>
             <p id="recipeUploadStatus" style="font-size:13px;color:#555;margin-top:8px;"></p>
           </div>
-        </div>
-        <div class="card">
-          <h2 style="margin-top:0;">My media</h2>
-          <div id="mediaList"></div>
-        </div>
       </div>
 
       <div id="tabRecipes" class="tab hidden">
@@ -1265,7 +1260,6 @@ async function ingestUrl() {
     const data = await res.json();
     if (!res.ok) throw new Error(data.detail || data.error || 'unknown');
     status.textContent = 'Done. Saved media items: ' + JSON.stringify(data);
-    loadMedia();
   } catch (err) { status.textContent = 'Error: ' + err.message; }
 }
 async function ingestFile() {
@@ -1280,7 +1274,7 @@ async function ingestFile() {
     const data = await res.json();
     if (!res.ok) throw new Error(data.detail || data.error || 'unknown');
     status.textContent = 'Done. Saved media items: ' + JSON.stringify(data);
-    loadMedia(); fileInput.value='';
+    fileInput.value='';
   } catch (err) { status.textContent = 'Error: ' + err.message; }
 }
 async function extractRecipe() {
@@ -1295,18 +1289,6 @@ async function extractRecipe() {
     status.textContent = 'Done. Recipe added: ' + (data.title || 'ID ' + data.recipe_id);
     if (data.recipe_id) openRecipeDetail(data.recipe_id);
   } catch (err) { status.textContent = 'Error: ' + err.message; }
-}
-async function loadMedia() {
-  const res = await fetch(API + '/media/items', { headers: authHeaders() });
-  const items = await res.json();
-  const box = document.getElementById('mediaList');
-  box.innerHTML = '';
-  for (const item of items) {
-    const el = document.createElement('div');
-    el.className = 'item';
-        el.innerHTML = '<div><div><strong onclick="openPlanDetail(' + p.id + ')" style="cursor:pointer;">' + escapeHtml(p.name) + '</strong></div><div class="meta">' + escapeHtml(p.period) + '</div></div><div style="display:flex;gap:6px;"><button class="secondary" onclick="openPlanDetail(' + p.id + ')" style="width:auto;padding:8px 10px;font-size:13px;">Open</button><button class="danger" onclick="deletePlanWithConfirm(' + p.id + ')" style="width:auto;padding:8px 10px;font-size:13px;">Delete</button></div>';
-    box.appendChild(el);
-  }
 }
 
 let tags = [];
