@@ -24,7 +24,7 @@ from backend.models import (
     User,
 )  # noqa: F401 (registered with Base)
 from backend.routers import router as api_router
-from backend.services.auth import ALGORITHM, SECRET_KEY, hash_password
+from backend.services.auth import ALGORITHM, SECRET_KEY, hash_password, verify_password
 
 
 def _bootstrap_default_admin() -> None:
@@ -359,6 +359,18 @@ def _get_or_create_guest(db):
     guest_email = settings.DEFAULT_GUEST_EMAIL.strip().lower()
     existing = db.query(User).filter(func.lower(User.email) == guest_email).first()
     if existing:
+        # Ensure is_readonly is set and password is current for existing guest accounts
+        needs_update = False
+        if not existing.is_readonly:
+            existing.is_readonly = 1
+            needs_update = True
+        # Reset password if it no longer verifies (e.g. DEFAULT_GUEST_PASSWORD changed)
+        if not verify_password(settings.DEFAULT_GUEST_PASSWORD, existing.hashed_password):
+            existing.hashed_password = hash_password(settings.DEFAULT_GUEST_PASSWORD)
+            needs_update = True
+        if needs_update:
+            db.commit()
+            db.refresh(existing)
         return existing
     guest = User(
         email=guest_email,
