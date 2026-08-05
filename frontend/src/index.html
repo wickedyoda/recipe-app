@@ -209,6 +209,22 @@
   @media (min-width: 600px) {
     .nav button { font-size: 14px; padding: 8px 16px; }
   }
+  .nav-top {
+    display: flex; justify-content: space-around; align-items: center;
+    background: var(--warm-bg); border-bottom: 1px solid var(--border-light);
+    padding: 6px 0; margin-bottom: 4px; gap: 4px; overflow-x: auto;
+  }
+  .nav-top-btn {
+    flex: 1; min-width: 80px; background: none; border: none;
+    color: var(--text-secondary); font-size: 13px; padding: 6px 4px;
+    border-radius: 10px; cursor: pointer; font-weight: 500; white-space: nowrap;
+  }
+  .nav-top-btn.active { color: var(--orange-dark); font-weight: 600; background: var(--beige); }
+  .nav-top-btn:hover { background: rgba(0,0,0,0.03); }
+  [data-theme="dark"] .nav-top-btn:hover { background: rgba(255,255,255,0.05); }
+  @media (min-width: 600px) {
+    .nav-top-btn { font-size: 14px; padding: 8px 6px; }
+  }
   .pill {
     display: inline-block; padding: 2px 8px;
     background: var(--beige); color: var(--orange-dark);
@@ -411,6 +427,16 @@
         <button class="secondary" id="themeToggle" onclick="toggleTheme()" style="width:auto;padding:6px 10px;font-size:12px;">🌙</button>
       </div>
     </div>
+  </div>
+
+  <!-- Top navigation bar - visible on every page -->
+  <div id="topNav" class="nav-top hidden">
+    <button data-tab="tabMenu" onclick="switchTab('tabMenu')" class="nav-top-btn active">🏠 Menu</button>
+    <button data-tab="tabImport" onclick="switchTab('tabImport')" class="nav-top-btn">📥 Add recipe</button>
+    <button data-tab="tabRecipes" onclick="switchTab('tabRecipes')" class="nav-top-btn">📋 Recipes</button>
+    <button data-tab="tabMeals" onclick="switchTab('tabMeals')" class="nav-top-btn">📅 Meal plans</button>
+    <button data-tab="tabGroceries" onclick="switchTab('tabGroceries')" class="nav-top-btn">🛒 Grocery lists</button>
+    <button id="adminTabBtnTop" data-tab="tabAdmin" onclick="switchTab('tabAdmin')" class="nav-top-btn hidden">👤 Admin</button>
   </div>
 
     <div id="loginSection" class="card">
@@ -979,6 +1005,8 @@ function switchTab(name) {
   document.querySelectorAll('.tab').forEach(el => el.classList.add('hidden'));
   document.getElementById(name).classList.remove('hidden');
   document.querySelectorAll('.nav button').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+  // Update top nav buttons
+  document.querySelectorAll('.nav-top-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
   if (name === 'tabRecipes') renderRecipes();
   if (name === 'tabMeals') { renderPlans(); }
   if (name === 'tabGroceries') renderGroceryLists();
@@ -1349,6 +1377,7 @@ async function initApp() {
   document.getElementById('loginSection').classList.add('hidden');
   document.getElementById('registerSection').classList.add('hidden');
   document.getElementById('appSection').classList.remove('hidden');
+  document.getElementById('topNav').classList.remove('hidden');
   document.getElementById('nav').classList.remove('hidden');
   document.getElementById('authArea').classList.remove('hidden');
   localStorage.setItem('isReadonly', user.is_readonly ? '1' : '0');
@@ -1362,7 +1391,10 @@ async function initApp() {
     badge.style.cssText = 'margin-left:6px;font-size:10px;font-weight:700;color:#b91c1c;background:rgba(185,28,28,0.15);border:1px solid rgba(185,28,28,0.3);border-radius:4px;padding:2px 6px;';
     document.getElementById('userEmail').appendChild(badge);
   }
-  if (user.role === 'admin') document.getElementById('adminTabBtn').classList.remove('hidden');
+  if (user.role === 'admin') {
+    document.getElementById('adminTabBtn').classList.remove('hidden');
+    document.getElementById('adminTabBtnTop').classList.remove('hidden');
+  }
   // Show Settings button only for admin users
   const settingsDropdown = document.getElementById('settingsDropdownBtn');
   const settingsProfile = document.getElementById('settingsProfileBtn');
