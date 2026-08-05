@@ -345,12 +345,12 @@
   <div class="container" style="position:relative;">
   <div class="card">
     <div class="top">
-      <h1 style="margin:0;font-size:20px;"><a href="#" onclick="switchTab('tabMenu');return false;" style="color:inherit;text-decoration:none;"><img src="/src/icons/logo-sm.png" alt="CookieRue" style="width:24px;height:20px;vertical-align:middle;margin-right:6px;object-fit:contain;" /> CookieRue</a></h1>
+      <h1 style="margin:0;font-size:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;"><a href="#" onclick="switchTab('tabMenu');return false;" style="color:inherit;text-decoration:none;display:flex;flex-direction:column;align-items:center;gap:4px;"><img src="/src/icons/logo-lg.png" alt="CookieRue" style="width:96px;height:96px;object-fit:contain;" />CookieRue</a></h1>
       <div id="authAreaRight" style="display:flex;align-items:center;gap:4px;">
         <div id="dropdownMenu" class="hidden" style="position:absolute;top:56px;right:56px;background:#fcfafa;border:1px solid #e0ddd7;border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,0.12);z-index:1000;min-width:160px;">
           <button onclick="switchTab('tabMenu');closeDropdown()" class="dropdown-item">🏠 Menu</button>
           <button onclick="switchTab('tabRecipes');closeDropdown()" class="dropdown-item">📋 Recipes</button>
-          <button onclick="switchTab('tabImport');closeDropdown()" class="dropdown-item">📥 Import</button>
+          <button onclick="switchTab('tabImport');closeDropdown()" class="dropdown-item">📥 Add recipe</button>
           <button onclick="switchTab('tabMeals');closeDropdown()" class="dropdown-item">📅 Meal plans</button>
           <button onclick="switchTab('tabGroceries');closeDropdown()" class="dropdown-item">🛒 Grocery lists</button>
           <button onclick="switchTab('tabProfile');closeDropdown()" class="dropdown-item">👤 Profile</button>
@@ -396,8 +396,8 @@
       <div id="tabMenu" class="tab">
         <div class="card">
           <div class="nav-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;">
-            <button class="nav-square" onclick="switchTab('tabImport')" aria-label="Import">
-              <span class="nav-icon">📥</span><span class="nav-label">Import</span>
+            <button class="nav-square" onclick="switchTab('tabImport')" aria-label="Add recipe">
+              <span class="nav-icon">📥</span><span class="nav-label">Add recipe</span>
             </button>
             <button class="nav-square" onclick="switchTab('tabRecipes')" aria-label="Recipes">
               <span class="nav-icon">🏠</span><span class="nav-label">Recipes</span>
@@ -426,25 +426,14 @@
 
       <div id="tabImport" class="tab hidden">
         <div class="card">
-          <h2 style="margin-top:0;">Import video</h2>
-          <input id="videoUrl" placeholder="TikTok / YouTube / Facebook / Reels URL" />
-          <button onclick="ingestUrl()">Extract from URL</button>
-          <p id="ingestStatus" style="font-size:13px;color:#555;margin-top:8px;"></p>
-          <div style="margin-top:12px; padding-top:12px; border-top:1px solid #eee;">
-            <p style="font-size:13px;color:#555;margin-top:0;margin-bottom:8px;">Or upload a video file directly:</p>
-            <input id="videoFile" type="file" accept="video/*" />
-            <button onclick="ingestFile()">Upload & process</button>
-            <p id="uploadStatus" style="font-size:13px;color:#555;margin-top:8px;"></p>
-          </div>
-        </div>
-        <div class="card">
-          <h2 style="margin-top:0;">Extract recipe from video</h2>
-          <input id="recipeUrl" placeholder="Paste TikTok / YouTube / Reels URL" />
-          <button onclick="extractRecipe()">Extract recipe from URL</button>
+          <h2 style="margin-top:0;">Add recipe</h2>
+          <p style="font-size:13px;color:#555;margin:0 0 8px;">Paste a TikTok, YouTube, Facebook, or Reels URL. The video will be examined, the recipe extracted, and automatically added to your recipe book.</p>
+          <input id="recipeUrl" placeholder="TikTok / YouTube / Facebook / Reels URL" />
+          <button onclick="extractRecipe()">Extract recipe from video</button>
           <p id="recipeStatus" style="font-size:13px;color:#555;margin-top:8px;"></p>
           <div style="margin-top:12px; padding-top:12px; border-top:1px solid #eee;">
-            <p style="font-size:13px;color:#555;margin-top:0;margin-bottom:8px;">Or upload a video file:</p>
-            <input id="recipeFile" type="file" accept="video/*" />
+            <p style="font-size:13px;color:#555;margin-top:0;margin-bottom:8px;">Or upload a file directly (video, image, PDF, doc, txt — max 10MB):</p>
+            <input id="recipeFile" type="file" accept="video/*,.jpg,.jpeg,.png,.pdf,.doc,.docx,.txt,.md,.csv" />
             <button onclick="extractRecipeFromUpload()">Extract recipe from file</button>
             <p id="recipeUploadStatus" style="font-size:13px;color:#555;margin-top:8px;"></p>
           </div>
@@ -483,7 +472,7 @@
             <button class="secondary" id="selectModeBtn" onclick="toggleSelectMode()" style="width:auto;padding:8px 10px;font-size:13px;display:none;">✓ Select</button>
             <button class="secondary" id="exportSelectedBtn" onclick="exportSelectedRecipes()" style="width:auto;padding:8px 10px;font-size:13px;display:none;">Export selected</button>
             <label class="secondary" style="width:auto;padding:8px 10px;font-size:13px;display:inline-flex;align-items:center;cursor:pointer;">
-              Import
+              Add recipe JSON file
               <input type="file" accept="application/json" style="display:none;" onchange="importRecipes(this)" />
             </label>
           </div>
@@ -805,7 +794,7 @@
 
   <div id="nav" class="nav hidden">
     <button data-tab="tabMenu" onclick="switchTab('tabMenu');closeDropdown()" aria-label="Menu">🏠</button>
-    <button data-tab="tabImport" onclick="switchTab('tabImport');closeDropdown()" aria-label="Import">📥</button>
+    <button data-tab="tabImport" onclick="switchTab('tabImport');closeDropdown()" aria-label="Add recipe">📥</button>
     <button data-tab="tabRecipes" onclick="switchTab('tabRecipes');closeDropdown()" aria-label="Recipes">🏠</button>
     <button data-tab="tabMeals" onclick="switchTab('tabMeals');closeDropdown()" aria-label="Meal plans">📅</button>
     <button data-tab="tabGroceries" onclick="switchTab('tabGroceries')" aria-label="Grocery lists">🛒</button>
@@ -1298,12 +1287,12 @@ async function extractRecipe() {
   const url = document.getElementById('recipeUrl').value.trim();
   const status = document.getElementById('recipeStatus');
   if (!url) return;
-  status.textContent = 'Extracting recipe...';
+  status.textContent = 'Examining video and extracting recipe...';
   try {
     const res = await fetch(API + '/media/recipe', { method:'POST', headers: authHeaders(), body: JSON.stringify({url}) });
     const data = await res.json();
     if (!res.ok) throw new Error(data.detail || data.error || 'unknown');
-    status.textContent = 'Done. Saved recipe: ' + (data.title || data.recipe_id);
+    status.textContent = 'Done. Recipe added: ' + (data.title || 'ID ' + data.recipe_id);
     if (data.recipe_id) openRecipeDetail(data.recipe_id);
   } catch (err) { status.textContent = 'Error: ' + err.message; }
 }
@@ -1872,6 +1861,11 @@ async function extractRecipeFromUpload() {
   const status = document.getElementById('recipeUploadStatus');
   const file = fileInput.files[0];
   if (!file) return;
+  // Client-side file size validation (max 10MB)
+  if (file.size > 10 * 1024 * 1024) {
+    status.textContent = 'Error: File too large (max 10MB)';
+    return;
+  }
   status.textContent = 'Uploading & extracting...';
   const form = new FormData(); form.append('file', file);
   try {

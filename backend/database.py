@@ -54,6 +54,10 @@ def _migrate_sqlite(conn):
     users_cols = {c["name"] for c in insp.get_columns("users")}
     if "is_readonly" not in users_cols:
         conn.execute(text("ALTER TABLE users ADD COLUMN is_readonly INTEGER NOT NULL DEFAULT 0"))
+    # Add source_filename column to recipes table
+    recipe_cols = {c["name"] for c in insp.get_columns("recipes")}
+    if "source_filename" not in recipe_cols:
+        conn.execute(text("ALTER TABLE recipes ADD COLUMN source_filename VARCHAR(255)"))
     # Create recipe_media table if it doesn't exist
     if "recipe_media" not in insp.get_table_names():
         conn.execute(text("CREATE TABLE recipe_media (id INTEGER PRIMARY KEY AUTOINCREMENT, recipe_id INTEGER NOT NULL, owner_id INTEGER NOT NULL, file_path VARCHAR(1024) NOT NULL, thumbnail_path VARCHAR(1024), original_filename VARCHAR(255) NOT NULL, media_type VARCHAR(20) NOT NULL, file_size INTEGER, extracted_text TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE, FOREIGN KEY (owner_id) REFERENCES users(id))"))
@@ -125,6 +129,13 @@ def _migrate_mysql(conn):
         conn.execute(text("CREATE TABLE password_reset_tokens (id INTEGER PRIMARY KEY AUTO_INCREMENT, user_id INTEGER NOT NULL, token VARCHAR(255) NOT NULL UNIQUE, expires_at DATETIME NOT NULL, used TINYINT(1) DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (user_id) REFERENCES users(id))"))
     if "position" not in {c["name"] for c in insp.get_columns("meal_plan_entries")}:
         conn.execute(text("ALTER TABLE meal_plan_entries ADD COLUMN position INTEGER NOT NULL DEFAULT 0"))
+    # Add source_filename column to recipes table
+    recipe_cols = {c["name"] for c in insp.get_columns("recipes")}
+    if "source_filename" not in recipe_cols:
+        conn.execute(text("ALTER TABLE recipes ADD COLUMN source_filename VARCHAR(255)"))
+    # Create recipe_media table if it doesn't exist (MySQL)
+    if "recipe_media" not in insp.get_table_names():
+        conn.execute(text("CREATE TABLE recipe_media (id INTEGER PRIMARY KEY AUTO_INCREMENT, recipe_id INTEGER NOT NULL, owner_id INTEGER NOT NULL, file_path VARCHAR(1024) NOT NULL, thumbnail_path VARCHAR(1024), original_filename VARCHAR(255) NOT NULL, media_type VARCHAR(20) NOT NULL, file_size INTEGER, extracted_text TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE, FOREIGN KEY (owner_id) REFERENCES users(id))"))
     try:
         _ensure_indexes(conn, insp)
     except Exception:
