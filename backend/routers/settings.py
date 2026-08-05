@@ -75,11 +75,16 @@ def get_settings(_: User = Depends(require_role(Role.admin))):
     )
 
 
+class GuestLoginToggle(BaseModel):
+    enabled: bool = True
+
+
 @router.post("/guest-login", response_model=dict)
 def toggle_guest_login(
-    enabled: bool = True,
+    payload: GuestLoginToggle,
     _: User = Depends(require_role(Role.admin)),
 ):
+    enabled = payload.enabled
     _update_env("GUEST_LOGIN_ENABLED", "true" if enabled else "false")
     object.__setattr__(settings, "GUEST_LOGIN_ENABLED", enabled)
     return {"status": "ok", "guest_login_enabled": enabled, "message": "Guest login " + ("enabled" if enabled else "disabled")}
