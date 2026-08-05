@@ -33,5 +33,9 @@ class Settings(BaseSettings):
     DEFAULT_ADMIN_PASSWORD: str = "ChangeMe123!"
     DEFAULT_ADMIN_DISPLAY_NAME: str = "Admin"
 
+    DEFAULT_GUEST_EMAIL: str = "guest@cookierue.local"
+    DEFAULT_GUEST_PASSWORD: str = "guest123!"
+    DEFAULT_GUEST_DISPLAY_NAME: str = "Guest"
+
 
 settings = Settings()
