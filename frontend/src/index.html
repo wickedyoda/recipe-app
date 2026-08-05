@@ -402,7 +402,7 @@
           <button onclick="switchTab('tabMeals');closeDropdown()" class="dropdown-item">📅 Meal plans</button>
           <button onclick="switchTab('tabGroceries');closeDropdown()" class="dropdown-item">🛒 Grocery lists</button>
           <button onclick="switchTab('tabProfile');closeDropdown()" class="dropdown-item">👤 Profile</button>
-          <button onclick="openSettingsCard();toggleDropdown()" class="dropdown-item">⚙️ Settings</button>
+          <button id="settingsDropdownBtn" onclick="openSettingsCard();toggleDropdown()" class="dropdown-item hidden">⚙️ Settings</button>
           <div class="dropdown-divider"></div>
           <button onclick="logout()" class="dropdown-item logout">Logout</button>
         </div>
@@ -465,7 +465,7 @@
         </div>
         <div class="card" style="padding:12px;">
           <div style="display:flex;flex-direction:column;gap:8px;">
-            <button class="secondary" onclick="openSettingsCard()" style="width:100%;padding:10px;font-size:14px;">⚙️ Settings</button>
+            <button id="settingsProfileBtn" class="secondary hidden" onclick="openSettingsCard()" style="width:100%;padding:10px;font-size:14px;">⚙️ Settings</button>
             <button class="secondary" onclick="switchTab('tabProfile')" style="width:100%;padding:10px;font-size:14px;">👤 Profile</button>
             <button class="danger" onclick="logout()" style="width:100%;padding:10px;font-size:14px;">Logout</button>
           </div>
@@ -1055,15 +1055,16 @@ async function loadRecentRecipes() {
 }
 
 function openSettingsCard() {
-  document.getElementById('userForm').classList.add('hidden');
-  // Non-admin users don't have access to system settings; redirect to profile
+  // Admin-only: system settings page with server config + user management
   if (localStorage.getItem('userRole') !== 'admin') {
-    switchTab('tabProfile');
-    loadProfile();
+    alert('Settings is for admin users only. Non-admin users can manage profile settings in the Profile tab.');
     return;
   }
+  document.getElementById('userForm').classList.add('hidden');
   document.getElementById('settingsCard').classList.remove('hidden');
   loadSettings();
+  loadPending();
+  loadUsers();
 }
 function closeSettingsCard() {
   document.getElementById('settingsCard').classList.add('hidden');
@@ -1316,6 +1317,11 @@ async function initApp() {
     document.getElementById('userEmail').appendChild(badge);
   }
   if (user.role === 'admin') document.getElementById('adminTabBtn').classList.remove('hidden');
+  // Show Settings button only for admin users
+  const settingsDropdown = document.getElementById('settingsDropdownBtn');
+  const settingsProfile = document.getElementById('settingsProfileBtn');
+  if (settingsDropdown) settingsDropdown.classList.toggle('hidden', user.role !== 'admin');
+  if (settingsProfile) settingsProfile.classList.toggle('hidden', user.role !== 'admin');
   switchTab('tabMenu');
   _updateReadonlyButtons();
   await loadTags();
