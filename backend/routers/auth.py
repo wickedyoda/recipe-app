@@ -1,6 +1,8 @@
+import os
+import uuid
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, EmailStr
 from sqlalchemy import func
@@ -149,6 +151,31 @@ def delete_account(current_user: User = Depends(get_current_user), db: Session =
     db.delete(current_user)
     db.commit()
     return {"ok": True, "message": "Account and all associated data deleted"}
+
+
+@router.post("/upload-avatar")
+async def upload_avatar(file: UploadFile = File(...), current_user: User = Depends(get_current_user)):
+    """Upload a profile avatar image (max 1MB). Returns avatar_url for saving."""
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="No file provided")
+    # Validate image type
+    ext = os.path.splitext(file.filename)[1].lower()
+    if ext not in ('.png', '.jpg', '.jpeg', '.webp', '.gif'):
+        raise HTTPException(status_code=400, detail="Only PNG, JPG, WebP, GIF allowed")
+    # Check file size (read content to check)
+    content = await file.read()
+    if len(content) > 1024 * 1024:  # 1MB
+        raise HTTPException(status_code=400, detail="Image must be under 1MB")
+    # Save to media/avatars/
+    avatar_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'media', 'avatars')
+    os.makedirs(avatar_dir, exist_ok=True)
+    ext = os.path.splitext(file.filename)[1].lower()
+    filename = f"{current_user.id}_{uuid.uuid4().hex[:8]}{ext}"
+    filepath = os.path.join(avatar_dir, filename)
+    with open(filepath, 'wb') as f:
+        f.write(content)
+    avatar_url = f"/media/static/avatars/{filename}"
+    return {"ok": True, "avatar_url": avatar_url}
 
 
 @router.get("/me/export")

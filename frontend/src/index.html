@@ -815,7 +815,35 @@
           <div class="section">
             <h3>Display name</h3>
             <input id="profileName" placeholder="Display name" />
-            <input id="profileAvatar" placeholder="Avatar URL (optional)" />
+            <div class="section">
+              <h3>Profile Picture (125×125)</h3>
+              <div id="avatarPreview" style="width:125px;height:125px;border-radius:50%;margin:8px auto;display:flex;align-items:center;justify-content:center;background:var(--beige);border:2px dashed var(--border-light);overflow:hidden;">
+                <span style="font-size:32px;">👤</span>
+              </div>
+              <div class="row gap-6" style="margin-bottom:8px;">
+                <label style="flex:1;text-align:center;font-size:13px;">
+                  <input type="file" id="avatarUpload" accept="image/*" capture="environment" style="display:none;" onchange="uploadAvatar(event)" />
+                  <button type="button" onclick="document.getElementById('avatarUpload').click()" style="flex:1;">📷 Upload</button>
+                </label>
+                <button type="button" onclick="document.getElementById('avatarPicker').classList.toggle('hidden')" style="flex:1;">🎨 Pick</button>
+              </div>
+              <input id="profileAvatar" type="hidden" placeholder="Avatar URL" />
+              <div id="avatarPicker" class="hidden" style="margin-top:8px;">
+                <div style="font-size:13px;color:var(--text-muted);margin-bottom:8px;">Select a vegetable avatar:</div>
+                <div class="row wrap" style="gap:8px;">
+                  <button onclick="selectAvatar('')" style="flex:0 0 calc(25% - 6px);padding:4px;">👤 Default</button>
+                  <button onclick="selectAvatar('/src/icons/avatar_tomato.png')" style="flex:0 0 calc(25% - 6px);padding:4px;">🍅</button>
+                  <button onclick="selectAvatar('/src/icons/avatar_carrot.png')" style="flex:0 0 calc(25% - 6px);padding:4px;">🥕</button>
+                  <button onclick="selectAvatar('/src/icons/avatar_broccoli.png')" style="flex:0 0 calc(25% - 6px);padding:4px;">🥦</button>
+                  <button onclick="selectAvatar('/src/icons/avatar_pepper.png')" style="flex:0 0 calc(25% - 6px);padding:4px;">🌶️</button>
+                  <button onclick="selectAvatar('/src/icons/avatar_eggplant.png')" style="flex:0 0 calc(25% - 6px);padding:4px;">🍆</button>
+                  <button onclick="selectAvatar('/src/icons/avatar_pea.png')" style="flex:0 0 calc(25% - 6px);padding:4px;">🟢</button>
+                  <button onclick="selectAvatar('/src/icons/avatar_corn.png')" style="flex:0 0 calc(25% - 6px);padding:4px;">🌽</button>
+                  <button onclick="selectAvatar('/src/icons/avatar_pumpkin.png')" style="flex:0 0 calc(25% - 6px);padding:4px;">🎃</button>
+                  <button onclick="selectAvatar('/src/icons/avatar_beet.png')" style="flex:0 0 calc(25% - 6px);padding:4px;">🫐</button>
+                </div>
+              </div>
+            </div>
             <button onclick="updateProfile()">Save profile</button>
           </div>
           <div class="section">
@@ -1020,6 +1048,15 @@ async function loadProfile() {
   document.getElementById('profileName').value = user.display_name || '';
   document.getElementById('profileAvatar').value = user.avatar_url || '';
   document.getElementById('defaultServings').value = (saved.defaultServings || 4);
+  // Update avatar preview
+  const preview = document.getElementById('avatarPreview');
+  if (user.avatar_url) {
+    preview.innerHTML = '<img src="' + escapeHtml(user.avatar_url) + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" />';
+  } else {
+    preview.innerHTML = '<span style="font-size:32px;">👤</span>';
+  }
+  // Hide avatar picker
+  if (document.getElementById('avatarPicker')) document.getElementById('avatarPicker').classList.add('hidden');
   // Sync theme selector with current theme
   const themeSelect = document.getElementById('themeSelect');
   if (themeSelect) themeSelect.value = localStorage.getItem('theme') || 'light';
@@ -2975,6 +3012,27 @@ function updateThemeButton() {
   if (btn) btn.textContent = labels[theme] || '🌙';
   const profileBtn = document.getElementById('themeToggleProfile');
   if (profileBtn) profileBtn.textContent = 'Theme: ' + (theme.charAt(0).toUpperCase() + theme.slice(1));
+}
+async function uploadAvatar(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  if (file.size > 1024 * 1024) return alert('Image must be under 1MB');
+  const form = new FormData();
+  form.append('file', file);
+  const res = await fetch(API + '/auth/upload-avatar', { method: 'POST', headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('token') || '') }, body: form });
+  const data = await res.json();
+  if (!res.ok) return alert('Upload failed: ' + (data.detail || 'unknown'));
+  document.getElementById('profileAvatar').value = data.avatar_url;
+  document.getElementById('avatarPreview').innerHTML = '<img src="' + data.avatar_url + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" />';
+}
+function selectAvatar(avatarUrl) {
+  document.getElementById('profileAvatar').value = avatarUrl;
+  if (avatarUrl) {
+    document.getElementById('avatarPreview').innerHTML = '<img src="' + avatarUrl + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" />';
+  } else {
+    document.getElementById('avatarPreview').innerHTML = '<span style="font-size:32px;">👤</span>';
+  }
+  document.getElementById('avatarPicker').classList.add('hidden');
 }
 function getCurrentTheme() {
   return localStorage.getItem('theme') || 'light';
