@@ -228,6 +228,15 @@
   .nav-top-btn.active { color: var(--orange-dark); font-weight: 600; background: var(--beige); }
   .nav-top-btn:hover { background: rgba(0,0,0,0.03); }
   [data-theme="dark"] .nav-top-btn:hover { background: rgba(255,255,255,0.05); }
+  /* Compact nav buttons for single-row header navigation */
+  .nav-btn-small {
+    flex: 0 0 auto; width: 34px; height: 34px; padding: 0;
+    font-size: 15px; border-radius: 8px; background: none; border: 1px solid transparent;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+  }
+  .nav-btn-small.active { color: var(--orange-dark); font-weight: 600; background: var(--beige); border-color: var(--border-light); }
+  .nav-btn-small:hover { background: rgba(0,0,0,0.03); border-color: var(--border-light); }
+  [data-theme="dark"] .nav-btn-small:hover { background: rgba(255,255,255,0.05); }
   .pill {
     display: inline-block; padding: 2px 8px;
     background: var(--beige); color: var(--orange-dark);
@@ -426,20 +435,19 @@
           <button onclick="logout()" class="dropdown-item logout">Logout</button>
         </div>
         <span id="userEmail" style="font-size:12px;color:#555;"></span>
-        <button class="secondary" id="menuBtn" onclick="toggleDropdown()" style="width:auto;padding:6px 10px;font-size:12px;">⋮</button>
-        <button class="secondary" id="themeToggle" onclick="toggleTheme()" style="width:auto;padding:6px 10px;font-size:12px;">🌙</button>
+        <!-- Compact single-row navigation with 3-line menu -->
+        <div id="topNavRow" class="hidden" style="display:flex;align-items:center;gap:2px;">
+          <button data-tab="tabMenu" onclick="switchTab('tabMenu')" class="nav-btn-small active" title="Menu">🏠</button>
+          <button data-tab="tabRecipes" onclick="switchTab('tabRecipes')" class="nav-btn-small" title="Recipes">📋</button>
+          <button data-tab="tabImport" onclick="switchTab('tabImport')" class="nav-btn-small" title="Add recipe">📥</button>
+          <button data-tab="tabMeals" onclick="switchTab('tabMeals')" class="nav-btn-small" title="Meal plans">📅</button>
+          <button data-tab="tabGroceries" onclick="switchTab('tabGroceries')" class="nav-btn-small" title="Grocery lists">🛒</button>
+          <button id="adminTabBtnTop" data-tab="tabAdmin" onclick="switchTab('tabAdmin')" class="nav-btn-small hidden" title="Admin">👤</button>
+          <button class="secondary small" id="menuBtn" onclick="toggleDropdown()" style="padding:2px 6px;font-size:13px;">☰</button>
+          <button class="secondary small" id="themeToggle" onclick="toggleTheme()" style="padding:2px 6px;font-size:13px;">🌙</button>
+        </div>
       </div>
     </div>
-  </div>
-
-  <!-- Top navigation bar - visible on every page -->
-  <div id="topNav" class="nav-top hidden">
-    <button data-tab="tabMenu" onclick="switchTab('tabMenu')" class="nav-top-btn active"><span>🏠</span><span>Menu</span></button>
-    <button data-tab="tabImport" onclick="switchTab('tabImport')" class="nav-top-btn"><span>📥</span><span>Add recipe</span></button>
-    <button data-tab="tabRecipes" onclick="switchTab('tabRecipes')" class="nav-top-btn"><span>📋</span><span>Recipes</span></button>
-    <button data-tab="tabMeals" onclick="switchTab('tabMeals')" class="nav-top-btn"><span>📅</span><span>Meal plans</span></button>
-    <button data-tab="tabGroceries" onclick="switchTab('tabGroceries')" class="nav-top-btn"><span>🛒</span><span>Grocery lists</span></button>
-    <button id="adminTabBtnTop" data-tab="tabAdmin" onclick="switchTab('tabAdmin')" class="nav-top-btn hidden"><span>👤</span><span>Admin</span></button>
   </div>
 
     <div id="loginSection" class="card">
@@ -1012,7 +1020,7 @@ function switchTab(name) {
   document.getElementById(name).classList.remove('hidden');
   document.querySelectorAll('.nav button').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
   // Update top nav buttons
-  document.querySelectorAll('.nav-top-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+  document.querySelectorAll('.nav-top-btn, .nav-btn-small').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
   if (name === 'tabRecipes') renderRecipes();
   if (name === 'tabMeals') { renderPlans(); }
   if (name === 'tabGroceries') renderGroceryLists();
@@ -1436,7 +1444,7 @@ async function initApp() {
   document.getElementById('loginSection').classList.add('hidden');
   document.getElementById('registerSection').classList.add('hidden');
   document.getElementById('appSection').classList.remove('hidden');
-  document.getElementById('topNav').classList.remove('hidden');
+  document.getElementById('topNavRow').classList.remove('hidden');
   document.getElementById('nav').classList.remove('hidden');
   document.getElementById('authArea').classList.remove('hidden');
   localStorage.setItem('isReadonly', user.is_readonly ? '1' : '0');
