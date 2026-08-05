@@ -13,10 +13,7 @@ from backend.models import (
     GroceryItem,
     GroceryList,
     Note,
-    PasswordHistory,
     Recipe,
-    RecipePhoto,
-    RecipeStepPhoto,
     RecipeTag,
     Role,
     Store,
@@ -171,14 +168,14 @@ def _bootstrap_guest_account() -> None:
             db.refresh(grocery_list)
 
             for line in seed["ingredients"].splitlines():
-                line = line.strip()
-                if not line:
+                stripped = line.strip()
+                if not stripped:
                     continue
-                if line[0].isdigit() or line[0] == "½" or line[0] == "¼":
-                    name_part = line
+                if stripped[0].isdigit() or stripped[0] == "½" or stripped[0] == "¼":
+                    name_part = stripped
                     for prefix in ("1 ", "2 ", "3 ", "4 ", "½ ", "¼ ", "¾ ", "1/2 ", "1/4 "):
-                        if line.startswith(prefix):
-                            name_part = line[len(prefix):]
+                        if stripped.startswith(prefix):
+                            name_part = stripped[len(prefix):]
                             break
                     db.add(GroceryItem(list_id=grocery_list.id, recipe_id=recipe.id, name=name_part, owner_id=guest.id))
 
