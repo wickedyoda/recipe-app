@@ -951,7 +951,7 @@ async function loadRecipesFromAPI() {
   return await res.json();
 }
 function escapeHtml(text) {
-  return String(text||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  return String(text||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 function scaleIngredientLine(line, scale) {
   if (!scale || scale === 1) return line;

@@ -1,6 +1,7 @@
+import logging
 import os
 import shutil
-import subprocess
+import subprocess  # noqa: S404  # nosec B404 - required for DB backup (mysqldump), admin-only
 import tempfile
 from typing import Optional
 from urllib.parse import urlparse
@@ -55,9 +56,8 @@ def get_settings(_: User = Depends(require_role(Role.admin))):
                 f.stat().st_size for f in os.scandir(media_root) if f.is_file()
             )
             disk_gb = round(total / (1024**3), 2)
-    except Exception:
-        pass
-
+    except Exception as exc:
+        logging.getLogger(__name__).warning("Could not compute disk usage: %s", exc)
     return SettingsOut(
         allowed_hosts=settings.ALLOWED_HOSTS_LIST,
         allowed_origins=settings.ALLOWED_ORIGINS_LIST,
@@ -169,8 +169,9 @@ def backup_database(_: User = Depends(require_role(Role.admin))):
             db = parsed.path.lstrip("/")
             env = os.environ.copy()
             env["MYSQL_PWD"] = password
-            result = subprocess.run(
-                ["mysqldump", f"-h{host}", f"-P{port}", f"-u{user}", db],
+            mysqldump = shutil.which("mysqldump") or "mysqldump"
+            result = subprocess.run(  # nosec B607,B603 - mysqldump on admin-only backup endpoint
+                [mysqldump, f"-h{host}", f"-P{port}", f"-u{user}", db],
                 capture_output=True, text=True, env=env
             )
             if result.returncode != 0:

@@ -1,3 +1,5 @@
+import logging
+
 import jwt as _jwt
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -560,8 +562,9 @@ async def readonly_guest_middleware(request: Request, call_next):
                 db.close()
                 if user and user.is_readonly:
                     return JSONResponse(status_code=403, content={"detail": "Guest account is read-only"})
-            except Exception:
-                pass
+            except Exception as exc:
+                # Log unexpected token validation errors but don't block the request
+                logging.getLogger(__name__).warning("readonly_guest_middleware: %s", exc)
     return await call_next(request)
 
 
