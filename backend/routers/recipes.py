@@ -4,10 +4,11 @@ import time
 import uuid
 
 from fastapi import APIRouter, Depends, File, HTTPException, Request, Response, UploadFile
+from sqlalchemy import func as _func
 from sqlalchemy.orm import Session
 
 from backend.database import get_db
-from backend.models import Recipe, RecipeMedia, RecipePhoto, RecipeStepPhoto, RecipeTag, Store, Tag, User
+from backend.models import Recipe, RecipeMedia, RecipePhoto, RecipeRating, RecipeStepPhoto, RecipeTag, Store, Tag, User
 from backend.schemas import RecipeCreate, RecipeOut
 from backend.services.auth import get_current_user
 
@@ -76,11 +77,20 @@ def list_recipes(db: Session = Depends(get_db), current_user: User = Depends(get
     recipe_photos = {}
     for rid, path in photo_results:
         recipe_photos.setdefault(rid, []).append(path)
+    # Batch query ratings
+    rating_results = db.query(RecipeRating.recipe_id, _func.avg(RecipeRating.score).label('avg'), _func.count(RecipeRating.score).label('cnt')).filter(RecipeRating.recipe_id.in_(recipe_ids)).group_by(RecipeRating.recipe_id).all()
+    recipe_avg_ratings = {rid: float(avg) for rid, avg, cnt in rating_results}
+    recipe_rating_counts = {rid: cnt for rid, avg, cnt in rating_results}
+    user_rating_results = db.query(RecipeRating.recipe_id, RecipeRating.score).filter(RecipeRating.recipe_id.in_(recipe_ids), RecipeRating.user_id == current_user.id).all()
+    user_ratings = {rid: score for rid, score in user_rating_results}
     out = []
     for r in rows:
         data = RecipeOut.model_validate(r).model_dump()
         data["tags"] = recipe_tags.get(r.id, [])
         data["photos"] = recipe_photos.get(r.id, [])
+        data["rating"] = recipe_avg_ratings.get(r.id)  # average rating
+        data["rating_count"] = recipe_rating_counts.get(r.id, 0)
+        data["user_rating"] = user_ratings.get(r.id)
         out.append(data)
     return out
 
@@ -94,7 +104,34 @@ def get_recipe(recipe_id: int, db: Session = Depends(get_db), current_user: User
     data["photos"] = [p.path for p in db.query(RecipePhoto).filter(RecipePhoto.recipe_id==r.id).order_by(RecipePhoto.id.asc()).all()]
     data["step_photos"] = [{"step_index": s.step_index, "path": s.path, "caption": s.caption} for s in db.query(RecipeStepPhoto).filter(RecipeStepPhoto.recipe_id==r.id).order_by(RecipeStepPhoto.step_index.asc()).all()]
     data["media"] = [{"id": m.id, "file_path": m.file_path, "thumbnail_path": m.thumbnail_path, "original_filename": m.original_filename, "media_type": m.media_type, "file_size": m.file_size, "has_text": bool(m.extracted_text)} for m in db.query(RecipeMedia).filter(RecipeMedia.recipe_id==r.id).order_by(RecipeMedia.created_at.desc()).all()]
+    # Add rating info
+    avg_rating = db.query(_func.avg(RecipeRating.score)).filter(RecipeRating.recipe_id==r.id).scalar()
+    rating_count = db.query(_func.count(RecipeRating.score)).filter(RecipeRating.recipe_id==r.id).scalar()
+    user_rating = db.query(RecipeRating.score).filter(RecipeRating.recipe_id==r.id, RecipeRating.user_id==current_user.id).scalar()
+    data["rating"] = float(avg_rating) if avg_rating else None
+    data["rating_count"] = rating_count or 0
+    data["user_rating"] = user_rating
     return data
+
+
+@router.post("/{recipe_id}/rate")
+def rate_recipe(recipe_id: int, score: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    if score < 0 or score > 5:
+        raise HTTPException(status_code=400, detail="Score must be 0-5")
+    r = db.query(Recipe).filter(Recipe.id==recipe_id, Recipe.owner_id==current_user.id).first()
+    if not r:
+        raise HTTPException(status_code=404, detail="Recipe not found")
+    existing = db.query(RecipeRating).filter(RecipeRating.recipe_id==r.id, RecipeRating.user_id==current_user.id).first()
+    if existing:
+        existing.score = score
+    else:
+        db.add(RecipeRating(recipe_id=r.id, user_id=current_user.id, score=score))
+    db.commit()
+    # Update average rating on recipe
+    avg = db.query(_func.avg(RecipeRating.score)).filter(RecipeRating.recipe_id==r.id).scalar()
+    r.rating = float(avg) if avg else None
+    db.commit()
+    return {"ok": True, "rating": float(avg) if avg else None, "score": score}
 
 @router.patch("/{recipe_id}", response_model=RecipeOut)
 def update_recipe(recipe_id: int, payload: RecipeCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):

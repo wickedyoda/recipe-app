@@ -187,6 +187,8 @@ class RecipeOut(RecipeCreate):
     photos: list[str] = []
     step_photos: list[dict] = []
     media: list = []
+    rating_count: int = 0
+    user_rating: int | None = None
     model_config = {"from_attributes": True}
 
 
