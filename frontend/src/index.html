@@ -1206,7 +1206,7 @@ async function toggleGuestLogin(checkbox) {
   const res = await fetch(API + '/settings/guest-login', {
     method: 'POST',
     headers: authHeaders(),
-    body: new URLSearchParams({ enabled: checkbox.checked })
+    body: JSON.stringify({ enabled: checkbox.checked })
   });
   const data = await res.json();
   document.getElementById('settingsStatus').textContent = data.message || '';
