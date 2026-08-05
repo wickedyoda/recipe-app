@@ -93,6 +93,7 @@ def get_recipe(recipe_id: int, db: Session = Depends(get_db), current_user: User
     data["tags"] = [t.name for t in db.query(Tag).join(RecipeTag, RecipeTag.tag_id==Tag.id).filter(RecipeTag.recipe_id==r.id).all()]
     data["photos"] = [p.path for p in db.query(RecipePhoto).filter(RecipePhoto.recipe_id==r.id).order_by(RecipePhoto.id.asc()).all()]
     data["step_photos"] = [{"step_index": s.step_index, "path": s.path, "caption": s.caption} for s in db.query(RecipeStepPhoto).filter(RecipeStepPhoto.recipe_id==r.id).order_by(RecipeStepPhoto.step_index.asc()).all()]
+    data["media"] = [{"id": m.id, "file_path": m.file_path, "thumbnail_path": m.thumbnail_path, "original_filename": m.original_filename, "media_type": m.media_type, "file_size": m.file_size, "has_text": bool(m.extracted_text)} for m in db.query(RecipeMedia).filter(RecipeMedia.recipe_id==r.id).order_by(RecipeMedia.created_at.desc()).all()]
     return data
 
 @router.patch("/{recipe_id}", response_model=RecipeOut)

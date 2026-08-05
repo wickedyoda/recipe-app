@@ -561,6 +561,16 @@
           </div>
           <div id="detailPhotos" class="row" style="margin-top:10px;"></div>
           <div id="stepPhotos" class="row" style="margin-top:10px;"></div>
+          <div id="mediaSection" style="margin-top:16px;">
+            <div class="top" style="display:flex;justify-content:space-between;align-items:center;">
+              <h3 style="margin:0;">Recipe Media</h3>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <button class="secondary" id="uploadRecipeMediaBtn" onclick="document.getElementById('recipeMediaInput').click()" style="width:auto;padding:6px 10px;font-size:12px;">📎 Add Media</button>
+                <input type="file" id="recipeMediaInput" accept=".jpg,.jpeg,.png,.webp,.gif,.bmp,.pdf,.docx,.doc,.txt,.md,.csv" style="display:none;" onchange="uploadRecipeMedia()" />
+              </div>
+            </div>
+            <div id="recipeMediaGallery"></div>
+          </div>
           <h3 style="margin-top:16px;">Notes</h3>
           <div id="detailNotes"></div>
         </div>
@@ -1682,7 +1692,104 @@ async function openRecipeDetail(id) {
     const photos = stepPhotos.filter(sp => sp.step_index === i).map(sp => '<img src="/media/static/' + sp.path + '" style="max-height:80px;border-radius:8px;margin-right:8px;" />').join('');
     return photos ? '<div style="margin-top:8px;font-size:12px;color:#555;">Step ' + (i + 1) + ' photos</div><div class="carousel-container">' + photos + '</div>' : '';
   }).join('');
+  // Recipe media gallery (images, PDFs, documents)
+  const mediaBox = document.getElementById('recipeMediaGallery');
+  const allMedia = (r.media || []);
+  if (allMedia.length > 0) {
+    mediaBox.innerHTML = allMedia.map(m => {
+      const isImage = m.media_type === 'image';
+      const isPdf = m.media_type === 'pdf';
+      const isDoc = m.media_type === 'document';
+      let preview = '';
+      if (isImage && m.thumbnail_path) {
+        preview = '<img src="/media/static/' + m.thumbnail_path + '" style="max-width:100px;max-height:100px;object-fit:cover;border-radius:8px;" />';
+      } else if (isImage) {
+        preview = '<img src="/media/static/' + m.file_path + '" style="max-width:100px;max-height:100px;object-fit:cover;border-radius:8px;" />';
+      } else if (isPdf) {
+        preview = '<div style="width:100px;height:100px;display:flex;align-items:center;justify-content:center;background:#f3f4f6;border-radius:8px;font-size:24px;">📄</div>';
+      } else if (isDoc) {
+        preview = '<div style="width:100px;height:100px;display:flex;align-items:center;justify-content:center;background:#f3f4f6;border-radius:8px;font-size:24px;">📎</div>';
+      } else {
+        preview = '<div style="width:100px;height:100px;display:flex;align-items:center;justify-content:center;background:#f3f4f6;border-radius:8px;font-size:24px;">📄</div>';
+      }
+      return '<div style="display:inline-flex;align-items:center;gap:8px;margin:4px;vertical-align:top;">' + preview + '<div style="display:flex;flex-direction:column;gap:4px;"><div style="font-size:12px;font-weight:500;max-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escapeHtml(m.original_filename) + '</div><button class="secondary" onclick="deleteRecipeMedia(' + m.id + ')" style="font-size:10px;padding:2px 6px;">🗑️</button></div></div>';
+    }).join('');
+  } else {
+    mediaBox.innerHTML = '<p style="font-size:12px;color:var(--text-muted);">No media files attached.</p>';
+  }
+  _updateRecipeMediaUI();
 }
+function _updateRecipeMediaUI() {
+  // Hide/show media upload button based on read-only status
+  const isReadonly = localStorage.getItem('isReadonly') === '1';
+  const uploadBtn = document.getElementById('uploadRecipeMediaBtn');
+  if (uploadBtn) {
+    uploadBtn.style.display = isReadonly ? 'none' : 'inline-block';
+  }
+}
+function _renderMediaOnDetail(r) {
+  const mediaBox = document.getElementById('recipeMediaGallery');
+  if (!mediaBox) return;
+  const allMedia = (r.media || []);
+  if (allMedia.length > 0) {
+    mediaBox.innerHTML = allMedia.map(m => {
+      const isImage = m.media_type === 'image';
+      const isPdf = m.media_type === 'pdf';
+      let preview = '';
+      if (isImage && m.thumbnail_path) {
+        preview = '<img src="/media/static/' + m.thumbnail_path + '" style="max-width:100px;max-height:100px;object-fit:cover;border-radius:8px;" />';
+      } else if (isImage) {
+        preview = '<img src="/media/static/' + m.file_path + '" style="max-width:100px;max-height:100px;object-fit:cover;border-radius:8px;" />';
+      } else if (isPdf || m.media_type === 'document' || m.media_type === 'text') {
+        preview = '<div style="width:100px;height:100px;display:flex;align-items:center;justify-content:center;background:#f3f4f6;border-radius:8px;font-size:24px;">📄</div>';
+      }
+      return '<div style="display:inline-flex;align-items:center;gap:8px;margin:4px;vertical-align:top;">' + preview + '<div style="display:flex;flex-direction:column;gap:4px;"><div style="font-size:12px;font-weight:500;max-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="' + escapeHtml(m.original_filename) + '">' + escapeHtml(m.original_filename) + '</div><button class="secondary" onclick="deleteRecipeMedia(' + m.id + ')" style="font-size:10px;padding:2px 6px;">🗑️</button></div></div>';
+    }).join('');
+  } else {
+    mediaBox.innerHTML = '<p style="font-size:12px;color:var(--text-muted);">No media files attached.</p>';
+  }
+  _updateRecipeMediaUI();
+}
+async function uploadRecipeMedia() {
+  const input = document.getElementById('recipeMediaInput');
+  const file = input.files[0];
+  if (!file || !currentRecipeId) return;
+  const form = new FormData();
+  form.append('file', file);
+  const res = await fetch(API + '/recipes/' + currentRecipeId + '/media', {
+    method: 'POST',
+    headers: authHeadersNoJson(),
+    body: form,
+  });
+  if (!res.ok) {
+    const err = await res.json();
+    return alert('Upload failed: ' + (err.detail || 'unknown error'));
+  }
+  const result = await res.json();
+  setShareStatus('Media uploaded successfully');
+  _renderMediaOnDetail({media: [result]});
+  // Re-fetch to get full list
+  const fullRes = await fetch(API + '/recipes/' + currentRecipeId, { headers: authHeaders() });
+  if (fullRes.ok) {
+    const full = await fullRes.json();
+    _renderMediaOnDetail(full);
+  }
+}
+async function deleteRecipeMedia(mediaId) {
+  if (!confirm('Remove this media file?')) return;
+  const res = await fetch(API + '/recipes/' + currentRecipeId + '/media/' + mediaId, {
+    method: 'DELETE',
+    headers: authHeaders(),
+  });
+  if (!res.ok) return alert('Delete failed');
+  // Re-fetch recipe to refresh media gallery
+  const fullRes = await fetch(API + '/recipes/' + currentRecipeId, { headers: authHeaders() });
+  if (fullRes.ok) {
+    const full = await fullRes.json();
+    _renderMediaOnDetail(full);
+  }
+}
+
 async function uploadStepPhoto() {
   const input = document.getElementById('stepPhotoInput');
   const file = input.files[0];
