@@ -1,6 +1,6 @@
 import enum
 
-from sqlalchemy import Column, DateTime, Enum, Float, ForeignKey, Integer, String, Text
+from sqlalchemy import Column, DateTime, Enum, Float, ForeignKey, Index, Integer, String, Text
 from sqlalchemy.sql import func
 
 from backend.database import Base
@@ -45,14 +45,16 @@ class Cookbook(Base):
     name = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
     store = Column(Enum(Store), default=Store.local, nullable=False)
-    owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    owner_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    __table_args__ = (Index("idx_cookbooks_owner", "owner_id"),)
 
 class Tag(Base):
     __tablename__ = "tags"
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(100), unique=True, nullable=False)
-    owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    owner_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    __table_args__ = (Index("idx_tags_owner", "owner_id"),)
 
 class Recipe(Base):
     __tablename__ = "recipes"
@@ -64,8 +66,8 @@ class Recipe(Base):
     source_url = Column(String(1024), nullable=True)
     source_path = Column(String(1024), nullable=True)
     store = Column(Enum(Store), default=Store.local, nullable=False)
-    owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    cookbook_id = Column(Integer, ForeignKey("cookbooks.id"), nullable=True)
+    owner_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    cookbook_id = Column(Integer, ForeignKey("cookbooks.id"), nullable=True, index=True)
     rating = Column(Float, nullable=True)
     flavor_rating = Column(Float, nullable=True)
     effort_rating = Column(Float, nullable=True)
@@ -81,67 +83,74 @@ class Recipe(Base):
 class RecipeTag(Base):
     __tablename__ = "recipe_tags"
     id = Column(Integer, primary_key=True, index=True)
-    recipe_id = Column(Integer, ForeignKey("recipes.id"), nullable=False)
-    tag_id = Column(Integer, ForeignKey("tags.id"), nullable=False)
+    recipe_id = Column(Integer, ForeignKey("recipes.id"), nullable=False, index=True)
+    tag_id = Column(Integer, ForeignKey("tags.id"), nullable=False, index=True)
 
 class RecipePhoto(Base):
     __tablename__ = "recipe_photos"
     id = Column(Integer, primary_key=True, index=True)
-    recipe_id = Column(Integer, ForeignKey("recipes.id"), nullable=False)
-    owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    recipe_id = Column(Integer, ForeignKey("recipes.id"), nullable=False, index=True)
+    owner_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     path = Column(String(1024), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    __table_args__ = (Index("idx_recipe_photos_recipe_id", "recipe_id"),)
 
 class RecipeStepPhoto(Base):
     __tablename__ = "recipe_step_photos"
     id = Column(Integer, primary_key=True, index=True)
-    recipe_id = Column(Integer, ForeignKey("recipes.id"), nullable=False)
+    recipe_id = Column(Integer, ForeignKey("recipes.id"), nullable=False, index=True)
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     step_index = Column(Integer, nullable=False)
     path = Column(String(1024), nullable=False)
+    __table_args__ = (Index("idx_recipe_step_photos_recipe_id", "recipe_id"),)
     caption = Column(String(255), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 class Note(Base):
     __tablename__ = "notes"
     id = Column(Integer, primary_key=True, index=True)
-    recipe_id = Column(Integer, ForeignKey("recipes.id"), nullable=False)
+    recipe_id = Column(Integer, ForeignKey("recipes.id"), nullable=False, index=True)
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     body = Column(Text, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    __table_args__ = (Index("idx_notes_recipe_id", "recipe_id"),)
 
 class MealPlan(Base):
     __tablename__ = "meal_plans"
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(255), nullable=False)
     period = Column(String(50), nullable=False)
-    owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    owner_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    __table_args__ = (Index("idx_meal_plans_owner", "owner_id"),)
 
 class MealPlanEntry(Base):
     __tablename__ = "meal_plan_entries"
     id = Column(Integer, primary_key=True, index=True)
-    meal_plan_id = Column(Integer, ForeignKey("meal_plans.id"), nullable=False)
-    recipe_id = Column(Integer, ForeignKey("recipes.id"), nullable=False)
+    meal_plan_id = Column(Integer, ForeignKey("meal_plans.id"), nullable=False, index=True)
+    recipe_id = Column(Integer, ForeignKey("recipes.id"), nullable=False, index=True)
     meal = Column(String(50), nullable=False)
     date = Column(String(20), nullable=True)
     position = Column(Integer, default=0, nullable=False)
-    owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    owner_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    __table_args__ = (Index("idx_entries_plan_id", "meal_plan_id"), Index("idx_entries_recipe", "recipe_id"),)
 
 class GroceryList(Base):
     __tablename__ = "grocery_lists"
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(255), nullable=False)
-    owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    share_token = Column(String(255), nullable=True)
+    owner_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    share_token = Column(String(255), nullable=True, index=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    __table_args__ = (Index("idx_grocery_lists_owner", "owner_id"),)
 
 class GroceryItem(Base):
     __tablename__ = "grocery_items"
     id = Column(Integer, primary_key=True, index=True)
-    list_id = Column(Integer, ForeignKey("grocery_lists.id"), nullable=False)
-    recipe_id = Column(Integer, ForeignKey("recipes.id"), nullable=True)
+    list_id = Column(Integer, ForeignKey("grocery_lists.id"), nullable=False, index=True)
+    recipe_id = Column(Integer, ForeignKey("recipes.id"), nullable=True, index=True)
     name = Column(String(255), nullable=False)
+    __table_args__ = (Index("idx_grocery_items_list", "list_id"),)
     quantity = Column(String(100), nullable=True)
     checked = Column(Integer, default=0, nullable=False)
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)

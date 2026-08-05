@@ -4,7 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#d97706">
-  <link rel="apple-touch-icon" href="/media/static/favicon.png">
+  <link rel="apple-touch-icon" href="/src/icons/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/src/icons/favicon-16x16.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/src/icons/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="48x48" href="/src/icons/favicon-48x48.png">
+  <link rel="icon" type="image/png" sizes="96x96" href="/src/icons/favicon-96x96.png">
+  <link rel="icon" type="image/png" sizes="128x128" href="/src/icons/favicon-128x128.png">
+  <link rel="icon" type="image/png" sizes="256x256" href="/src/icons/favicon-256x256.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="/src/icons/favicon-512x512.png">
+  <link rel="shortcut icon" href="/src/icons/favicon.ico">
+  <link rel="manifest" href="/src/manifest.json">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="format-detection" content="telephone=no, email=no, address=no, date=no, month=no, year=no">
@@ -120,6 +129,8 @@
   }
   .nav-square:hover { background: #ede9e0; }
   .nav-icon { font-size: 22px; }
+  .picker-item { display:flex; align-items:center; gap:10px; padding:8px; border-radius:8px; cursor:pointer; transition:background 0.15s; }
+  .picker-item:hover { background:rgba(0,0,0,0.05); }
   .nav-label { font-size: 11px; font-weight: 500; }
   body.dark .nav-square { background: #1a1a1e; border-color: #3a3a45; color: #c8a78a; }
   body.dark .nav-square:hover { background: #2a2a2e; }
@@ -334,23 +345,23 @@
   <div class="container" style="position:relative;">
   <div class="card">
     <div class="top">
-      <h1 style="margin:0;font-size:20px;"><a href="#" onclick="switchTab('tabMenu');return false;" style="color:inherit;text-decoration:none;"><span style="font-size:18px;">🍪</span> CookieRue</a></h1>
-      <div id="authArea" class="hidden">
+      <h1 style="margin:0;font-size:20px;"><a href="#" onclick="switchTab('tabMenu');return false;" style="color:inherit;text-decoration:none;"><img src="/src/icons/logo-sm.png" alt="CookieRue" style="width:24px;height:20px;vertical-align:middle;margin-right:6px;object-fit:contain;" /> CookieRue</a></h1>
+      <div id="authAreaRight" style="display:flex;align-items:center;gap:4px;">
+        <div id="dropdownMenu" class="hidden" style="position:absolute;top:56px;right:56px;background:#fcfafa;border:1px solid #e0ddd7;border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,0.12);z-index:1000;min-width:160px;">
+          <button onclick="switchTab('tabMenu');closeDropdown()" class="dropdown-item">🏠 Menu</button>
+          <button onclick="switchTab('tabRecipes');closeDropdown()" class="dropdown-item">📋 Recipes</button>
+          <button onclick="switchTab('tabImport');closeDropdown()" class="dropdown-item">📥 Import</button>
+          <button onclick="switchTab('tabMeals');closeDropdown()" class="dropdown-item">📅 Meal plans</button>
+          <button onclick="switchTab('tabGroceries');closeDropdown()" class="dropdown-item">🛒 Grocery lists</button>
+          <button onclick="switchTab('tabProfile');closeDropdown()" class="dropdown-item">👤 Profile</button>
+          <button onclick="openSettingsCard();toggleDropdown()" class="dropdown-item">⚙️ Settings</button>
+          <div class="dropdown-divider"></div>
+          <button onclick="logout()" class="dropdown-item logout">Logout</button>
+        </div>
         <span id="userEmail" style="font-size:12px;color:#555;"></span>
         <button class="secondary" id="menuBtn" onclick="toggleDropdown()" style="width:auto;padding:6px 10px;font-size:12px;">⋮</button>
+        <button class="secondary" id="themeToggle" onclick="toggleTheme()" style="width:auto;padding:6px 10px;font-size:12px;">🌙</button>
       </div>
-      <div id="dropdownMenu" class="hidden" style="position:absolute;top:56px;right:8px;background:#fcfafa;border:1px solid #e0ddd7;border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,0.12);z-index:1000;min-width:160px;">
-        <button onclick="switchTab('tabMenu');closeDropdown()" class="dropdown-item">🏠 Menu</button>
-        <button onclick="switchTab('tabRecipes');closeDropdown()" class="dropdown-item">📋 Recipes</button>
-        <button onclick="switchTab('tabImport');closeDropdown()" class="dropdown-item">📥 Import</button>
-        <button onclick="switchTab('tabMeals');closeDropdown()" class="dropdown-item">📅 Meal plans</button>
-        <button onclick="switchTab('tabGroceries');closeDropdown()" class="dropdown-item">🛒 Grocery lists</button>
-        <button onclick="switchTab('tabProfile');closeDropdown()" class="dropdown-item">👤 Profile</button>
-        <button onclick="openSettingsCard();toggleDropdown()" class="dropdown-item">⚙️ Settings</button>
-        <div class="dropdown-divider"></div>
-        <button onclick="logout()" class="dropdown-item logout">Logout</button>
-      </div>
-      <button class="secondary" id="themeToggle" onclick="toggleTheme()" style="width:auto;padding:6px 10px;font-size:12px;">🌙</button>
     </div>
   </div>
 
@@ -522,8 +533,9 @@
           <div class="top">
             <h2 style="margin:0;font-size:18px;" id="detailTitle"></h2>
             <button class="secondary" onclick="closeRecipeDetail()" style="width:auto;padding:8px 10px;font-size:13px;">Close</button>
-            <button class="secondary" id="favBtn" onclick="toggleFavoriteFromDetail()" style="width:auto;padding:8px 10px;font-size:13px;">🤍</button>
+            <button class="secondary" id="favBtn" onclick="toggleFavoriteFromDetail()" style="width:auto;padding:8px 10px;font-size:13px;"><img src="/src/icons/favorites-icon.png" alt="fav" style="width:20px;height:20px;vertical-align:middle;" /></button>
             <button class="secondary" onclick="editCurrentRecipe()" style="width:auto;padding:8px 10px;font-size:13px;">Edit</button>
+            <button class="danger" onclick="deleteCurrentRecipe()" style="width:auto;padding:8px 10px;font-size:13px;">Delete</button>
           </div>
           <div id="detailMeta"></div>
           <div id="detailHero" style="margin-bottom:8px;min-height:0;"></div>
@@ -616,10 +628,25 @@
               <button class="secondary" onclick="setPlannerView('daily')" id="plannerDayBtn" style="width:auto;padding:6px 10px;font-size:12px;">Day</button>
             </div>
             <button class="secondary" onclick="closePlanDetail()" style="width:auto;padding:8px 10px;font-size:13px;">Close</button>
+            <button class="danger" onclick="deleteCurrentPlan()" style="width:auto;padding:8px 10px;font-size:13px;">Delete</button>
           </div>
           <div id="plannerDayChips" class="row" style="margin-top:8px;overflow-x:auto;gap:8px;flex-wrap:nowrap;"></div>
           <div id="plannerSlots" style="margin-top:12px;"></div>
           <div id="plannerSummary" class="meta" style="margin-top:8px;"></div>
+        </div>
+        <!-- Recipe Picker Modal -->
+        <div id="recipePickerOverlay" class="hidden" style="position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.5);z-index:2000;display:flex;align-items:center;justify-content:center;">
+          <div class="card" style="width:90%;max-width:500px;max-height:80vh;overflow-y:auto;margin:16px;">
+            <div class="top" style="margin-bottom:10px;">
+              <h3 style="margin:0;font-size:16px;" id="recipePickerTitle">Add recipe</h3>
+              <button class="secondary" onclick="closeRecipePicker()" style="width:auto;padding:4px 8px;font-size:12px;">✕</button>
+            </div>
+            <input id="recipePickerSearch" type="text" placeholder="Search recipes..." oninput="filterPickerRecipes()" style="width:100%;margin-bottom:8px;font-size:13px;padding:6px;" />
+            <div id="recipePickerList" style="max-height:400px;overflow-y:auto;"></div>
+            <div style="margin-top:10px;text-align:right;">
+              <button class="secondary" onclick="closeRecipePicker()" style="width:auto;padding:8px 12px;font-size:13px;">Cancel</button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -784,6 +811,10 @@ let currentPlanId = null;
 let currentGroceryId = null;
 let editingRecipeId = null;
 const viewType = localStorage.getItem('viewType') || 'list';
+let _recipeCache = null;
+let _recipeCacheTime = 0;
+let _plansCache = null;
+let _plansCacheTime = 0;
 
 function authHeaders() {
   return { 'Content-Type':'application/json', Authorization: 'Bearer ' + token };
@@ -792,6 +823,11 @@ function authHeadersNoJson() {
   const h = authHeaders();
   delete h['Content-Type'];
   return h;
+}
+async function loadRecipesFromAPI() {
+  const res = await fetch(API + '/recipes', { headers: authHeaders() });
+  if (!res.ok) return [];
+  return await res.json();
 }
 function escapeHtml(text) {
   return String(text||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -887,9 +923,15 @@ async function loadProfile() {
 }
 
 async function loadRecentRecipes() {
-  const res = await fetch(API + '/recipes/?limit=5', { headers: authHeaders() });
-  if (!res.ok) return;
-  const recipes = await res.json();
+  const now = Date.now();
+  let recipes;
+  if (_recipeCache && (now - _recipeCacheTime < 30000)) {
+    recipes = _recipeCache;
+  } else {
+    recipes = await loadRecipesFromAPI();
+    _recipeCache = recipes;
+    _recipeCacheTime = now;
+  }
   const container = document.getElementById('recentRecipesList');
   if (!container) return;
   if (!recipes.length) {
@@ -1218,7 +1260,7 @@ async function loadMedia() {
   for (const item of items) {
     const el = document.createElement('div');
     el.className = 'item';
-    el.innerHTML = '<div><div><strong>' + escapeHtml(item.title) + '</strong></div><div style="font-size:12px;color:#555;">' + escapeHtml(item.source_url || '') + '</div><div style="font-size:12px;color:#555;">' + escapeHtml(item.description || '') + '</div></div>';
+        el.innerHTML = '<div><div><strong onclick="openPlanDetail(' + p.id + ')" style="cursor:pointer;">' + escapeHtml(p.name) + '</strong></div><div class="meta">' + escapeHtml(p.period) + '</div></div><div style="display:flex;gap:6px;"><button class="secondary" onclick="openPlanDetail(' + p.id + ')" style="width:auto;padding:8px 10px;font-size:13px;">Open</button><button class="danger" onclick="deletePlanWithConfirm(' + p.id + ')" style="width:auto;padding:8px 10px;font-size:13px;">Delete</button></div>';
     box.appendChild(el);
   }
 }
@@ -1238,10 +1280,18 @@ function categoryIcon(cat) { return (cat && categoryIcons[cat]) || '📝'; }
 
 async function renderRecipes() {
   const q = (document.getElementById('recipeSearch')?.value || '').trim().toLowerCase();
-  const res = await fetch(API + '/recipes', { headers: authHeaders() });
-  if (!res.ok) return;
-  const items = await res.json();
+  let items;
+  const now = Date.now();
+  if (_recipeCache && (now - _recipeCacheTime < 30000)) {
+    items = _recipeCache;
+  } else {
+    items = await loadRecipesFromAPI();
+    if (!items.length && _recipeCache) return;
+    _recipeCache = items;
+    _recipeCacheTime = now;
+  }
   const favs = new Set(JSON.parse(localStorage.getItem('recipe_favorites') || '[]'));
+  const favsById = new Set([...favs].map(x => parseInt(x)));
   const categories = Array.from(new Set(items.map(r => r.category).filter(Boolean))).slice(0, 20);
   const filterBox = document.getElementById('recipeCategoryFilters');
   const activeCategory = filterBox.dataset.active || '';
@@ -1256,7 +1306,7 @@ async function renderRecipes() {
     const matchesCategory = !activeCategory || r.category === activeCategory;
     const matchesMeal = !activeMeal || (r.category || '').toLowerCase() === activeMeal.toLowerCase();
     const matchesSub = !activeSub || (r.subcategory || '').toLowerCase() === activeSub.toLowerCase();
-    const matchesFav = !filterBox.dataset.favs || favs.has(String(r.id));
+    const matchesFav = !filterBox.dataset.favs || favsById.has(r.id);
     return matchesSearch && matchesCategory && matchesMeal && matchesSub && matchesFav;
   });
   const favPill = document.getElementById('favPill');
@@ -1271,7 +1321,7 @@ async function renderRecipes() {
     el.className = 'recipe-list-item';
     if (!window.recipeSelectionMode) el.onclick = function() { openRecipeDetail(r.id); };
     el.style.cursor = 'pointer';
-    const heart = favs.has(String(r.id)) ? '❤' : '🤍';
+    const heart = favsById.has(r.id) ? '<img src="/src/icons/favorites-icon.png" alt="fav" style="width:16px;height:16px;vertical-align:middle;" />' : '<img src="/src/icons/favorites-icon.png" alt="fav" style="width:16px;height:16px;vertical-align:middle;opacity:0.3;" />';
     const stars = r.rating ? '★'.repeat(Math.round(r.rating)) : '';
     const flavorStars = r.flavor_rating ? ' Flavor:' + '★'.repeat(Math.round(r.flavor_rating)) : '';
     const effortStars = r.effort_rating ? ' Effort:' + '★'.repeat(Math.round(r.effort_rating)) : '';
@@ -1280,7 +1330,7 @@ async function renderRecipes() {
     const photoUrl = (r.photos && r.photos.length > 0) ? '/media/static/' + r.photos[0] : (r.source_path ? '/media/static/' + r.source_path : categoryIcon(r.category));
     const isImg = (r.photos && r.photos.length > 0) || r.source_path;
     const cb = window.recipeSelectionMode ? '<input type="checkbox" class="recipe-checkbox" onchange="toggleSelection(' + r.id + ')" style="margin-right:8px;flex-shrink:0;" />' : '';
-    el.innerHTML = cb + '<div style="display:flex;align-items:center;gap:10px;overflow:hidden;flex:1;">' + (isImg ? '<img src="' + photoUrl + '" style="width:56px;height:56px;object-fit:cover;border-radius:8px;" />' : '<span class="recipe-icon" style="font-size:28px;min-width:56px;height:56px;display:flex;align-items:center;justify-content:center;background:#f3f0e8;border-radius:8px;">' + photoUrl + '</span>') + '<div style="flex:1;min-width:0;overflow:hidden;"><div class="rl-title">' + escapeHtml(r.title || 'Untitled') + '</div><div class="rl-meta">' + escapeHtml(meta) + '</div></div></div><div style="display:flex;align-items:center;gap:6px;"><button class="secondary" onclick="event.stopPropagation();toggleFavorite(' + r.id + ')" style="width:auto;padding:6px 8px;font-size:12px;">' + heart + '</button><button class="secondary" onclick="event.stopPropagation();openRecipeDetail(' + r.id + ')" style="width:auto;padding:6px 8px;font-size:12px;">Open</button></div>';
+    el.innerHTML = cb + '<div style="display:flex;align-items:center;gap:10px;overflow:hidden;flex:1;">' + (isImg ? '<img src="' + photoUrl + '" style="width:56px;height:56px;object-fit:cover;border-radius:8px;cursor:pointer;" onclick="event.stopPropagation();openRecipeDetail(' + r.id + ')" />' : '<span class="recipe-icon" style="font-size:28px;min-width:56px;height:56px;display:flex;align-items:center;justify-content:center;background:#f3f0e8;border-radius:8px;cursor:pointer;" onclick="event.stopPropagation();openRecipeDetail(' + r.id + ')">' + photoUrl + '</span>') + '<div style="flex:1;min-width:0;overflow:hidden;"><div class="rl-title" onclick="event.stopPropagation();openRecipeDetail(' + r.id + ')" style="cursor:pointer;">' + escapeHtml(r.title || 'Untitled') + '</div><div class="rl-meta">' + escapeHtml(meta) + '</div></div></div><div style="display:flex;align-items:center;gap:6px;"><button class="secondary" onclick="event.stopPropagation();toggleFavorite(' + r.id + ')" style="width:auto;padding:6px 8px;font-size:12px;">' + heart + '</button><button class="secondary" onclick="event.stopPropagation();openRecipeDetail(' + r.id + ')" style="width:auto;padding:6px 8px;font-size:12px;">Open</button><button class="danger" onclick="event.stopPropagation();deleteRecipe(' + r.id + ')" style="width:auto;padding:6px 8px;font-size:12px;">Delete</button></div>';
     box.appendChild(el);
   }
 }
@@ -1339,6 +1389,7 @@ window.toggleViewType = function() {
   }
 };
 window.toggleFavorite = function(id) {
+  _recipeCacheTime = 0; // invalidate cache
   const favs = new Set(JSON.parse(localStorage.getItem('recipe_favorites') || '[]'));
   if (favs.has(String(id))) favs.delete(String(id)); else favs.add(String(id));
   localStorage.setItem('recipe_favorites', JSON.stringify([...favs]));
@@ -1350,7 +1401,7 @@ window.toggleFavoriteFromDetail = function() {
   const favBtn = document.getElementById('favBtn');
   if (favs.has(String(currentRecipeId))) favs.delete(String(currentRecipeId)); else favs.add(String(currentRecipeId));
   localStorage.setItem('recipe_favorites', JSON.stringify([...favs]));
-  if (favBtn) favBtn.textContent = favs.has(String(currentRecipeId)) ? '❤' : '🤍';
+  if (favBtn) { favBtn.innerHTML = favs.has(String(currentRecipeId)) ? '<img src="/src/icons/favorites-icon.png" alt="fav" style="width:20px;height:20px;vertical-align:middle;filter:brightness(0)_sepia(1)_saturate(3)_hue-rotate(320deg);" />' : '<img src="/src/icons/favorites-icon.png" alt="fav" style="width:20px;height:20px;vertical-align:middle;opacity:0.3;" />'; }
   renderRecipes();
 };
 async function exportRecipes() {
@@ -1365,6 +1416,54 @@ async function exportRecipes() {
   window.URL.revokeObjectURL(url);
 }
 window.selectedRecipes = new Set();
+
+function deleteRecipe(id) {
+  _recipeCacheTime = 0;
+  if (!confirm('Delete this recipe? This cannot be undone.')) return;
+  fetch(API + '/recipes/' + id, { method: 'DELETE', headers: authHeaders() })
+    .then(r => r.json())
+    .then(() => {
+      if (currentRecipeId == id) closeRecipeDetail();
+      renderRecipes();
+    })
+    .catch(() => alert('Delete failed'));
+}
+function deleteCurrentRecipe() {
+  _recipeCacheTime = 0;
+  if (!currentRecipeId) return;
+  if (!confirm('Delete this recipe? This cannot be undone.')) return;
+  fetch(API + '/recipes/' + currentRecipeId, { method: 'DELETE', headers: authHeaders() })
+    .then(r => r.json())
+    .then(() => {
+      closeRecipeDetail();
+      renderRecipes();
+      loadRecentRecipes();
+    })
+    .catch(() => alert('Delete failed'));
+}
+function deletePlanWithConfirm(id) {
+  _plansCacheTime = 0;
+  if (!confirm('Delete this meal plan? All entries will be removed. This cannot be undone.')) return;
+  fetch(API + '/meal-plans/' + id, { method: 'DELETE', headers: authHeaders() })
+    .then(r => r.json())
+    .then(() => {
+      if (currentPlanId == id) closePlanDetail();
+      renderPlans();
+    })
+    .catch(() => alert('Delete failed'));
+}
+function deleteCurrentPlan() {
+  _plansCacheTime = 0;
+  if (!currentPlanId) return;
+  if (!confirm('Delete this meal plan? All entries will be removed. This cannot be undone.')) return;
+  fetch(API + '/meal-plans/' + currentPlanId, { method: 'DELETE', headers: authHeaders() })
+    .then(r => r.json())
+    .then(() => {
+      closePlanDetail();
+      renderPlans();
+    })
+    .catch(() => alert('Delete failed'));
+}
 window.recipeSelectionMode = false;
 function toggleSelectMode() {
   window.recipeSelectionMode = !window.recipeSelectionMode;
@@ -1723,8 +1822,16 @@ async function deleteNote(id) {
 }
 
 async function renderPlans() {
-  const res = await fetch(API + '/meal-plans', { headers: authHeaders() });
-  const items = await res.json();
+  let items;
+  const now = Date.now();
+  if (_plansCache && (now - _plansCacheTime < 30000)) {
+    items = _plansCache;
+  } else {
+    const res = await fetch(API + '/meal-plans', { headers: authHeaders() });
+    items = await res.json();
+    _plansCache = items;
+    _plansCacheTime = now;
+  }
   const box = document.getElementById('planList');
   box.innerHTML = '';
   if (!items.length) {
@@ -1734,13 +1841,14 @@ async function renderPlans() {
   for (const p of items) {
     const el = document.createElement('div');
     el.className = 'item';
-    el.innerHTML = '<div><div><strong>' + escapeHtml(p.name) + '</strong></div><div class="meta">' + escapeHtml(p.period) + '</div></div><button class="secondary" onclick="openPlanDetail(' + p.id + ')" style="width:auto;padding:8px 10px;font-size:13px;">Open</button>';
+        el.innerHTML = '<div><div><strong onclick="openPlanDetail(' + p.id + ')" style="cursor:pointer;">' + escapeHtml(p.name) + '</strong></div><div class="meta">' + escapeHtml(p.period) + '</div></div><div style="display:flex;gap:6px;"><button class="secondary" onclick="openPlanDetail(' + p.id + ')" style="width:auto;padding:8px 10px;font-size:13px;">Open</button><button class="danger" onclick="deletePlanWithConfirm(' + p.id + ')" style="width:auto;padding:8px 10px;font-size:13px;">Delete</button></div>';
     box.appendChild(el);
   }
 }
 function openPlanForm() { document.getElementById('planForm').classList.remove('hidden'); }
 function closePlanForm() { document.getElementById('planForm').classList.add('hidden'); }
 async function savePlan() {
+  _plansCacheTime = 0;
   const name = document.getElementById('planName').value.trim();
   const period = document.getElementById('planPeriod').value;
   const res = await fetch(API + '/meal-plans', { method:'POST', headers: authHeaders(), body: JSON.stringify({name,period}) });
@@ -1883,29 +1991,65 @@ function updatePlannerSummary(dayKey, byDay) {
   const total = Object.values(byDay).reduce((sum, dayObj) => sum + Object.keys(dayObj).length, 0);
   document.getElementById('plannerSummary').textContent = dayEntries + ' meal' + (dayEntries !== 1 ? 's' : '') + ' on ' + dayKey + ' • ' + total + ' planned total';
 }
-async function addMealEntry(date, meal) {
+function addMealEntry(date, meal) {
   const recipes = window._plannerRecipes || [];
   if (!recipes.length) return alert('No recipes available');
-  const names = recipes.map(r => r.title).join('\n');
-  const chosen = prompt('Enter recipe name for ' + meal + ' on ' + date + ':\n' + names);
-  if (!chosen) return;
-  const match = recipes.find(r => r.title.toLowerCase() === chosen.trim().toLowerCase());
-  if (!match) return alert('Recipe not found');
-  const payload = { meal_plan_id: currentPlanId, recipe_id: match.id, meal, date };
-  const res = await fetch(API + '/meal-plans/entries', { method:'POST', headers: authHeaders(), body: JSON.stringify(payload) });
-  const data = await res.json();
-  if (!res.ok) return alert('Failed: ' + (data.detail || 'unknown'));
+  window._pickerContext = { date: date, meal: meal, entryId: null };
+  document.getElementById('recipePickerTitle').textContent = 'Add recipe for ' + meal;
+  renderPickerRecipes();
+  document.getElementById('recipePickerOverlay').classList.remove('hidden');
+}
+function renderPickerRecipes() {
+  const recipes = window._plannerRecipes || [];
+  const query = (document.getElementById('recipePickerSearch') || { value: '' }).value.toLowerCase();
+  let filtered = recipes;
+  if (query) {
+    filtered = recipes.filter(r => r.title.toLowerCase().includes(query));
+  }
+  if (!query) {
+    filtered = filtered.slice(0, 5);
+  }
+  const list = document.getElementById('recipePickerList');
+  if (!list) return;
+  list.innerHTML = filtered.map(r => {
+    const img = (r.photos && r.photos.length > 0) ? '/media/static/' + r.photos[0] : (r.source_path ? '/media/static/' + r.source_path : '');
+    const imgTag = img ? '<img src="' + img + '" style="width:40px;height:40px;object-fit:cover;border-radius:6px;" />' : '<span style="width:40px;height:40px;border-radius:6px;background:#eee;display:inline-block;flex-shrink:0;"></span>';
+    return '<div onclick="pickRecipe(' + r.id + ')" class="picker-item">' + imgTag + '<div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:500;">' + escapeHtml(r.title) + '</div><div class="meta" style="font-size:11px;color:#999;">' + escapeHtml(r.category || '') + '</div></div></div>';
+  }).join('');
+  if (!filtered.length) {
+    list.innerHTML = '<div style="padding:16px;text-align:center;color:#999;font-size:13px;">No recipes found</div>';
+  }
+}
+function filterPickerRecipes() {
+  renderPickerRecipes();
+}
+async function pickRecipe(recipeId) {
+  const ctx = window._pickerContext;
+  if (!ctx) return closeRecipePicker();
+  closeRecipePicker();
+  if (ctx.entryId) {
+    // Change existing entry
+    const payload = { meal_plan_id: currentPlanId, recipe_id: recipeId, meal: ctx.meal, date: ctx.date };
+    const res = await fetch(API + '/meal-plans/entries', { method:'POST', headers: authHeaders(), body: JSON.stringify(payload) });
+    if (!res.ok) return alert('Failed');
+  } else {
+    // Add new entry
+    const payload = { meal_plan_id: currentPlanId, recipe_id: recipeId, meal: ctx.meal, date: ctx.date };
+    const res = await fetch(API + '/meal-plans/entries', { method:'POST', headers: authHeaders(), body: JSON.stringify(payload) });
+    const data = await res.json();
+    if (!res.ok) return alert('Failed: ' + (data.detail || 'unknown'));
+  }
   const planRes = await fetch(API + '/meal-plans/' + currentPlanId, { headers: authHeaders() });
-  const plan = await planRes.json();
-  await renderPlanner(plan);
+  const p = await planRes.json();
+  await renderPlanner(p);
+}
+function closeRecipePicker() {
+  document.getElementById('recipePickerOverlay').classList.add('hidden');
+  window._pickerContext = null;
 }
 async function selectPlannerRecipe(entryId) {
   const recipes = window._plannerRecipes || [];
-  const names = recipes.map(r => r.title).join('\n');
-  const chosen = prompt('Enter new recipe name:\n' + names);
-  if (!chosen) return;
-  const match = recipes.find(r => r.title.toLowerCase() === chosen.trim().toLowerCase());
-  if (!match) return alert('Recipe not found');
+  if (!recipes.length) return alert('No recipes available');
   const plan = window._plannerPlan;
   const byDay = window._plannerEntriesByDay;
   let old = null;
@@ -1916,12 +2060,10 @@ async function selectPlannerRecipe(entryId) {
     if (old) break;
   }
   if (!old) return alert('Entry not found');
-  const payload = { meal_plan_id: plan.id, recipe_id: match.id, meal: old.meal, date: old.date || window._plannerSelectedDay };
-  const res = await fetch(API + '/meal-plans/entries', { method:'POST', headers: authHeaders(), body: JSON.stringify(payload) });
-  if (!res.ok) return alert('Update failed');
-  const planRes = await fetch(API + '/meal-plans/' + currentPlanId, { headers: authHeaders() });
-  const p = await planRes.json();
-  await renderPlanner(p);
+  window._pickerContext = { date: old.date || window._plannerSelectedDay, meal: old.meal, entryId: entryId };
+  document.getElementById('recipePickerTitle').textContent = 'Change recipe for ' + old.meal;
+  renderPickerRecipes();
+  document.getElementById('recipePickerOverlay').classList.remove('hidden');
 }
 async function deleteMealEntry(id) {
   const res = await fetch(API + '/meal-plans/entries/' + id, { method:'DELETE', headers: authHeaders() });
