@@ -99,21 +99,21 @@ def _bootstrap_guest_account() -> None:
     try:
         guest_email = settings.DEFAULT_GUEST_EMAIL.strip().lower()
         existing = db.query(User).filter(func.lower(User.email) == guest_email).first()
-        if existing:
-            return
-
-        guest = User(
-            email=guest_email,
-            hashed_password=hash_password(settings.DEFAULT_GUEST_PASSWORD),
-            display_name=settings.DEFAULT_GUEST_DISPLAY_NAME,
-            role=Role.user,
-            is_active=1,
-            is_approved=1,
-            must_change_password=0,
-        )
-        db.add(guest)
-        db.commit()
-        db.refresh(guest)
+        if not existing:
+            guest = User(
+                email=guest_email,
+                hashed_password=hash_password(settings.DEFAULT_GUEST_PASSWORD),
+                display_name=settings.DEFAULT_GUEST_DISPLAY_NAME,
+                role=Role.user,
+                is_active=1,
+                is_approved=1,
+                must_change_password=0,
+            )
+            db.add(guest)
+            db.commit()
+            db.refresh(guest)
+        else:
+            guest = existing
 
         cookbook = Cookbook(
             name="Sample Recipes",
@@ -136,6 +136,13 @@ def _bootstrap_guest_account() -> None:
             tag_objs[tag_name] = tag
 
         for seed in SEED_RECIPES:
+            # Idempotency: skip if recipe already exists
+            existing_recipe = db.query(Recipe).filter(
+                Recipe.owner_id == guest.id, Recipe.title == seed["title"]
+            ).first()
+            if existing_recipe:
+                continue
+
             recipe = Recipe(
                 title=seed["title"],
                 description=seed["description"],
