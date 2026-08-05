@@ -1170,8 +1170,22 @@ async function loadSettings() {
   html += '<div class="meta">SMTP port: ' + (s.smtp_port || '—') + '</div>';
   if (s.smtp_from_email) html += '<div class="meta">From: ' + escapeHtml(s.smtp_from_email) + '</div>';
   html += '</div>';
+  html += '<div class="section"><h3>Guest Account</h3>';
+  html += '<div style="display:flex;align-items:center;gap:8px;">';
+  html += '<label style="display:flex;align-items:center;gap:6px;font-size:14px;">';
+  html += '<input type="checkbox" id="guestLoginToggle" onchange="toggleGuestLogin(this)" style="width:auto;" />Enable guest/demo login';
+  html += '</label>';
+  html += '</div>';
+  html += '<div class="meta" style="font-size:12px;color:var(--text-muted);margin-top:4px;">';
+  html += 'Guest account: <strong>' + escapeHtml(s.guest_email || 'guest@cookierue.app') + '</strong>';
+  html += '</div></div>';
   document.getElementById('settingsContent').innerHTML = html;
   document.getElementById('settingsStatus').textContent = '';
+  // Set guest login toggle state
+  if (s.guest_login_enabled !== undefined) {
+    const toggle = document.getElementById('guestLoginToggle');
+    if (toggle) toggle.checked = s.guest_login_enabled;
+  }
 }
 async function addHost() {
   const host = document.getElementById('newHost').value.trim();
@@ -1187,6 +1201,17 @@ async function removeHost(host) {
   const data = await res.json();
   document.getElementById('settingsStatus').textContent = data.message || (res.ok ? 'Host removed' : 'Failed');
   if (res.ok) loadSettings();
+}
+async function toggleGuestLogin(checkbox) {
+  const res = await fetch(API + '/settings/guest-login', {
+    method: 'POST',
+    headers: authHeaders(),
+    body: new URLSearchParams({ enabled: checkbox.checked })
+  });
+  const data = await res.json();
+  document.getElementById('settingsStatus').textContent = data.message || '';
+  if (res.ok) loadSettings();
+  else checkbox.checked = !checkbox.checked;
 }
 async function backupDatabase() {
   document.getElementById('settingsStatus').textContent = 'Backing up...';
@@ -1339,7 +1364,23 @@ window.onload = function() {
     document.getElementById('saveLogin').checked = true;
   }
   initTheme();
+  checkGuestLoginEnabled();
 };
+async function checkGuestLoginEnabled() {
+  try {
+    const res = await fetch(API + '/settings/guest-login-enabled');
+    if (res.ok) {
+      const data = await res.json();
+      if (!data.enabled) {
+        const guestBtn = document.querySelector('button[onclick="loginAsGuest()"]');
+        if (guestBtn) guestBtn.style.display = 'none';
+        // Also hide the parent div that contains the subtitle
+        const parent = guestBtn ? guestBtn.closest('div') : null;
+        if (parent) parent.style.display = 'none';
+      }
+    }
+  } catch (e) { /* ignore */ }
+}
 async function register() {
   const email = document.getElementById('regEmail').value.trim();
   const password = document.getElementById('regPassword').value;

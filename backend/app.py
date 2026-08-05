@@ -344,6 +344,8 @@ SEED_TAGS = ["pasta", "italian", "dessert", "cookies", "salad", "mediterranean",
 
 
 def _bootstrap_guest_account() -> None:
+    if not settings.GUEST_LOGIN_ENABLED:
+        return
     db = SessionLocal()
     try:
         guest = _get_or_create_guest(db)
