@@ -1010,6 +1010,12 @@ async function loadRecentRecipes() {
 
 function openSettingsCard() {
   document.getElementById('userForm').classList.add('hidden');
+  // Non-admin users don't have access to system settings; redirect to profile
+  if (localStorage.getItem('userRole') !== 'admin') {
+    switchTab('tabProfile');
+    loadProfile();
+    return;
+  }
   document.getElementById('settingsCard').classList.remove('hidden');
   loadSettings();
 }
@@ -1255,6 +1261,7 @@ async function initApp() {
   document.getElementById('nav').classList.remove('hidden');
   document.getElementById('authArea').classList.remove('hidden');
   localStorage.setItem('isReadonly', user.is_readonly ? '1' : '0');
+  localStorage.setItem('userRole', user.role || 'user');
   document.getElementById('userEmail').textContent = user.email + ' (' + user.role + ')';
   if (user.is_readonly) {
     const badge = document.createElement('span');
@@ -1675,7 +1682,12 @@ async function saveRecipe() {
   const method = editingRecipeId ? 'PATCH' : 'POST';
   const res = await fetch(url, { method, headers: authHeaders(), body: JSON.stringify(payload) });
   const data = await res.json();
-  if (!res.ok) return alert('Save failed: ' + (data.detail || 'unknown'));
+  if (!res.ok) {
+    if (res.status === 409) {
+      return alert('A recipe with this title and description already exists. It was not duplicated.');
+    }
+    return alert('Save failed: ' + (data.detail || 'unknown'));
+  }
   closeRecipeForm();
   switchTab('tabRecipes');
   setTimeout(() => openRecipeDetail(data.id), 100);
