@@ -163,16 +163,15 @@ def share_list(list_id: int, db: Session = Depends(get_db), current_user: User =
     text = _list_text(gl.name, items)
     subject = urllib.parse.quote(gl.name or "Grocery list")
     body = urllib.parse.quote(text)
-    sms = "sms:?body=" + body
     mailto = "mailto:?subject=" + subject + "&body=" + body
     html = _html(gl.name, items)
     return {
         "share_token": gl.share_token,
         "link": link,
-        "sms": sms,
         "mailto": mailto,
         "text": text,
         "html": html,
+        "list_name": gl.name,
     }
 
 @router.get("/public/{share_token}")

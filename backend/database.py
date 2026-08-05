@@ -50,6 +50,13 @@ def _migrate_sqlite(conn):
     entry_cols = {c["name"] for c in insp.get_columns("meal_plan_entries")}
     if "position" not in entry_cols:
         conn.execute(text("ALTER TABLE meal_plan_entries ADD COLUMN position INTEGER NOT NULL DEFAULT 0"))
+    # Add is_readonly column to users table
+    users_cols = {c["name"] for c in insp.get_columns("users")}
+    if "is_readonly" not in users_cols:
+        conn.execute(text("ALTER TABLE users ADD COLUMN is_readonly INTEGER NOT NULL DEFAULT 0"))
+    # Create recipe_media table if it doesn't exist
+    if "recipe_media" not in insp.get_table_names():
+        conn.execute(text("CREATE TABLE recipe_media (id INTEGER PRIMARY KEY AUTOINCREMENT, recipe_id INTEGER NOT NULL, owner_id INTEGER NOT NULL, file_path VARCHAR(1024) NOT NULL, thumbnail_path VARCHAR(1024), original_filename VARCHAR(255) NOT NULL, media_type VARCHAR(20) NOT NULL, file_size INTEGER, extracted_text TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE, FOREIGN KEY (owner_id) REFERENCES users(id))"))
     try:
         _ensure_indexes(conn, insp)
     except Exception:
@@ -76,6 +83,9 @@ def _ensure_indexes(conn, insp):
         "idx_grocery_items_recipe": ("grocery_items", "recipe_id"),
         "idx_tags_owner": ("tags", "owner_id"),
         "idx_cookbooks_owner": ("cookbooks", "owner_id"),
+        "idx_recipe_media_recipe": ("recipe_media", "recipe_id"),
+        "idx_recipe_media_owner": ("recipe_media", "owner_id"),
+        "idx_users_email": ("users", "email"),
     }
     existing = set()
     try:
@@ -90,6 +100,10 @@ def _ensure_indexes(conn, insp):
                 existing.add(t["name"])
         except Exception:
             pass
+        for t in insp.get_indexes("recipe_media"):
+            existing.add(t["name"])
+        for t in insp.get_indexes("users"):
+            existing.add(t["name"])
     except Exception:
         pass
     for idx_name, (table, col) in idx_map.items():
@@ -103,6 +117,8 @@ def _migrate_mysql(conn):
         conn.execute(text("ALTER TABLE users ADD COLUMN must_change_password TINYINT(1) NOT NULL DEFAULT 0 AFTER is_approved"))
     if "password_changed_at" not in users_cols:
         conn.execute(text("ALTER TABLE users ADD COLUMN password_changed_at DATETIME NULL AFTER must_change_password"))
+    if "is_readonly" not in users_cols:
+        conn.execute(text("ALTER TABLE users ADD COLUMN is_readonly TINYINT(1) NOT NULL DEFAULT 0 AFTER password_changed_at"))
     if "password_history" not in insp.get_table_names():
         conn.execute(text("CREATE TABLE password_history (id INTEGER PRIMARY KEY AUTO_INCREMENT, user_id INTEGER NOT NULL, hashed_password VARCHAR(255) NOT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (user_id) REFERENCES users(id))"))
     if "password_reset_tokens" not in insp.get_table_names():
