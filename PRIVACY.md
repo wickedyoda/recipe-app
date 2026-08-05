@@ -1,7 +1,7 @@
 # Privacy Policy — CookieRue Recipe App
 
 **Effective Date:** August 4, 2026  
-**Last Updated:** August 4, 2026
+**Last Updated:** August 5, 2026
 
 ## Overview
 
@@ -35,8 +35,9 @@ The application stores only the data you explicitly enter:
 | **Notes** | Text notes attached to recipes |
 | **Grocery lists** | List names, items, quantities, checked state |
 | **Meal plans** | Your planned meals |
-| **Password reset tokens** | Single-use, time-limited (1 hour), stored securely |
-| **Share tokens** | Random unguessable tokens for sharing grocery lists |
+|| **Password reset tokens** | Single-use, time-limited (1 hour), stored securely |
+|| **Share tokens** | Random unguessable tokens for sharing grocery lists |
+|| **Guest account** | Shared read-only account for demo access (admin can disable) |
 
 ### Data Automatically Collected
 When you use a self-hosted CookieRue instance, the following may be logged by your server infrastructure:
@@ -146,7 +147,7 @@ CookieRue implements:
 - **bcrypt** password hashing with salt
 - **JWT HS256** authentication (24-hour expiry)
 - **Password history** (last 5 passwords remembered, reuse blocked)
-- **Password policy** (min 6 chars, requires uppercase + symbol)
+- **Password policy** (min 8 chars, requires uppercase, lowercase, number, and symbol)
 - **Rate limiting** on auth endpoints (5 requests/min)
 - **Security headers** (CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy)
 - **SSRF protection** (blocks private/internal IPs on URL ingestion)
