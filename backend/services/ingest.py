@@ -11,6 +11,7 @@ from urllib.parse import urlparse
 import yt_dlp
 from backend.database import SessionLocal
 from backend.models import Cookbook, Recipe, Store
+from backend.services.media_text import extract_text_from_file
 from sqlalchemy.orm import Session
 
 MEDIA_ROOT = Path(os.getenv("MEDIA_ROOT", "/media"))
@@ -375,6 +376,42 @@ def extract_recipe_from_upload(file, user_id: int) -> dict:
 
     video = dest if suffix in {".mp4", ".mkv", ".webm", ".mov"} else None
     audio = dest if suffix in {".m4a", ".mp3", ".wav", ".aac"} else None
+    # Handle document/image files: extract text and create recipe from content
+    doc_suffixes = {".txt", ".md", ".pdf", ".doc", ".docx", ".csv"}
+    image_suffixes = {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp"}
+    if suffix in doc_suffixes or suffix in image_suffixes:
+        try:
+            extracted = extract_text_from_file(str(dest), file.filename or "upload")
+        except Exception:
+            extracted = ""
+        parsed = _extract_recipe_from_text(extracted)
+        db = SessionLocal()
+        try:
+            cookbook = ensure_local_cookbook(db, user_id)
+            recipe = Recipe(
+                title=parsed.get("title") or Path(file.filename).stem,
+                description=parsed.get("description") or "",
+                ingredients=parsed.get("ingredients"),
+                instructions=parsed.get("instructions"),
+                source_path=str(dest),
+                source_filename=file.filename or "",
+                store=Store.local,
+                owner_id=user_id,
+            )
+            db.add(recipe)
+            db.commit()
+            db.refresh(recipe)
+        finally:
+            db.close()
+        return {
+            "ok": True,
+            "recipe_id": recipe.id,
+            "title": recipe.title,
+            "ingredients": recipe.ingredients,
+            "instructions": recipe.instructions,
+            "source_path": str(dest),
+            "cookbook_id": cookbook.id,
+        }
     if video:
         audio = workdir / "audio.wav"
         _run([
