@@ -66,6 +66,7 @@ class Recipe(Base):
     instructions = Column(Text, nullable=True)
     source_url = Column(String(1024), nullable=True)
     source_path = Column(String(1024), nullable=True)
+    source_filename = Column(String(255), nullable=True)
     store = Column(Enum(Store), default=Store.local, nullable=False)
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     cookbook_id = Column(Integer, ForeignKey("cookbooks.id"), nullable=True, index=True)
