@@ -539,6 +539,10 @@
         <div id="recipeDetail" class="card hidden" onclick="event.stopPropagation()">
           <div class="top">
             <h2 style="margin:0;font-size:18px;" id="detailTitle"></h2>
+            <div id="detailRating" style="display:flex;align-items:center;gap:4px;margin:4px 0 8px;">
+              <span id="detailStarRating" style="font-size:18px;color:#ffd43b;cursor:pointer;" onclick="rateCurrentRecipe()"></span>
+              <span id="detailRatingCount" style="font-size:12px;color:#888;"></span>
+            </div>
             <button class="secondary" onclick="closeRecipeDetail()" style="width:auto;padding:8px 10px;font-size:13px;">Close</button>
             <button class="secondary" id="favBtn" onclick="toggleFavoriteFromDetail()" style="width:auto;padding:8px 10px;font-size:13px;"><img src="/src/icons/favorites-icon.png" alt="fav" style="width:20px;height:20px;vertical-align:middle;" /></button>
             <button class="secondary" onclick="editCurrentRecipe()" style="width:auto;padding:8px 10px;font-size:13px;">Edit</button>
@@ -1403,7 +1407,7 @@ async function renderRecipes() {
     if (!window.recipeSelectionMode) el.onclick = function() { openRecipeDetail(r.id); };
     el.style.cursor = 'pointer';
     const heart = favsById.has(r.id) ? '<img src="/src/icons/favorites-icon.png" alt="fav" style="width:16px;height:16px;vertical-align:middle;" />' : '<img src="/src/icons/favorites-icon.png" alt="fav" style="width:16px;height:16px;vertical-align:middle;opacity:0.3;" />';
-    const stars = r.rating ? '★'.repeat(Math.round(r.rating)) : '';
+    const stars = r.rating ? renderStars(r.rating, 0) + ' <span style="color:#ffd43b;font-size:11px;">(' + (r.rating_count || 0) + ')</span>' : '';
     const flavorStars = r.flavor_rating ? ' Flavor:' + '★'.repeat(Math.round(r.flavor_rating)) : '';
     const effortStars = r.effort_rating ? ' Effort:' + '★'.repeat(Math.round(r.effort_rating)) : '';
     const timeMeta = [r.prep_time_minutes ? 'Prep ' + r.prep_time_minutes + ' min' : '', r.cook_time_minutes ? 'Cook ' + r.cook_time_minutes + ' min' : '', r.servings ? 'Serves ' + r.servings : ''].filter(Boolean).join(' • ');
@@ -1682,6 +1686,13 @@ async function openRecipeDetail(id) {
   if (!res.ok) return alert('Recipe not found');
   const r = await res.json();
   document.getElementById('detailTitle').innerHTML = (r.category ? categoryIcon(r.category) + ' ' : '') + escapeHtml(r.title || 'Untitled');
+  // Display star rating (average) + user's rating
+  const avgRating = r.rating ? parseFloat(r.rating) : 0;
+  const userRating = r.user_rating || 0;
+  const starSpan = document.getElementById('detailStarRating');
+  const countSpan = document.getElementById('detailRatingCount');
+  starSpan.innerHTML = renderStars(avgRating, userRating);
+  countSpan.textContent = (r.rating_count ? r.rating_count : 0) + ' rating' + (r.rating_count !== 1 ? 's' : '');
   document.getElementById('detailMeta').innerHTML = '<div class="meta">' + escapeHtml(r.description||'') + '</div>' + (r.rating ? '<div class="stars">' + '★'.repeat(Math.round(r.rating)) + '</div>' : '') + (r.flavor_rating ? '<div class="meta">Flavor: ' + '★'.repeat(Math.round(r.flavor_rating)) + '</div>' : '') + (r.effort_rating ? '<div class="meta">Effort: ' + '★'.repeat(Math.round(r.effort_rating)) + '</div>' : '') + '<div class="detail-meta-labels">' + '<span class="meta-label">Prep Time</span><span class="meta-label-val">' + (r.prep_time ? r.prep_time+' min' : '—') + '</span>' + '<span class="meta-label">Cook Time</span><span class="meta-label-val">' + (r.cook_time ? r.cook_time+' min' : '—') + '</span>' + '<span class="meta-label">Servings</span><span class="meta-label-val">' + (r.servings ? r.servings : '—') + '</span>' + '</div>' + '<div class="meta">' + (r.tags||[]).map(t=>'<span class="pill">'+escapeHtml(t)+'</span>').join(' ') + '</div>';
   const scaleVal = parseFloat(document.getElementById('recipeScale')?.value || '1') || 1;
   const heroBox = document.getElementById('detailHero');
@@ -1755,6 +1766,32 @@ function _updateRecipeMediaUI() {
   if (uploadBtn) {
     uploadBtn.style.display = isReadonly ? 'none' : 'inline-block';
   }
+}
+function renderStars(avgRating, userRating) {
+  const full = Math.floor(avgRating);
+  const half = avgRating - full >= 0.25 && avgRating - full < 0.75;
+  const empty = 5 - full - (half ? 1 : 0);
+  let stars = '';
+  for (let i = 0; i < 5; i++) {
+    const filled = i < full || (i === full && half);
+    stars += filled ? '★' : '☆';
+  }
+  return stars;
+}
+async function rateCurrentRecipe() {
+  if (!currentRecipeId) return;
+  const choice = prompt('Rate this recipe (1-5):\n1. ★ Poor\n2. ★★ Fair\n3. ★★★ Good\n4. ★★★★ Very Good\n5. ★★★★★ Excellent\n0. Unrate', '5');
+  if (!choice && choice !== '0') return;
+  const score = parseInt(choice);
+  if (isNaN(score) || score < 0 || score > 5) return alert('Please enter a number 0-5');
+  const res = await fetch(API + '/recipes/' + currentRecipeId + '/rate', { method: 'POST', headers: authHeaders(), body: JSON.stringify({score}) });
+  const data = await res.json();
+  if (!res.ok) return alert('Failed: ' + (data.detail || 'unknown'));
+  // Re-render rating
+  const starSpan = document.getElementById('detailStarRating');
+  const countSpan = document.getElementById('detailRatingCount');
+  starSpan.innerHTML = renderStars(data.rating || 0, score);
+  countSpan.textContent = (data.user_rating !== undefined ? '' : '') + ' ratings';
 }
 function _renderMediaOnDetail(r) {
   const mediaBox = document.getElementById('recipeMediaGallery');
