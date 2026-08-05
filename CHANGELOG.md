@@ -21,6 +21,11 @@ and this project uses modified MIT licensing with attribution to upstream tool o
 - Password reset capability for admin to reset user passwords
 - `GET /settings/guest-login-enabled` public endpoint
 - `POST /settings/guest-login` admin toggle endpoint
+- `POST /settings/smtp` admin endpoint for configuring SMTP email settings (writes to .env)
+- SMTP configuration fields in `GET /settings/` response (host, port, username, from email, TLS)
+- Recipe detail Share button with Web Share API + clipboard fallback
+- Compact header navigation with icon buttons + 3-line hamburger dropdown menu
+- PWA Android home screen icons (192×192 and 512×512 with `purpose: maskable any`)
 
 ### Fixed
 - Login name/email case sensitivity (email comparison is now case-insensitive)
@@ -31,6 +36,8 @@ and this project uses modified MIT licensing with attribution to upstream tool o
 - Grocery list share/export functionality (blob API preserves auth headers)
 - `JSONResponse` import fixed in grocery router
 - `DBIA0415` import-outside-function ruff errors in app.py
+- Removed missing `authArea` reference that caused JS error in `loadProfile()`, blocking admin button visibility
+- CodeQL workflow restructured into separate job with v4 action (was failing due to v3 deprecation + incorrect init order)
 
 ### Security
 - Full security scan: Bandit 0 issues, ruff 0 errors, pip-audit 0 vulnerabilities
@@ -40,7 +47,7 @@ and this project uses modified MIT licensing with attribution to upstream tool o
 - Security headers: X-Content-Type-Options, X-Frame-Options, X-XSS-Protection
 
 ### Changed
-- Top navigation bar consolidated into a single compact header row with icon buttons and hamburger menu (☰)
+- Top navigation bar consolidated into a compact single header row centered under the logo with icon buttons and hamburger dropdown menu (☰)
 
 ### Removed
 - SMS share option from frontend and backend
