@@ -1189,8 +1189,18 @@ async function loadSettings() {
   html += '<div class="section"><h3>Email (SMTP)</h3>';
   html += '<div class="meta">SMTP host: ' + escapeHtml(s.smtp_host || '(not configured)') + '</div>';
   html += '<div class="meta">SMTP port: ' + (s.smtp_port || '—') + '</div>';
+  if (s.smtp_username) html += '<div class="meta">Username: ' + escapeHtml(s.smtp_username) + '</div>';
   if (s.smtp_from_email) html += '<div class="meta">From: ' + escapeHtml(s.smtp_from_email) + '</div>';
-  html += '</div>';
+  html += '<div style="margin-top:8px;border-top:1px solid var(--border-light);padding-top:8px;">';
+  html += '<div style="font-size:13px;font-weight:600;margin-bottom:6px;">Configure SMTP</div>';
+  html += '<input id="smtpHost" type="text" placeholder="SMTP host (e.g. smtp.gmail.com)" style="font-size:13px;" value="' + escapeHtml(s.smtp_host || '') + '" />';
+  html += '<input id="smtpPort" type="number" placeholder="Port (default 587)" style="font-size:13px;" value="' + (s.smtp_port || 587) + '" />';
+  html += '<input id="smtpUsername" type="text" placeholder="Username" style="font-size:13px;" value="' + escapeHtml(s.smtp_username || '') + '" />';
+  html += '<input id="smtpPassword" type="password" placeholder="Password" style="font-size:13px;" />';
+  html += '<input id="smtpFromEmail" type="email" placeholder="From email" style="font-size:13px;" value="' + escapeHtml(s.smtp_from_email || '') + '" />';
+  html += '<label style="display:flex;align-items:center;gap:6px;font-size:13px;margin-top:4px;"><input type="checkbox" id="smtpUseTls" style="width:auto;" ' + (s.smtp_use_tls ? 'checked' : '') + ' /> Use TLS</label>';
+  html += '<button onclick="saveSmtpSettings()" style="margin-top:8px;">Save SMTP</button>';
+  html += '</div></div>';
   html += '<div class="section"><h3>Guest Account</h3>';
   html += '<div style="display:flex;align-items:center;gap:8px;">';
   html += '<label style="display:flex;align-items:center;gap:6px;font-size:14px;">';
@@ -1233,6 +1243,24 @@ async function toggleGuestLogin(checkbox) {
   document.getElementById('settingsStatus').textContent = data.message || '';
   if (res.ok) loadSettings();
   else checkbox.checked = !checkbox.checked;
+}
+async function saveSmtpSettings() {
+  const payload = {
+    smtp_host: document.getElementById('smtpHost').value.trim() || null,
+    smtp_port: parseInt(document.getElementById('smtpPort').value) || 587,
+    smtp_username: document.getElementById('smtpUsername').value.trim() || null,
+    smtp_password: document.getElementById('smtpPassword').value || null,
+    smtp_from_email: document.getElementById('smtpFromEmail').value.trim() || null,
+    smtp_use_tls: document.getElementById('smtpUseTls').checked
+  };
+  document.getElementById('settingsStatus').textContent = 'Saving SMTP settings...';
+  const res = await fetch(API + '/settings/smtp', { method: 'POST', headers: authHeaders(), body: JSON.stringify(payload) });
+  const data = await res.json();
+  document.getElementById('settingsStatus').textContent = data.message || (res.ok ? 'SMTP settings saved (restart backend to apply)' : 'Failed to save SMTP settings');
+  if (res.ok) {
+    document.getElementById('smtpPassword').value = '';
+    loadSettings();
+  }
 }
 async function backupDatabase() {
   document.getElementById('settingsStatus').textContent = 'Backing up...';
