@@ -1675,7 +1675,12 @@ async function saveRecipe() {
   const method = editingRecipeId ? 'PATCH' : 'POST';
   const res = await fetch(url, { method, headers: authHeaders(), body: JSON.stringify(payload) });
   const data = await res.json();
-  if (!res.ok) return alert('Save failed: ' + (data.detail || 'unknown'));
+  if (!res.ok) {
+    if (res.status === 409) {
+      return alert('A recipe with this title and description already exists. It was not duplicated.');
+    }
+    return alert('Save failed: ' + (data.detail || 'unknown'));
+  }
   closeRecipeForm();
   switchTab('tabRecipes');
   setTimeout(() => openRecipeDetail(data.id), 100);
