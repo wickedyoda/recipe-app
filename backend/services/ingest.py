@@ -388,6 +388,7 @@ def extract_recipe_from_upload(file, user_id: int) -> dict:
         db = SessionLocal()
         try:
             cookbook = ensure_local_cookbook(db, user_id)
+            cookbook_id = cookbook.id
             recipe = Recipe(
                 title=parsed.get("title") or Path(file.filename).stem,
                 description=parsed.get("description") or "",
@@ -410,7 +411,7 @@ def extract_recipe_from_upload(file, user_id: int) -> dict:
             "ingredients": recipe.ingredients,
             "instructions": recipe.instructions,
             "source_path": str(dest),
-            "cookbook_id": cookbook.id,
+            "cookbook_id": cookbook_id,
         }
     if video:
         audio = workdir / "audio.wav"
