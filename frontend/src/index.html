@@ -432,8 +432,8 @@
           <button onclick="extractRecipe()">Extract recipe from video</button>
           <p id="recipeStatus" style="font-size:13px;color:#555;margin-top:8px;"></p>
           <div style="margin-top:12px; padding-top:12px; border-top:1px solid #eee;">
-            <p style="font-size:13px;color:#555;margin-top:0;margin-bottom:8px;">Or upload a video file directly (max 10MB):</p>
-            <input id="recipeFile" type="file" accept="video/*" />
+            <p style="font-size:13px;color:#555;margin-top:0;margin-bottom:8px;">Or upload a file directly (video, image, PDF, doc, txt — max 10MB):</p>
+            <input id="recipeFile" type="file" accept="video/*,.jpg,.jpeg,.png,.pdf,.doc,.docx,.txt,.md,.csv" />
             <button onclick="extractRecipeFromUpload()">Extract recipe from file</button>
             <p id="recipeUploadStatus" style="font-size:13px;color:#555;margin-top:8px;"></p>
           </div>
