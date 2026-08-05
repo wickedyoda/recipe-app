@@ -210,21 +210,21 @@
     .nav button { font-size: 14px; padding: 8px 16px; }
   }
   .nav-top {
-    display: flex; justify-content: space-around; align-items: center;
+    display: flex; justify-content: center; align-items: center;
     background: var(--warm-bg); border-bottom: 1px solid var(--border-light);
-    padding: 6px 0; margin-bottom: 4px; gap: 4px; overflow-x: auto;
+    padding: 4px 0; margin-bottom: 4px; gap: 3px; flex-wrap: wrap;
   }
   .nav-top-btn {
-    flex: 1; min-width: 80px; background: none; border: none;
-    color: var(--text-secondary); font-size: 13px; padding: 6px 4px;
-    border-radius: 10px; cursor: pointer; font-weight: 500; white-space: nowrap;
+    flex: 1 0 48%; max-width: 200px; min-width: 95px; background: none; border: none;
+    color: var(--text-secondary); font-size: 11px; padding: 4px 2px;
+    border-radius: 8px; cursor: pointer; font-weight: 500; white-space: nowrap;
+    text-align: center;
   }
+  .nav-top-btn span { display: block; line-height: 1.1; }
+  .nav-top-btn span:first-child { font-size: 16px; }
   .nav-top-btn.active { color: var(--orange-dark); font-weight: 600; background: var(--beige); }
   .nav-top-btn:hover { background: rgba(0,0,0,0.03); }
   [data-theme="dark"] .nav-top-btn:hover { background: rgba(255,255,255,0.05); }
-  @media (min-width: 600px) {
-    .nav-top-btn { font-size: 14px; padding: 8px 6px; }
-  }
   .pill {
     display: inline-block; padding: 2px 8px;
     background: var(--beige); color: var(--orange-dark);
@@ -431,12 +431,12 @@
 
   <!-- Top navigation bar - visible on every page -->
   <div id="topNav" class="nav-top hidden">
-    <button data-tab="tabMenu" onclick="switchTab('tabMenu')" class="nav-top-btn active">🏠 Menu</button>
-    <button data-tab="tabImport" onclick="switchTab('tabImport')" class="nav-top-btn">📥 Add recipe</button>
-    <button data-tab="tabRecipes" onclick="switchTab('tabRecipes')" class="nav-top-btn">📋 Recipes</button>
-    <button data-tab="tabMeals" onclick="switchTab('tabMeals')" class="nav-top-btn">📅 Meal plans</button>
-    <button data-tab="tabGroceries" onclick="switchTab('tabGroceries')" class="nav-top-btn">🛒 Grocery lists</button>
-    <button id="adminTabBtnTop" data-tab="tabAdmin" onclick="switchTab('tabAdmin')" class="nav-top-btn hidden">👤 Admin</button>
+    <button data-tab="tabMenu" onclick="switchTab('tabMenu')" class="nav-top-btn active"><span>🏠</span><span>Menu</span></button>
+    <button data-tab="tabImport" onclick="switchTab('tabImport')" class="nav-top-btn"><span>📥</span><span>Add recipe</span></button>
+    <button data-tab="tabRecipes" onclick="switchTab('tabRecipes')" class="nav-top-btn"><span>📋</span><span>Recipes</span></button>
+    <button data-tab="tabMeals" onclick="switchTab('tabMeals')" class="nav-top-btn"><span>📅</span><span>Meal plans</span></button>
+    <button data-tab="tabGroceries" onclick="switchTab('tabGroceries')" class="nav-top-btn"><span>🛒</span><span>Grocery lists</span></button>
+    <button id="adminTabBtnTop" data-tab="tabAdmin" onclick="switchTab('tabAdmin')" class="nav-top-btn hidden"><span>👤</span><span>Admin</span></button>
   </div>
 
     <div id="loginSection" class="card">
