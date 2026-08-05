@@ -1,4 +1,8 @@
+import io
+from pathlib import Path
+
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from PIL import Image
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -33,6 +37,30 @@ def upload_media(file: UploadFile = File(...), db: Session = Depends(get_db), cu
     if not result.get("ok"):
         raise HTTPException(status_code=400, detail=result.get("error","upload failed"))
     return result
+
+@router.post("/avatar")
+def upload_avatar(file: UploadFile = File(...), db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    suffix = Path(file.filename or "avatar.png").suffix.lower()
+    if suffix not in {".png", ".jpg", ".jpeg", ".webp"}:
+        raise HTTPException(status_code=400, detail="Avatar must be PNG, JPG, or WebP")
+    raw = file.file.read()
+    pil_img = Image.open(io.BytesIO(raw))
+    pil_img = pil_img.convert("RGBA")
+    pil_img.thumbnail((125, 125), Image.Resampling.LANCZOS)
+    canvas = Image.new("RGBA", (125, 125), (0, 0, 0, 0))
+    offset = ((125 - pil_img.width) // 2, (125 - pil_img.height) // 2)
+    canvas.paste(pil_img, offset)
+    workdir = Path("backend/media/avatars")
+    workdir.mkdir(parents=True, exist_ok=True)
+    dest = workdir / f"user_{current_user.id}.png"
+    canvas.save(dest, "PNG")
+    rel_path = f"media/avatars/user_{current_user.id}.png"
+    current_user.avatar_url = f"/media/static/{rel_path}"
+    db.add(current_user)
+    db.commit()
+    db.refresh(current_user)
+    from backend.schemas import UserOut
+    return UserOut.model_validate(current_user)
 
 @router.post("/recipe")
 def extract_recipe(payload: IngestRequest, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
