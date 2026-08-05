@@ -36,6 +36,7 @@ class Settings(BaseSettings):
     DEFAULT_GUEST_EMAIL: str = "guest@cookierue.app"
     DEFAULT_GUEST_PASSWORD: str = "guest123!"
     DEFAULT_GUEST_DISPLAY_NAME: str = "Guest"
+    GUEST_LOGIN_ENABLED: bool = True
 
 
 settings = Settings()

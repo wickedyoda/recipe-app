@@ -41,6 +41,8 @@ class SettingsOut(BaseModel):
     smtp_use_tls: bool
     public_url: Optional[str]
     disk_usage_gb: Optional[float] = None
+    guest_login_enabled: bool = True
+    guest_email: Optional[str] = None
 
 
 @router.get("/", response_model=SettingsOut)
@@ -68,7 +70,24 @@ def get_settings(_: User = Depends(require_role(Role.admin))):
         smtp_use_tls=settings.SMTP_USE_TLS,
         public_url=settings.PUBLIC_URL or None,
         disk_usage_gb=disk_gb,
+        guest_login_enabled=settings.GUEST_LOGIN_ENABLED,
+        guest_email=settings.DEFAULT_GUEST_EMAIL,
     )
+
+
+@router.post("/guest-login", response_model=dict)
+def toggle_guest_login(
+    enabled: bool = True,
+    _: User = Depends(require_role(Role.admin)),
+):
+    _update_env("GUEST_LOGIN_ENABLED", "true" if enabled else "false")
+    object.__setattr__(settings, "GUEST_LOGIN_ENABLED", enabled)
+    return {"status": "ok", "guest_login_enabled": enabled, "message": "Guest login " + ("enabled" if enabled else "disabled")}
+
+
+@router.get("/guest-login-enabled", response_model=dict)
+def get_guest_login_enabled():
+    return {"enabled": settings.GUEST_LOGIN_ENABLED}
 
 
 @router.post("/allowed-hosts", response_model=dict)
