@@ -437,11 +437,13 @@
 <div class="container" style="position:relative;">
 <div class="card">
   <div class="top" style="text-align:center;padding-top:12px;">
-    <h1 style="margin:0;font-size:20px;display:inline-flex;align-items:center;gap:8px;"><a href="#" onclick="switchTab('tabMenu');return false" style="color:inherit;text-decoration:none;display:inline-flex;align-items:center;gap:6px;"><img src="/src/icons/logo-lg.png" alt="CookieRue" style="width:64px;height:64px;object-fit:contain;" />CookieRue</a></h1>
+    <h1 style="margin:0;font-size:20px;display:flex;flex-direction:column;align-items:center;gap:4px;"><a href="#" onclick="switchTab('tabMenu');return false" style="color:inherit;text-decoration:none;display:flex;flex-direction:column;align-items:center;gap:2px;"><img src="/src/icons/logo-lg.png" alt="CookieRue" style="width:64px;height:64px;object-fit:contain;" />CookieRue</a></h1>
   </div>
   <!-- Compact single-row navigation with 3-line menu, centered under logo -->
   <div style="display:flex;justify-content:center;align-items:center;gap:2px;margin-top:8px;">
-    <span id="userEmail" style="font-size:12px;color:#555;margin:0 8px;"></span>
+    <span id="userEmailRow" style="font-size:12px;color:#555;margin:0 8px;display:flex;flex-direction:column;align-items:center;gap:2px;">
+      <span id="userEmail"></span>
+    </span>
     <div id="topNavRow" class="hidden" style="display:flex;align-items:center;gap:2px;">
       <button data-tab="tabMenu" onclick="switchTab('tabMenu')" class="nav-btn-small active" title="Menu">🏠</button>
       <button data-tab="tabRecipes" onclick="switchTab('tabRecipes')" class="nav-btn-small" title="Recipes">📋</button>
@@ -1501,7 +1503,7 @@ async function initApp() {
     badge.className = 'readonly-badge';
     badge.textContent = 'READ-ONLY';
     badge.style.cssText = 'margin-left:6px;font-size:10px;font-weight:700;color:#b91c1c;background:rgba(185,28,28,0.15);border:1px solid rgba(185,28,28,0.3);border-radius:4px;padding:2px 6px;';
-    document.getElementById('userEmail').appendChild(badge);
+    document.getElementById('userEmailRow').appendChild(badge);
   }
   if (user.role === 'admin') {
     document.getElementById('adminTabBtn').classList.remove('hidden');

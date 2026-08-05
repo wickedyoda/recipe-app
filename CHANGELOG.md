@@ -26,6 +26,9 @@ and this project uses modified MIT licensing with attribution to upstream tool o
 - Recipe detail Share button with Web Share API + clipboard fallback
 - Compact header navigation with icon buttons + 3-line hamburger dropdown menu
 - PWA Android home screen icons (192×192 and 512×512 with `purpose: maskable any`)
+- READ-ONLY badge moved below email on its own row in header
+- Responsive recipe detail layout: full-screen on mobile, centered modal on desktop
+- SMTP configuration UI in settings page with input fields + Save button
 
 ### Fixed
 - Login name/email case sensitivity (email comparison is now case-insensitive)
@@ -41,6 +44,7 @@ and this project uses modified MIT licensing with attribution to upstream tool o
 
 ### Security
 - Full security scan: Bandit 0 issues, ruff 0 errors, pip-audit 0 vulnerabilities
+- Comprehensive SECURITY-SCAN.md report generated with findings from Bandit, pip-audit, Trivy, CodeQL, and manual review
 - `try/except/pass` replaced with proper logging in 7 locations
 - Subprocess security alerts suppressed with `# nosec` comments for trusted commands
 - CSP updated to include `img-src 'self' data: https:`
