@@ -555,11 +555,7 @@
             <button class="secondary" id="exportSelectedBtn" onclick="exportSelectedRecipes()" style="width:auto;padding:8px 10px;font-size:13px;display:none;">Export selected</button>
             <button class="secondary" id="selectModeBtn" onclick="toggleSelectMode()" style="width:auto;padding:8px 10px;font-size:13px;display:none;">✓ Select</button>
             <button class="secondary" id="exportSelectedBtn" onclick="exportSelectedRecipes()" style="width:auto;padding:8px 10px;font-size:13px;display:none;">Export selected</button>
-            <label class="secondary" style="width:auto;padding:8px 10px;font-size:13px;display:inline-flex;align-items:center;cursor:pointer;">
-              Add recipe JSON file
-              <input type="file" accept="application/json" style="display:none;" onchange="importRecipes(this)" />
-            </label>
-          </div>
+            </div>
           <div id="recipeList" class="recipe-list-view"></div>
         </div>
         <div id="recipeForm" class="card hidden">
@@ -1734,18 +1730,6 @@ async function exportSelectedRecipes() {
   const expBtn = document.getElementById('exportSelectedBtn');
   if (btn) btn.textContent = 'Select';
   if (expBtn) expBtn.style.display = 'none';
-  renderRecipes();
-}
-async function importRecipes(input) {
-  const file = input.files[0];
-  if (!file) return;
-  const form = new FormData();
-  form.append('file', file);
-  const res = await fetch(API + '/recipes/import', { method:'POST', headers: authHeaders(), body: form });
-  const data = await res.json();
-  if (!res.ok) return alert('Import failed: ' + (data.detail || 'unknown'));
-  alert('Imported ' + (data.imported || 0) + ' recipes');
-  input.value = '';
   renderRecipes();
 }
 function openRecipeForm(id) {
