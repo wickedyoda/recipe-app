@@ -411,7 +411,7 @@
     .search { padding: 10px; }
     .share-card { width: 95%; max-width: 340px; }
     .share-btn { font-size: 15px; padding: 12px; margin: 3px 0; }
-    .detail-meta-labels { gap: 6px; }
+    .detail-meta-labels { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
     /* Header nav buttons optimized for mobile */
     .nav-btn-small { font-size: 16px; padding: 6px 8px; min-width: 44px; min-height: 44px; }
     button.secondary.small { font-size: 15px; padding: 6px 10px; min-width: 44px; min-height: 44px; }
@@ -1946,7 +1946,7 @@ async function openRecipeDetail(id) {
   } else {
     heroBox.innerHTML = '';
   }
-  document.getElementById('detailBody').innerHTML = '<div style="display:flex;flex-direction:column;gap:8px;"><div>' + (r.ingredients||'').split('\n').filter(Boolean).map(line => '<label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" onchange="toggleIngredientCheck(this)" /> <span style="white-space:pre-wrap;">' + scaleIngredientLine(escapeHtml(line), scaleVal) + '</span></label>').join('') + '</div><div style="white-space:pre-wrap;font-size:14px;margin-top:8px;">' + escapeHtml(r.instructions||'') + '</div></div><div id="ingredientActions" class="row" style="margin-top:8px;"><button class="secondary" onclick="checkAllIngredients()">Check all</button><button class="secondary" onclick="uncheckAllIngredients()">Uncheck all</button><button class="secondary" onclick="addAllIngredientsToGrocery()">Add ingredients to grocery list</button></div>';
+  document.getElementById('detailBody').innerHTML = '<div style="display:flex;flex-direction:column;gap:8px;"><div>' + (r.ingredients||'').split('\n').filter(Boolean).map(line => '<label style="display:flex;align-items:flex-start;gap:8px;"><input type="checkbox" onchange="toggleIngredientCheck(this)" style="margin-top:2px;flex-shrink:0;" /><span style="white-space:pre-wrap;">' + scaleIngredientLine(escapeHtml(line), scaleVal) + '</span></label>').join('') + '</div><div style="white-space:pre-wrap;font-size:14px;margin-top:8px;">' + escapeHtml(r.instructions||'') + '</div></div><div id="ingredientActions" class="row" style="margin-top:8px;"><button class="secondary" onclick="checkAllIngredients()">Check all</button><button class="secondary" onclick="uncheckAllIngredients()">Uncheck all</button><button class="secondary" onclick="addAllIngredientsToGrocery()">Add ingredients to grocery list</button></div>';
   const metaExtra = [];
   if (r.prep_time_minutes) metaExtra.push('Prep ' + r.prep_time_minutes + ' min');
   if (r.cook_time_minutes) metaExtra.push('Cook ' + r.cook_time_minutes + ' min');
