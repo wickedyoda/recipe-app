@@ -432,11 +432,16 @@
           <button onclick="extractRecipe()">Extract recipe from video</button>
           <p id="recipeStatus" style="font-size:13px;color:#555;margin-top:8px;"></p>
           <div style="margin-top:12px; padding-top:12px; border-top:1px solid #eee;">
-            <p style="font-size:13px;color:#555;margin-top:0;margin-bottom:8px;">Or upload a file directly (video, image, PDF, doc, txt — max 10MB):</p>
-            <input id="recipeFile" type="file" accept="video/*,.jpg,.jpeg,.png,.pdf,.doc,.docx,.txt,.md,.csv" />
+            <p style="font-size:13px;color:#555;margin-top:0;margin-bottom:8px;">Or upload a video file directly:</p>
+            <input id="recipeFile" type="file" accept="video/*" />
             <button onclick="extractRecipeFromUpload()">Extract recipe from file</button>
             <p id="recipeUploadStatus" style="font-size:13px;color:#555;margin-top:8px;"></p>
           </div>
+        </div>
+        <div class="card">
+          <h2 style="margin-top:0;">My media</h2>
+          <div id="mediaList"></div>
+        </div>
       </div>
 
       <div id="tabRecipes" class="tab hidden">
@@ -1260,6 +1265,7 @@ async function ingestUrl() {
     const data = await res.json();
     if (!res.ok) throw new Error(data.detail || data.error || 'unknown');
     status.textContent = 'Done. Saved media items: ' + JSON.stringify(data);
+    loadMedia();
   } catch (err) { status.textContent = 'Error: ' + err.message; }
 }
 async function ingestFile() {
@@ -1274,7 +1280,7 @@ async function ingestFile() {
     const data = await res.json();
     if (!res.ok) throw new Error(data.detail || data.error || 'unknown');
     status.textContent = 'Done. Saved media items: ' + JSON.stringify(data);
-    fileInput.value='';
+    loadMedia(); fileInput.value='';
   } catch (err) { status.textContent = 'Error: ' + err.message; }
 }
 async function extractRecipe() {
@@ -1289,6 +1295,18 @@ async function extractRecipe() {
     status.textContent = 'Done. Recipe added: ' + (data.title || 'ID ' + data.recipe_id);
     if (data.recipe_id) openRecipeDetail(data.recipe_id);
   } catch (err) { status.textContent = 'Error: ' + err.message; }
+}
+async function loadMedia() {
+  const res = await fetch(API + '/media/items', { headers: authHeaders() });
+  const items = await res.json();
+  const box = document.getElementById('mediaList');
+  box.innerHTML = '';
+  for (const item of items) {
+    const el = document.createElement('div');
+    el.className = 'item';
+        el.innerHTML = '<div><div><strong onclick="openPlanDetail(' + p.id + ')" style="cursor:pointer;">' + escapeHtml(p.name) + '</strong></div><div class="meta">' + escapeHtml(p.period) + '</div></div><div style="display:flex;gap:6px;"><button class="secondary" onclick="openPlanDetail(' + p.id + ')" style="width:auto;padding:8px 10px;font-size:13px;">Open</button><button class="danger" onclick="deletePlanWithConfirm(' + p.id + ')" style="width:auto;padding:8px 10px;font-size:13px;">Delete</button></div>';
+    box.appendChild(el);
+  }
 }
 
 let tags = [];
@@ -1843,11 +1861,6 @@ async function extractRecipeFromUpload() {
   const status = document.getElementById('recipeUploadStatus');
   const file = fileInput.files[0];
   if (!file) return;
-  // Client-side file size validation (max 10MB)
-  if (file.size > 10 * 1024 * 1024) {
-    status.textContent = 'Error: File too large (max 10MB)';
-    return;
-  }
   status.textContent = 'Uploading & extracting...';
   const form = new FormData(); form.append('file', file);
   try {
