@@ -430,18 +430,24 @@
           <p style="font-size:13px;color:#555;margin:0 0 8px;">Paste a TikTok, YouTube, Facebook, or Reels URL. The video will be examined, the recipe extracted, and automatically added to your recipe book.</p>
           <input id="recipeUrl" placeholder="TikTok / YouTube / Facebook / Reels URL" />
           <button onclick="extractRecipe()">Extract recipe from video</button>
-          <p id="recipeStatus" style="font-size:13px;color:#555;margin-top:8px;"></p>
           <div style="margin-top:12px; padding-top:12px; border-top:1px solid #eee;">
-            <p style="font-size:13px;color:#555;margin-top:0;margin-bottom:8px;">Or upload a video file directly:</p>
-            <input id="recipeFile" type="file" accept="video/*" />
+            <p style="font-size:13px;color:#555;margin-top:0;margin-bottom:8px;">Or upload a file directly (video, image, PDF, doc, txt — max 10MB):</p>
+            <input id="recipeFile" type="file" accept="video/*,.jpg,.jpeg,.png,.pdf,.doc,.docx,.txt,.md,.csv" />
             <button onclick="extractRecipeFromUpload()">Extract recipe from file</button>
-            <p id="recipeUploadStatus" style="font-size:13px;color:#555;margin-top:8px;"></p>
           </div>
+          <!-- Progress + Continue section (shared by URL and file extraction) -->
+          <div id="importProgressSection" style="display:none; margin-top:16px; padding:12px; background:#f8f9fa; border-radius:8px;">
+            <p id="importProgressLabel" style="font-size:13px;color:#555;margin:0 0 8px;">Processing...</p>
+            <div style="width:100%; height:8px; background:#e9ecef; border-radius:4px; overflow:hidden;">
+              <div id="importProgressBar" style="width:0%; height:100%; background:#007bff; transition:width 0.3s;"></div>
+            </div>
+            <p id="importProgressStatus" style="font-size:13px;color:#555;margin:8px 0 0;">Examining video and extracting recipe... 0%</p>
+            <button id="importContinueBtn" onclick="continueToRecipe()" style="display:none; margin-top:8px; width:100%;">Continue to recipe</button>
+          </div>
+          <p id="recipeStatus" style="font-size:13px;color:#555;margin-top:8px;"></p>
+          <p id="recipeUploadStatus" style="font-size:13px;color:#555;margin-top:8px;"></p>
         </div>
-        <div class="card">
-          <h2 style="margin-top:0;">My media</h2>
-          <div id="mediaList"></div>
-        </div>
+      </div>
       </div>
 
       <div id="tabRecipes" class="tab hidden">
@@ -1265,7 +1271,6 @@ async function ingestUrl() {
     const data = await res.json();
     if (!res.ok) throw new Error(data.detail || data.error || 'unknown');
     status.textContent = 'Done. Saved media items: ' + JSON.stringify(data);
-    loadMedia();
   } catch (err) { status.textContent = 'Error: ' + err.message; }
 }
 async function ingestFile() {
@@ -1280,33 +1285,53 @@ async function ingestFile() {
     const data = await res.json();
     if (!res.ok) throw new Error(data.detail || data.error || 'unknown');
     status.textContent = 'Done. Saved media items: ' + JSON.stringify(data);
-    loadMedia(); fileInput.value='';
+    fileInput.value='';
   } catch (err) { status.textContent = 'Error: ' + err.message; }
+}
+
+// Progress bar helpers for import flow
+let _currentRecipeId = null;
+function showImportProgress(label) {
+  const section = document.getElementById('importProgressSection');
+  const bar = document.getElementById('importProgressBar');
+  const status = document.getElementById('importProgressStatus');
+  const btn = document.getElementById('importContinueBtn');
+  section.style.display = 'block';
+  bar.style.width = '0%';
+  status.textContent = label + ' 0%';
+  btn.style.display = 'none';
+}
+function updateImportProgress(pct, label) {
+  const bar = document.getElementById('importProgressBar');
+  const status = document.getElementById('importProgressStatus');
+  bar.style.width = pct + '%';
+  status.textContent = label + ' ' + pct + '%';
+}
+function showImportContinueButton() {
+  document.getElementById('importContinueBtn').style.display = 'block';
+}
+function hideImportProgress(pct) {
+  const section = document.getElementById('importProgressSection');
+  section.style.display = 'none';
+}
+function continueToRecipe() {
+  if (_currentRecipeId) openRecipeDetail(_currentRecipeId);
 }
 async function extractRecipe() {
   const url = document.getElementById('recipeUrl').value.trim();
   const status = document.getElementById('recipeStatus');
   if (!url) return;
-  status.textContent = 'Examining video and extracting recipe...';
+  status.textContent = '';
+  showImportProgress('Examining video and extracting recipe...');
   try {
     const res = await fetch(API + '/media/recipe', { method:'POST', headers: authHeaders(), body: JSON.stringify({url}) });
+    updateImportProgress(50, 'Recipe extracted, saving...');
     const data = await res.json();
     if (!res.ok) throw new Error(data.detail || data.error || 'unknown');
-    status.textContent = 'Done. Recipe added: ' + (data.title || 'ID ' + data.recipe_id);
-    if (data.recipe_id) openRecipeDetail(data.recipe_id);
-  } catch (err) { status.textContent = 'Error: ' + err.message; }
-}
-async function loadMedia() {
-  const res = await fetch(API + '/media/items', { headers: authHeaders() });
-  const items = await res.json();
-  const box = document.getElementById('mediaList');
-  box.innerHTML = '';
-  for (const item of items) {
-    const el = document.createElement('div');
-    el.className = 'item';
-        el.innerHTML = '<div><div><strong onclick="openPlanDetail(' + p.id + ')" style="cursor:pointer;">' + escapeHtml(p.name) + '</strong></div><div class="meta">' + escapeHtml(p.period) + '</div></div><div style="display:flex;gap:6px;"><button class="secondary" onclick="openPlanDetail(' + p.id + ')" style="width:auto;padding:8px 10px;font-size:13px;">Open</button><button class="danger" onclick="deletePlanWithConfirm(' + p.id + ')" style="width:auto;padding:8px 10px;font-size:13px;">Delete</button></div>';
-    box.appendChild(el);
-  }
+    updateImportProgress(100, 'Done. Recipe added: ' + (data.title || 'ID ' + data.recipe_id));
+    _currentRecipeId = data.recipe_id;
+    showImportContinueButton();
+  } catch (err) { updateImportProgress(100, 'Error: ' + err.message); hideImportProgress(0); }
 }
 
 let tags = [];
@@ -1861,16 +1886,19 @@ async function extractRecipeFromUpload() {
   const status = document.getElementById('recipeUploadStatus');
   const file = fileInput.files[0];
   if (!file) return;
-  status.textContent = 'Uploading & extracting...';
+  status.textContent = '';
+  showImportProgress('Uploading & extracting...');
   const form = new FormData(); form.append('file', file);
   try {
-    const res = await fetch(API + '/media/recipe/upload', { method:'POST', headers: authHeadersNoJson(), body: form });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.detail || data.error || 'unknown');
-    status.textContent = 'Done. Saved recipe: ' + (data.title || data.recipe_id);
-    if (data.recipe_id) openRecipeDetail(data.recipe_id);
-    fileInput.value='';
-  } catch (err) { status.textContent = 'Error: ' + err.message; }
+  const res = await fetch(API + '/media/recipe/upload', { method:'POST', headers: authHeadersNoJson(), body: form });
+  updateImportProgress(70, 'Recipe extracted, saving...');
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.detail || data.error || 'unknown');
+  updateImportProgress(100, 'Done. Recipe added: ' + (data.title || data.recipe_id));
+  _currentRecipeId = data.recipe_id;
+  showImportContinueButton();
+  fileInput.value='';
+  } catch (err) { updateImportProgress(100, 'Error: ' + err.message); hideImportProgress(0); }
 }
 
 let galleryModal = null;
