@@ -827,7 +827,10 @@
         <div id="settingsCard" class="card hidden">
           <div class="top">
             <h2 style="margin-top:0;">System Settings</h2>
-            <button class="secondary" onclick="loadSettings()" style="width:auto;padding:8px 10px;font-size:13px;">Refresh</button>
+            <div style="display:flex;gap:8px;">
+              <button class="secondary" onclick="loadSettings()" style="width:auto;padding:8px 10px;font-size:13px;">Refresh</button>
+              <button class="secondary" onclick="closeSettingsCard()" style="width:auto;padding:8px 10px;font-size:13px;">← Back</button>
+            </div>
           </div>
           <div id="settingsContent"></div>
           <button onclick="addHost()">Add host</button>
@@ -1130,6 +1133,8 @@ function openSettingsCard() {
     return;
   }
   document.getElementById('userForm').classList.add('hidden');
+  // Switch to admin tab first
+  switchTab('tabAdmin');
   document.getElementById('settingsCard').classList.remove('hidden');
   loadSettings();
   loadPending();
@@ -1137,6 +1142,10 @@ function openSettingsCard() {
 }
 function closeSettingsCard() {
   document.getElementById('settingsCard').classList.add('hidden');
+  // Show user management section again
+  document.getElementById('userForm').classList.add('hidden');
+  document.getElementById('pendingList').classList.remove('hidden');
+  document.getElementById('userList').classList.remove('hidden');
 }
 async function loadSettings() {
   const res = await fetch(API + '/settings/', { headers: authHeaders() });
