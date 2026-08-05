@@ -350,7 +350,7 @@
         <div id="dropdownMenu" class="hidden" style="position:absolute;top:56px;right:56px;background:#fcfafa;border:1px solid #e0ddd7;border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,0.12);z-index:1000;min-width:160px;">
           <button onclick="switchTab('tabMenu');closeDropdown()" class="dropdown-item">🏠 Menu</button>
           <button onclick="switchTab('tabRecipes');closeDropdown()" class="dropdown-item">📋 Recipes</button>
-          <button onclick="switchTab('tabImport');closeDropdown()" class="dropdown-item">📥 Import</button>
+          <button onclick="switchTab('tabImport');closeDropdown()" class="dropdown-item">📥 Add recipe</button>
           <button onclick="switchTab('tabMeals');closeDropdown()" class="dropdown-item">📅 Meal plans</button>
           <button onclick="switchTab('tabGroceries');closeDropdown()" class="dropdown-item">🛒 Grocery lists</button>
           <button onclick="switchTab('tabProfile');closeDropdown()" class="dropdown-item">👤 Profile</button>
@@ -396,8 +396,8 @@
       <div id="tabMenu" class="tab">
         <div class="card">
           <div class="nav-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;">
-            <button class="nav-square" onclick="switchTab('tabImport')" aria-label="Import">
-              <span class="nav-icon">📥</span><span class="nav-label">Import</span>
+            <button class="nav-square" onclick="switchTab('tabImport')" aria-label="Add recipe">
+              <span class="nav-icon">📥</span><span class="nav-label">Add recipe</span>
             </button>
             <button class="nav-square" onclick="switchTab('tabRecipes')" aria-label="Recipes">
               <span class="nav-icon">🏠</span><span class="nav-label">Recipes</span>
@@ -426,7 +426,7 @@
 
       <div id="tabImport" class="tab hidden">
         <div class="card">
-          <h2 style="margin-top:0;">Import video</h2>
+          <h2 style="margin-top:0;">Add recipe</h2>
           <input id="videoUrl" placeholder="TikTok / YouTube / Facebook / Reels URL" />
           <button onclick="ingestUrl()">Extract from URL</button>
           <p id="ingestStatus" style="font-size:13px;color:#555;margin-top:8px;"></p>
@@ -483,7 +483,7 @@
             <button class="secondary" id="selectModeBtn" onclick="toggleSelectMode()" style="width:auto;padding:8px 10px;font-size:13px;display:none;">✓ Select</button>
             <button class="secondary" id="exportSelectedBtn" onclick="exportSelectedRecipes()" style="width:auto;padding:8px 10px;font-size:13px;display:none;">Export selected</button>
             <label class="secondary" style="width:auto;padding:8px 10px;font-size:13px;display:inline-flex;align-items:center;cursor:pointer;">
-              Import
+              Add recipe JSON file
               <input type="file" accept="application/json" style="display:none;" onchange="importRecipes(this)" />
             </label>
           </div>
@@ -805,7 +805,7 @@
 
   <div id="nav" class="nav hidden">
     <button data-tab="tabMenu" onclick="switchTab('tabMenu');closeDropdown()" aria-label="Menu">🏠</button>
-    <button data-tab="tabImport" onclick="switchTab('tabImport');closeDropdown()" aria-label="Import">📥</button>
+    <button data-tab="tabImport" onclick="switchTab('tabImport');closeDropdown()" aria-label="Add recipe">📥</button>
     <button data-tab="tabRecipes" onclick="switchTab('tabRecipes');closeDropdown()" aria-label="Recipes">🏠</button>
     <button data-tab="tabMeals" onclick="switchTab('tabMeals');closeDropdown()" aria-label="Meal plans">📅</button>
     <button data-tab="tabGroceries" onclick="switchTab('tabGroceries')" aria-label="Grocery lists">🛒</button>
