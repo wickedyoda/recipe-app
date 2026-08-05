@@ -1950,8 +1950,9 @@ function closeRecipeDetail() {
 }
 function editCurrentRecipe() {
   if (!currentRecipeId) return;
+  const id = currentRecipeId;
   closeRecipeDetail();
-  openRecipeForm(currentRecipeId);
+  openRecipeForm(id);
 }
 async function duplicateCurrentRecipe() {
   if (!currentRecipeId) return;
