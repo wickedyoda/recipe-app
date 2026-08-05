@@ -758,32 +758,8 @@
           <div class="section">
             <h3>Display name</h3>
             <input id="profileName" placeholder="Display name" />
-            <button onclick="updateProfile()" style="margin-top:8px;">Save profile</button>
-          </div>
-          <div class="section">
-            <h3>Avatar</h3>
-            <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
-              <div id="avatarPreview" class="profile-avatar" style="width:64px;height:64px;">
-                <span style="font-size:28px;">👤</span>
-              </div>
-              <div style="flex:1;">
-                <input type="file" id="avatarUpload" accept="image/*" capture="environment" style="font-size:13px;" onchange="handleAvatarUpload(event)" />
-                <input id="profileAvatar" type="hidden" placeholder="Avatar URL (optional)" />
-              </div>
-            </div>
-            <p style="font-size:11px;color:var(--text-muted);margin:0 0 8px 0;">Or choose from fruit avatars:</p>
-            <div id="avatarGrid" style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;">
-              <button class="avatar-option" data-avatar="lemon" onclick="selectFruitAvatar('lemon')" style="width:auto;padding:6px;background:#f3f0e8;border-radius:10px;">🍋</button>
-              <button class="avatar-option" data-avatar="strawberry" onclick="selectFruitAvatar('strawberry')" style="width:auto;padding:6px;background:#f3f0e8;border-radius:10px;">🍓</button>
-              <button class="avatar-option" data-avatar="watermelon" onclick="selectFruitAvatar('watermelon')" style="width:auto;padding:6px;background:#f3f0e8;border-radius:10px;">🍉</button>
-              <button class="avatar-option" data-avatar="blueberry" onclick="selectFruitAvatar('blueberry')" style="width:auto;padding:6px;background:#f3f0e8;border-radius:10px;">🔵</button>
-              <button class="avatar-option" data-avatar="kiwi" onclick="selectFruitAvatar('kiwi')" style="width:auto;padding:6px;background:#f3f0e8;border-radius:10px;">🥝</button>
-              <button class="avatar-option" data-avatar="orange" onclick="selectFruitAvatar('orange')" style="width:auto;padding:6px;background:#f3f0e8;border-radius:10px;">🍊</button>
-              <button class="avatar-option" data-avatar="cherry" onclick="selectFruitAvatar('cherry')" style="width:auto;padding:6px;background:#f3f0e8;border-radius:10px;">🍒</button>
-              <button class="avatar-option" data-avatar="peach" onclick="selectFruitAvatar('peach')" style="width:auto;padding:6px;background:#f3f0e8;border-radius:10px;">🍑</button>
-              <button class="avatar-option" data-avatar="grape" onclick="selectFruitAvatar('grape')" style="width:auto;padding:6px;background:#f3f0e8;border-radius:10px;">🍇</button>
-              <button class="avatar-option" data-avatar="pineapple" onclick="selectFruitAvatar('pineapple')" style="width:auto;padding:6px;background:#f3f0e8;border-radius:10px;">🍍</button>
-            </div>
+            <input id="profileAvatar" placeholder="Avatar URL (optional)" />
+            <button onclick="updateProfile()">Save profile</button>
           </div>
           <div class="section">
             <h3>Preferences</h3>
@@ -981,15 +957,6 @@ async function loadProfile() {
   document.getElementById('profileName').value = user.display_name || '';
   document.getElementById('profileAvatar').value = user.avatar_url || '';
   document.getElementById('defaultServings').value = (saved.defaultServings || 4);
-  // Update avatar preview
-  const preview = document.getElementById('avatarPreview');
-  if (preview) {
-    if (user.avatar_url) {
-      preview.innerHTML = '<img src="' + escapeHtml(user.avatar_url) + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" />';
-    } else {
-      preview.innerHTML = '<span style="font-size:28px;">👤</span>';
-    }
-  }
 }
 
 async function loadRecentRecipes() {
@@ -1280,57 +1247,6 @@ async function initApp() {
   switchTab('tabMenu');
   _updateReadonlyButtons();
   await loadTags();
-}
-
-// Fruit avatar selector
-function selectFruitAvatar(fruit) {
-  const avatarUrl = '/src/icons/avatars/' + fruit + '.png';
-  document.getElementById('profileAvatar').value = avatarUrl;
-  const preview = document.getElementById('avatarPreview');
-  if (preview) {
-    preview.innerHTML = '<img src="' + avatarUrl + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" />';
-  }
-  // Save immediately
-  updateProfileWithAvatar(avatarUrl);
-}
-
-async function updateProfileWithAvatar(avatarUrl) {
-  const display_name = document.getElementById('profileName').value.trim();
-  const res = await fetch(API + '/auth/me', { method:'PATCH', headers: authHeaders(), body: JSON.stringify({display_name, avatar_url: avatarUrl}) });
-  if (!res.ok) return alert('Update failed');
-  // Reload profile to refresh header avatar
-  loadProfile();
-}
-
-// Handle avatar file upload (resized client-side to 125x125)
-async function handleAvatarUpload(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  if (!file.type.startsWith('image/')) {
-    return alert('Please select an image file');
-  }
-  if (file.size > 2 * 1024 * 1024) {
-    return alert('Image must be under 2MB');
-  }
-  // Preview immediately
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    const preview = document.getElementById('avatarPreview');
-    if (preview) {
-      preview.innerHTML = '<img src="' + e.target.result + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" />';
-    }
-  };
-  reader.readAsDataURL(file);
-  // Upload to backend (which will resize to 125x125)
-  const formData = new FormData();
-  formData.append('file', file);
-  const res = await fetch(API + '/media/avatar', { method:'POST', headers: authHeaders(), body: formData });
-  if (!res.ok) return alert('Upload failed: ' + (await res.text()));
-  const data = await res.json();
-  if (data.avatar_url) {
-    document.getElementById('profileAvatar').value = data.avatar_url;
-  }
-  loadProfile();
 }
 
 async function updateProfile() {
