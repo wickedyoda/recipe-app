@@ -1,3 +1,6 @@
+import logging
+import os
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -5,7 +8,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     DATABASE_URL: str = "mysql+mysqlconnector://recipes:recipes@mysql:3306/recipes"
-    SECRET_KEY: str = "change-me"
+    SECRET_KEY: str = os.environ.get("SECRET_KEY", "change-me")  # nosec B105 - runtime warning if default used
     MEDIA_ROOT: str = "/media"
     PUBLIC_URL: str = ""
     BACKEND_PORT: int = 8000
@@ -40,3 +43,10 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+# Warn if SECRET_KEY is not set (using insecure default)
+if settings.SECRET_KEY == "change-me":  # nosec B105 - checking for default, not setting
+    logging.warning(
+        "WARNING: SECRET_KEY is not set (using default 'change-me'). "
+        "This is insecure for production. Set the SECRET_KEY environment variable."
+    )
