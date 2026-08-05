@@ -428,6 +428,10 @@
       <button id="loginButton" onclick="login()">Login</button>
       <p id="loginStatus" role="alert" style="font-size:13px;color:#b91c1c;margin:8px 0 0;"></p>
       <button class="secondary" onclick="showRegister()">Create account</button>
+      <div class="section" style="margin-top:12px;">
+        <button class="secondary" onclick="loginAsGuest()" style="width:100%;font-size:14px;padding:12px;">🍪 Sign in as Demo (Guest)</button>
+        <p style="font-size:11px;color:var(--text-muted);margin-top:6px;text-align:center;">Read-only demo account — 30 sample recipes</p>
+      </div>
     </div>
 
     <div id="registerSection" class="card hidden">
@@ -1279,6 +1283,11 @@ async function login() {
   }
   initTheme();
   initApp();
+}
+async function loginAsGuest() {
+  document.getElementById('loginEmail').value = 'guest@cookierue.app';
+  document.getElementById('loginPassword').value = 'guest123!';
+  login();
 }
 function toggleLoginPassword() {
   const input = document.getElementById('loginPassword');
