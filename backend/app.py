@@ -115,15 +115,20 @@ def _bootstrap_guest_account() -> None:
         else:
             guest = existing
 
-        cookbook = Cookbook(
-            name="Sample Recipes",
-            description="Starter recipes for the guest account",
-            store=Store.local,
-            owner_id=guest.id,
-        )
-        db.add(cookbook)
-        db.commit()
-        db.refresh(cookbook)
+        # Idempotency: reuse or create the cookbook
+        cookbook = db.query(Cookbook).filter(
+            Cookbook.owner_id == guest.id, Cookbook.name == "Sample Recipes"
+        ).first()
+        if not cookbook:
+            cookbook = Cookbook(
+                name="Sample Recipes",
+                description="Starter recipes for the guest account",
+                store=Store.local,
+                owner_id=guest.id,
+            )
+            db.add(cookbook)
+            db.commit()
+            db.refresh(cookbook)
 
         tag_objs = {}
         for tag_name in SEED_TAGS:
@@ -136,57 +141,89 @@ def _bootstrap_guest_account() -> None:
             tag_objs[tag_name] = tag
 
         for seed in SEED_RECIPES:
-            # Idempotency: skip if recipe already exists
-            existing_recipe = db.query(Recipe).filter(
+            # Idempotency: use existing recipe if it already exists
+            recipe = db.query(Recipe).filter(
                 Recipe.owner_id == guest.id, Recipe.title == seed["title"]
             ).first()
-            if existing_recipe:
-                continue
+            if not recipe:
+                recipe = Recipe(
+                    title=seed["title"],
+                    description=seed["description"],
+                    ingredients=seed["ingredients"],
+                    instructions=seed["instructions"],
+                    store=Store.local,
+                    owner_id=guest.id,
+                    cookbook_id=cookbook.id,
+                    rating=seed.get("flavor_rating"),
+                    flavor_rating=seed.get("flavor_rating"),
+                    effort_rating=seed.get("effort_rating"),
+                    prep_time_minutes=seed["prep_time_minutes"],
+                    cook_time_minutes=seed["cook_time_minutes"],
+                    servings=seed["servings"],
+                    difficulty=seed["difficulty"],
+                    category=seed["category"],
+                    subcategory=seed["subcategory"],
+                )
+                db.add(recipe)
+                db.commit()
+                db.refresh(recipe)
 
-            recipe = Recipe(
-                title=seed["title"],
-                description=seed["description"],
-                ingredients=seed["ingredients"],
-                instructions=seed["instructions"],
-                store=Store.local,
-                owner_id=guest.id,
-                cookbook_id=cookbook.id,
-                rating=seed.get("flavor_rating"),
-                flavor_rating=seed.get("flavor_rating"),
-                effort_rating=seed.get("effort_rating"),
-                prep_time_minutes=seed["prep_time_minutes"],
-                cook_time_minutes=seed["cook_time_minutes"],
-                servings=seed["servings"],
-                difficulty=seed["difficulty"],
-                category=seed["category"],
-                subcategory=seed["subcategory"],
-            )
-            db.add(recipe)
-            db.commit()
-            db.refresh(recipe)
+                for tag_name in SEED_TAGS:
+                    if tag_name in seed["title"].lower() or tag_name in (seed.get("category", "") + " " + seed.get("subcategory", "")).lower():
+                        existing_rt = db.query(RecipeTag).filter(
+                            RecipeTag.recipe_id == recipe.id,
+                            RecipeTag.tag_id == tag_objs[tag_name].id,
+                        ).first()
+                        if not existing_rt:
+                            db.add(RecipeTag(recipe_id=recipe.id, tag_id=tag_objs[tag_name].id))
 
-            for tag_name in SEED_TAGS:
-                if tag_name in seed["title"].lower() or tag_name in (seed.get("category", "") + " " + seed.get("subcategory", "")).lower():
-                    db.add(RecipeTag(recipe_id=recipe.id, tag_id=tag_objs[tag_name].id))
+            # Idempotency: create grocery list if not already linked to this recipe
+            grocery_list = db.query(GroceryList).filter(
+                GroceryList.owner_id == guest.id,
+                GroceryList.name == f"{seed['title']} Ingredients",
+            ).first()
+            if not grocery_list:
+                grocery_list = GroceryList(
+                    name=f"{seed['title']} Ingredients", owner_id=guest.id
+                )
+                db.add(grocery_list)
+                db.commit()
+                db.refresh(grocery_list)
 
-            grocery_list = GroceryList(name=f"{seed['title']} Ingredients", owner_id=guest.id)
-            db.add(grocery_list)
-            db.commit()
-            db.refresh(grocery_list)
-
+            # Add grocery items (idempotent)
             for line in seed["ingredients"].splitlines():
                 stripped = line.strip()
                 if not stripped:
                     continue
-                if stripped[0].isdigit() or stripped[0] == "½" or stripped[0] == "¼":
+                if stripped[0].isdigit() or stripped[0] in ("½", "¼", "¾"):
                     name_part = stripped
                     for prefix in ("1 ", "2 ", "3 ", "4 ", "½ ", "¼ ", "¾ ", "1/2 ", "1/4 "):
                         if stripped.startswith(prefix):
                             name_part = stripped[len(prefix):]
                             break
-                    db.add(GroceryItem(list_id=grocery_list.id, recipe_id=recipe.id, name=name_part, owner_id=guest.id))
+                    existing_item = db.query(GroceryItem).filter(
+                        GroceryItem.list_id == grocery_list.id,
+                        GroceryItem.recipe_id == recipe.id,
+                        GroceryItem.name == name_part,
+                    ).first()
+                    if not existing_item:
+                        db.add(GroceryItem(
+                            list_id=grocery_list.id,
+                            recipe_id=recipe.id,
+                            name=name_part,
+                            owner_id=guest.id,
+                        ))
 
-            db.add(Note(recipe_id=recipe.id, owner_id=guest.id, body=f"Pro tip: {seed['instructions'].splitlines()[0] if seed['instructions'] else 'Enjoy!'}"))
+            # Idempotency: add note if not already present
+            existing_note = db.query(Note).filter(
+                Note.recipe_id == recipe.id, Note.owner_id == guest.id
+            ).first()
+            if not existing_note:
+                db.add(Note(
+                    recipe_id=recipe.id,
+                    owner_id=guest.id,
+                    body=f"Pro tip: {seed['instructions'].splitlines()[0] if seed['instructions'] else 'Enjoy!'}",
+                ))
 
         db.commit()
     finally:
