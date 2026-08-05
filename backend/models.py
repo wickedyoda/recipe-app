@@ -29,6 +29,7 @@ class User(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     must_change_password = Column(Integer, default=0, nullable=False)
     password_changed_at = Column(DateTime(timezone=True), nullable=True)
+    is_readonly = Column(Integer, default=0, nullable=False)
 
 
 class PasswordHistory(Base):

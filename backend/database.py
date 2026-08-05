@@ -103,6 +103,8 @@ def _migrate_mysql(conn):
         conn.execute(text("ALTER TABLE users ADD COLUMN must_change_password TINYINT(1) NOT NULL DEFAULT 0 AFTER is_approved"))
     if "password_changed_at" not in users_cols:
         conn.execute(text("ALTER TABLE users ADD COLUMN password_changed_at DATETIME NULL AFTER must_change_password"))
+    if "is_readonly" not in users_cols:
+        conn.execute(text("ALTER TABLE users ADD COLUMN is_readonly TINYINT(1) NOT NULL DEFAULT 0 AFTER password_changed_at"))
     if "password_history" not in insp.get_table_names():
         conn.execute(text("CREATE TABLE password_history (id INTEGER PRIMARY KEY AUTO_INCREMENT, user_id INTEGER NOT NULL, hashed_password VARCHAR(255) NOT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (user_id) REFERENCES users(id))"))
     if "password_reset_tokens" not in insp.get_table_names():

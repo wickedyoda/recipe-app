@@ -33,6 +33,7 @@ class UserOut(BaseModel):
     approved_at: datetime | None
     created_at: datetime
     must_change_password: bool = False
+    is_readonly: bool = False
     model_config = {"from_attributes": True}
 
 
