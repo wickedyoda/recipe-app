@@ -1,3 +1,4 @@
+import logging
 import os
 
 from sqlalchemy import create_engine, inspect, text
@@ -65,8 +66,8 @@ def _migrate_sqlite(conn):
         conn.execute(text("CREATE TABLE recipe_ratings (id INTEGER PRIMARY KEY AUTOINCREMENT, recipe_id INTEGER NOT NULL, user_id INTEGER NOT NULL, score INTEGER NOT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE, FOREIGN KEY (user_id) REFERENCES users(id), UNIQUE(recipe_id, user_id))"))
     try:
         _ensure_indexes(conn, insp)
-    except Exception:
-        pass
+    except Exception as exc:
+        logging.getLogger(__name__).warning("index migration skipped: %s", exc)
 
 
 def _ensure_indexes(conn, insp):
@@ -106,14 +107,14 @@ def _ensure_indexes(conn, insp):
         try:
             for t in insp.get_indexes("cookbooks") + insp.get_indexes("recipe_step_photos"):
                 existing.add(t["name"])
-        except Exception:
-            pass
+        except Exception as exc:
+            logging.getLogger(__name__).warning("SQLite index check failed: %s", exc)
         for t in insp.get_indexes("recipe_media"):
             existing.add(t["name"])
         for t in insp.get_indexes("users"):
             existing.add(t["name"])
-    except Exception:
-        pass
+    except Exception as exc:
+        logging.getLogger(__name__).warning("index migration skipped: %s", exc)
     for idx_name, (table, col) in idx_map.items():
         if idx_name not in existing and table in insp.get_table_names():
             conn.execute(text(f"CREATE INDEX IF NOT EXISTS {idx_name} ON {table}({col})"))
@@ -145,5 +146,5 @@ def _migrate_mysql(conn):
         conn.execute(text("CREATE TABLE recipe_ratings (id INTEGER PRIMARY KEY AUTO_INCREMENT, recipe_id INTEGER NOT NULL, user_id INTEGER NOT NULL, score INTEGER NOT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE, FOREIGN KEY (user_id) REFERENCES users(id), UNIQUE(recipe_id, user_id))"))
     try:
         _ensure_indexes(conn, insp)
-    except Exception:
-        pass
+    except Exception as exc:
+        logging.getLogger(__name__).warning("index migration skipped: %s", exc)

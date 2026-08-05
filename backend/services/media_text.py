@@ -1,7 +1,8 @@
 """Text extraction from uploaded media files (images, PDFs, documents)."""
 
+import logging
 import shutil
-import subprocess
+import subprocess  # noqa: S404  # nosec B404 - required for textract on user-uploaded documents
 from pathlib import Path
 
 
@@ -38,7 +39,7 @@ def _extract_pdf_text(file_path: str) -> str:
     pdftotext = shutil.which("pdftotext")
     if pdftotext:
         try:
-            result = subprocess.run(
+            result = subprocess.run(  # nosec B603 - pdftotext on trusted file path
                 [pdftotext, "-layout", file_path, "-"],
                 capture_output=True, text=True, timeout=30
             )
@@ -57,9 +58,8 @@ def _extract_pdf_text(file_path: str) -> str:
                 text = page.extract_text() or ""
                 pages.append(text)
             return "\n".join(pages)[:50000]
-    except Exception:
-        pass
-
+    except Exception as exc:
+        logging.warning("PDF text extraction failed: %s", exc)
     return ""
 
 
@@ -69,8 +69,8 @@ def _extract_docx_text(file_path: str) -> str:
         import docx  # noqa: PLC0415
         doc = docx.Document(file_path)
         return "\n".join(p.text for p in doc.paragraphs)[:50000]
-    except Exception:
-        pass
+    except Exception as exc:
+        logging.warning("DOCX text extraction failed: %s", exc)
     return ""
 
 
@@ -80,7 +80,7 @@ def _extract_doc_text(file_path: str) -> str:
         path = shutil.which(binary)
         if path:
             try:
-                result = subprocess.run(
+                result = subprocess.run(  # nosec B603 - textract on trusted file path
                     [path, file_path],
                     capture_output=True, text=True, timeout=30
                 )
@@ -99,6 +99,6 @@ def _extract_image_text(file_path: str) -> str:
         img = Image.open(file_path)
         text = pytesseract.image_to_string(img, lang="eng")
         return text.strip()[:50000]
-    except Exception:
-        pass
+    except Exception as exc:
+        logging.warning("OCR text extraction failed: %s", exc)
     return ""

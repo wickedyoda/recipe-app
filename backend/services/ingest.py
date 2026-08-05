@@ -1,7 +1,8 @@
+import logging
 import os
 import re
 import shutil
-import subprocess
+import subprocess  # noqa: S404  # nosec B404 - required for ffmpeg, whisper, yt-dlp on admin/user-uploaded media
 import uuid
 from datetime import datetime
 from ipaddress import ip_address, ip_network
@@ -74,7 +75,7 @@ def _sanitize_media_url(url: str) -> str:
 
 
 def _run(cmd: list[str]) -> None:
-    proc = subprocess.run(cmd, capture_output=True, text=True, check=False)
+    proc = subprocess.run(cmd, capture_output=True, text=True, check=False)  # nosec B603 - subprocess on trusted internal commands
     if proc.returncode != 0:
         raise RuntimeError(proc.stderr[-1000:] if proc.stderr else "external command failed")
 
@@ -131,8 +132,8 @@ def _download_media(url: str, workdir: Path) -> dict:
                     "--output_dir", str(workdir)
                 ])
                 subs = sorted([p for p in workdir.iterdir() if p.suffix.lower() == ".srt"])
-            except Exception:
-                pass  # whisper failed, continue without subtitles
+            except Exception as exc:
+                logging.warning("whisper subtitle extraction failed: %s", exc)
 
     subtitle_path = subs[0] if subs else None
     return {"video": video, "audio": audio, "subtitle": subtitle_path, "workdir": workdir}
