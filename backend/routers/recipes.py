@@ -16,6 +16,16 @@ router = APIRouter(prefix="/recipes", tags=["recipes"])
 
 @router.post("", response_model=RecipeOut)
 def create_recipe(payload: RecipeCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    # Prevent duplicates: same name + first 5 words of description for same user
+    desc_first_5 = ' '.join((payload.description or '').split()[:5])
+    existing_recipes = db.query(Recipe).filter(
+        Recipe.owner_id == current_user.id,
+        Recipe.title == payload.title.strip()
+    ).all()
+    for ex in existing_recipes:
+        ex_desc_first_5 = ' '.join((ex.description or '').split()[:5])
+        if ex_desc_first_5 == desc_first_5:
+            raise HTTPException(status_code=409, detail=f"A recipe with this title and description already exists (ID: {ex.id})")
     recipe = Recipe(
         title=payload.title,
         description=payload.description,
