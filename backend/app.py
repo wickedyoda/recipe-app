@@ -15,6 +15,7 @@ from backend.models import (
     GroceryList,
     Note,
     Recipe,
+    RecipeMedia,  # noqa: F401
     RecipeTag,
     Role,
     Store,
