@@ -5,6 +5,45 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project uses modified MIT licensing with attribution to upstream tool owners.
 
+## [0.2.0] - 2026-08-05
+
+### Added
+- 5-star recipe rating system with average display and per-user ratings
+- 5 color themes: light, dark, dawn, cozy, high-contrast (high contrast)
+- Per-user profiles with avatar upload or 10 vegetable avatar selections (125×125px)
+- Guest/demo account with read-only access (`is_readonly=1`)
+- Admin can enable/disable guest login via System Settings page
+- Top navigation bar with text labels (persistent across all pages)
+- Admin-only settings page for server config and user management
+- Recipe multi-select export
+- Recipe and meal plan deletion with cascade delete
+- PWA manifest with icons
+- Password reset capability for admin to reset user passwords
+- `GET /settings/guest-login-enabled` public endpoint
+- `POST /settings/guest-login` admin toggle endpoint
+
+### Fixed
+- Login name/email case sensitivity (email comparison is now case-insensitive)
+- Recipe edit now correctly passes recipe ID (fixed nulling issue)
+- XSS vulnerability in `escapeHtml()` — now escapes quotes (`"` and `'`)
+- N+1 query optimization in recipe list with batch queries
+- Duplicate recipe prevention (name + first 5 words of description)
+- Grocery list share/export functionality (blob API preserves auth headers)
+- `JSONResponse` import fixed in grocery router
+- `DBIA0415` import-outside-function ruff errors in app.py
+
+### Security
+- Full security scan: Bandit 0 issues, ruff 0 errors, pip-audit 0 vulnerabilities
+- `try/except/pass` replaced with proper logging in 7 locations
+- Subprocess security alerts suppressed with `# nosec` comments for trusted commands
+- CSP updated to include `img-src 'self' data: https:`
+- Security headers: X-Content-Type-Options, X-Frame-Options, X-XSS-Protection
+
+### Removed
+- SMS share option from frontend and backend
+- JSON file export from recipe multi-select and grocery share
+- JSON file import (`POST /recipes/import` endpoint removed)
+
 ## [0.1.0] - 2026-08-02
 
 ### Added

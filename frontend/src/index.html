@@ -1126,7 +1126,13 @@ async function loadRecentRecipes() {
 
 function openSettingsCard() {
   // Admin-only: system settings page with server config + user management
-  if (localStorage.getItem('userRole') !== 'admin') {
+  let role = localStorage.getItem('userRole');
+  // Fallback: check displayed role from userEmail element if localStorage is stale
+  if (!role) {
+    var el = document.getElementById('userEmail');
+    if (el && el.textContent.includes('(admin)')) role = 'admin';
+  }
+  if (role !== 'admin') {
     alert('Settings is for admin users only. Non-admin users can manage profile settings in the Profile tab.');
     return;
   }

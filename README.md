@@ -1,5 +1,12 @@
 # CookieRue
 
+<div align="center">
+  <img src="frontend/src/icons/logo-lg.png" alt="CookieRue logo" width="120" height="120" />
+</div>
+
+![Security Status](https://github.com/wickedyoda/recipe-app/actions/workflows/verify.yml/badge.svg?branch=master)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 Self-hosted recipe/media app with:
 - User auth (`admin` / `user` roles)
 - Per-user profiles
@@ -15,6 +22,15 @@ Self-hosted recipe/media app with:
 - Hybrid category taxonomy: Breakfast/Lunch/Dinner + subcategories
 - Per-step photos and ingredient checkoff
 - Dark embedded cooking mode
+- 5-star recipe ratings with average display
+- 5 color themes (light, dark, dawn, cozy, high-contrast) with high contrast option
+- Per-user profiles with avatar upload or 10 vegetable avatar selections
+- Guest/demo account with read-only access (admin can enable/disable)
+- Top navigation bar with text labels
+- Admin-only settings page for server config and user management
+- Grocery list sharing via link, email, and text copy (SMS removed)
+- Recipe multi-select export
+- Recipe/meal plan deletion with cascade
 
 ## GUI examples
 
@@ -97,6 +113,9 @@ Open:
 - `MEDIA_ROOT` - media storage path
 - `PUBLIC_URL` - public base URL for shared links
 - `ALLOWED_HOSTS` - comma-separated hostnames accepted by the API (add your deployment hostname)
+- `ALLOWED_ORIGINS` - comma-separated CORS origins
+- `GUEST_LOGIN_ENABLED` - enable/disable guest/demo login (default: `true`)
+- `PUBLIC_URL` - public base URL for shared links (used in grocery share links)
 - `BACKEND_IMAGE` / `FRONTEND_IMAGE` - GHCR image tags
 - `BACKEND_PULL_POLICY` / `FRONTEND_PULL_POLICY` - image pull behavior, e.g. `always`
 - `GHCR_TOKEN` - optional PAT with `read:packages` for private images
