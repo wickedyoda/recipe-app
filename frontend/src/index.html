@@ -102,11 +102,24 @@
   [data-theme="dawn"] .card { background: var(--card-bg); border-color: var(--card-border); box-shadow: var(--card-shadow); }
   [data-theme="cozy"] .card { background: var(--card-bg); border-color: var(--card-border); }
   [data-theme="contrast"] .card { background: var(--card-bg); border-color: var(--card-border); box-shadow: var(--card-shadow); }
-  /* Recipe detail as full-screen overlay (not at bottom of page) */
+  /* Recipe detail as full-screen overlay on mobile, centered modal on desktop */
   #recipeDetail {
     position: fixed; top: 0; left: 0; width: 100%; height: 100vh;
     z-index: 1000; overflow-y: auto; margin: 0; border-radius: 0;
     box-shadow: none; background: var(--warm-bg);
+  }
+  @media (min-width: 601px) {
+    #recipeDetail {
+      max-width: 720px; margin: 24px auto; border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.12); height: auto;
+    }
+    #cookingMode {
+      max-width: 720px; margin: 24px auto; border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.12); height: auto;
+    }
+    #recipeDetailOverlay {
+      background: rgba(0,0,0,0.3);
+    }
   }
   [data-theme="dark"] #recipeDetail { background: #121214; }
   [data-theme="dawn"] #recipeDetail { background: var(--warm-bg); }
