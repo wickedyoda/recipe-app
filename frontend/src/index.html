@@ -1591,8 +1591,7 @@ async function initApp() {
   document.getElementById('nav').classList.remove('hidden');
   localStorage.setItem('isReadonly', user.is_readonly ? '1' : '0');
   localStorage.setItem('userRole', user.role || 'user');
-  localStorage.setItem('userRole', user.role || 'user');
-  document.getElementById('userEmail').innerHTML = escapeHtml(user.display_name || user.email) + '<span style="display:block;font-size:11px;color:#888;margin-top:2px;">' + escapeHtml(user.email) + ' (' + escapeHtml(user.role || '') + ')</span>';
+  document.getElementById('userEmail').innerHTML = escapeHtml(user.display_name || user.email);
   if (user.is_readonly) {
     const badge = document.createElement('span');
     badge.className = 'readonly-badge';
