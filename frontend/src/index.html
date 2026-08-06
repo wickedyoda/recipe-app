@@ -332,6 +332,38 @@
     display: flex; align-items: center; justify-content: center;
     z-index: 10000;
   }
+  .confirm-modal {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 10001;
+  }
+  .confirm-card {
+    background: #1c1c1e; border-radius: 16px; padding: 0;
+    width: 90%; max-width: 340px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+  }
+  .confirm-header {
+    background: #111; color: #f5f5f7;
+    padding: 14px 18px; font-size: 13px; border-radius: 16px 16px 0 0;
+    font-weight: 600;
+  }
+  .confirm-body {
+    padding: 18px; color: #d1d1d4; font-size: 15px; text-align: center;
+  }
+  .confirm-buttons {
+    display: flex; gap: 10px; padding: 14px 18px 18px;
+  }
+  .confirm-btn {
+    flex: 1; padding: 10px; border: none; border-radius: 999px;
+    font-size: 14px; font-weight: 600; cursor: pointer;
+    color: #fff; font-family: 'Inter', sans-serif;
+  }
+  .confirm-btn.cancel { background: #1e3a8a; }
+  .confirm-btn.ok { background: #a78bfa; }
+  [data-theme="dark"] .confirm-card { background: #1c1c1e; }
+  [data-theme="dark"] .confirm-header { background: #111; }
+  [data-theme="dark"] .confirm-body { color: #a1a1aa; }
   .share-card {
     background: #fff; border-radius: 16px; padding: 0;
     width: 90%; max-width: 320px;
@@ -630,6 +662,16 @@
           <button class="secondary" onclick="closeRecipeForm()">Cancel</button>
         </div>
         <div id="recipeDetailOverlay" onclick="closeRecipeDetail()"></div>
+        <div id="confirmModal" class="confirm-modal" style="display:none;">
+          <div class="confirm-card" onclick="event.stopPropagation()">
+            <div class="confirm-header" id="confirmHeader"></div>
+            <div class="confirm-body" id="confirmBody"></div>
+            <div class="confirm-buttons">
+              <button class="confirm-btn cancel" onclick="cancelConfirm()">Cancel</button>
+              <button class="confirm-btn ok" onclick="okConfirm()">OK</button>
+            </div>
+          </div>
+        </div>
         <div id="recipeDetail" class="card hidden" onclick="event.stopPropagation()">
           <div class="top">
             <h2 style="margin:0;font-size:18px;" id="detailTitle"></h2>
@@ -1247,7 +1289,7 @@ async function addHost() {
   if (res.ok) { document.getElementById('newHost').value = ''; loadSettings(); }
 }
 async function removeHost(host) {
-  if (!confirm('Remove host ' + host + '?')) return;
+  if (!await showConfirm('Remove host ' + host + '?')) return;
   const res = await fetch(API + '/settings/allowed-hosts/' + encodeURIComponent(host), { method: 'DELETE', headers: authHeaders() });
   const data = await res.json();
   document.getElementById('settingsStatus').textContent = data.message || (res.ok ? 'Host removed' : 'Failed');
@@ -1329,7 +1371,7 @@ async function changeEmail() {
   alert('Email changed successfully. You may need to log in again.');
 }
 async function exportUserData() {
-  if (!confirm('Export all your data as JSON?')) return;
+  if (!await showConfirm('Export all your data as JSON?')) return;
   const res = await fetch(API + '/auth/me/export', { headers: authHeaders() });
   const data = await res.json();
   if (!res.ok) return alert('Failed: ' + (data.detail || 'unknown'));
@@ -1343,8 +1385,8 @@ async function exportUserData() {
   alert('Data exported to cookieRue-data.json');
 }
 async function deleteAccount() {
-  if (!confirm('Are you sure? This will permanently delete your account and all your data. This cannot be undone.')) return;
-  if (!confirm('Type DELETE to confirm deletion.')) return;
+  if (!await showConfirm('Are you sure? This will permanently delete your account and all your data. This cannot be undone.')) return;
+  if (!await showConfirm('Type DELETE to confirm deletion.')) return;
   const confirmText = prompt('Type DELETE to confirm permanent deletion:');
   if (confirmText !== 'DELETE') return alert('Deletion cancelled — confirmation text did not match');
   const res = await fetch(API + '/auth/me/delete', { method:'POST', headers: authHeaders() });
@@ -1580,8 +1622,33 @@ function hideImportProgress(pct) {
   const section = document.getElementById('importProgressSection');
   section.style.display = 'none';
 }
+let _confirmResolve = null;
+function showConfirm(message) {
+  return new Promise((resolve) => {
+    _confirmResolve = resolve;
+    const header = document.getElementById('confirmHeader');
+    const body = document.getElementById('confirmBody');
+    if (header) header.textContent = window.location.hostname + ' says';
+    if (body) body.textContent = message;
+    const modal = document.getElementById('confirmModal');
+    if (modal) modal.style.display = 'flex';
+  });
+}
+function okConfirm() {
+  const modal = document.getElementById('confirmModal');
+  if (modal) modal.style.display = 'none';
+  if (_confirmResolve) { _confirmResolve(true); _confirmResolve = null; }
+}
+function cancelConfirm() {
+  const modal = document.getElementById('confirmModal');
+  if (modal) modal.style.display = 'none';
+  if (_confirmResolve) { _confirmResolve(false); _confirmResolve = null; }
+}
 function continueToRecipe() {
-  if (_currentRecipeId) openRecipeDetail(_currentRecipeId);
+  if (_currentRecipeId) {
+    switchTab('tabRecipes');
+    openRecipeDetail(_currentRecipeId);
+  }
 }
 async function extractRecipe() {
   const url = document.getElementById('recipeUrl').value.trim();
@@ -1752,9 +1819,9 @@ async function exportRecipes() {
 }
 window.selectedRecipes = new Set();
 
-function deleteRecipe(id) {
+async function deleteRecipe(id) {
   _recipeCacheTime = 0;
-  if (!confirm('Delete this recipe? This cannot be undone.')) return;
+  if (!await showConfirm('Delete this recipe? This cannot be undone.')) return;
   fetch(API + '/recipes/' + id, { method: 'DELETE', headers: authHeaders() })
     .then(r => r.json())
     .then(() => {
@@ -1763,10 +1830,10 @@ function deleteRecipe(id) {
     })
     .catch(() => alert('Delete failed'));
 }
-function deleteCurrentRecipe() {
+async function deleteCurrentRecipe() {
   _recipeCacheTime = 0;
   if (!currentRecipeId) return;
-  if (!confirm('Delete this recipe? This cannot be undone.')) return;
+  if (!await showConfirm('Delete this recipe? This cannot be undone.')) return;
   fetch(API + '/recipes/' + currentRecipeId, { method: 'DELETE', headers: authHeaders() })
     .then(r => r.json())
     .then(() => {
@@ -1776,9 +1843,9 @@ function deleteCurrentRecipe() {
     })
     .catch(() => alert('Delete failed'));
 }
-function deletePlanWithConfirm(id) {
+async function deletePlanWithConfirm(id) {
   _plansCacheTime = 0;
-  if (!confirm('Delete this meal plan? All entries will be removed. This cannot be undone.')) return;
+  if (!await showConfirm('Delete this meal plan? All entries will be removed. This cannot be undone.')) return;
   fetch(API + '/meal-plans/' + id, { method: 'DELETE', headers: authHeaders() })
     .then(r => r.json())
     .then(() => {
@@ -1787,10 +1854,10 @@ function deletePlanWithConfirm(id) {
     })
     .catch(() => alert('Delete failed'));
 }
-function deleteCurrentPlan() {
+async function deleteCurrentPlan() {
   _plansCacheTime = 0;
   if (!currentPlanId) return;
-  if (!confirm('Delete this meal plan? All entries will be removed. This cannot be undone.')) return;
+  if (!await showConfirm('Delete this meal plan? All entries will be removed. This cannot be undone.')) return;
   fetch(API + '/meal-plans/' + currentPlanId, { method: 'DELETE', headers: authHeaders() })
     .then(r => r.json())
     .then(() => {
@@ -2085,7 +2152,7 @@ async function uploadRecipeMedia() {
   }
 }
 async function deleteRecipeMedia(mediaId) {
-  if (!confirm('Remove this media file?')) return;
+  if (!await showConfirm('Remove this media file?')) return;
   const res = await fetch(API + '/recipes/' + currentRecipeId + '/media/' + mediaId, {
     method: 'DELETE',
     headers: authHeaders(),
@@ -2331,7 +2398,7 @@ async function editNote(id) {
   el.addEventListener('keydown', onKeyDown);
 }
 async function deleteNote(id) {
-  if (!confirm('Delete this note?')) return;
+  if (!await showConfirm('Delete this note?')) return;
   const res = await fetch(API + '/notes/' + id, { method:'DELETE', headers: authHeaders() });
   if (!res.ok) return alert('Failed');
   if (currentRecipeId) renderNotes(currentRecipeId);
@@ -2789,7 +2856,7 @@ async function addGroceryItem() {
 }
 async function clearCompletedGroceries() {
   if (!currentGroceryId) return;
-  if (!confirm('Remove all checked items?')) return;
+  if (!await showConfirm('Remove all checked items?')) return;
   const items = await (await fetch(API + '/grocery-lists/' + currentGroceryId + '/items', { headers: authHeaders() })).json();
   const checked = items.filter(it => it.checked);
   for (const it of checked) {
@@ -2818,7 +2885,7 @@ async function toggleGrocery(id, checked) {
   if (!res.ok) alert('Update failed');
 }
 async function deleteGroceryItem(id) {
-  if (!confirm('Remove this item?')) return;
+  if (!await showConfirm('Remove this item?')) return;
   const res = await fetch(API + '/grocery-lists/items/' + id, { method:'DELETE', headers: authHeaders() });
   if (!res.ok) return alert('Failed');
   if (currentGroceryId) loadGroceryItems(currentGroceryId);
@@ -2974,7 +3041,7 @@ async function saveUser() {
   loadPending();
 }
 async function deleteUser(id) {
-  if (!confirm('Delete this user?')) return;
+  if (!await showConfirm('Delete this user?')) return;
   const res = await fetch(API + '/auth/users/' + id, { method: 'DELETE', headers: authHeaders() });
   if (!res.ok) {
     const data = await res.json();
@@ -3219,12 +3286,12 @@ function initTheme() {
   }
   applySavedTheme();
 }
-function openThemePicker() {
+async function openThemePicker() {
   const current = localStorage.getItem('theme') || 'light';
   const idx = THEMES.indexOf(current);
   const next = THEMES[(idx + 1) % THEMES.length];
   const label = next.charAt(0).toUpperCase() + next.slice(1);
-  if (confirm('Switch to ' + label + ' theme?')) {
+  if (await showConfirm('Switch to ' + label + ' theme?')) {
     localStorage.setItem('theme', next);
     applyTheme(next);
     updateThemeButton();
