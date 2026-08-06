@@ -68,6 +68,9 @@ def _migrate_sqlite(conn):
     # Add share_token column to recipes table (for public sharing)
     if "share_token" not in recipe_cols:
         conn.execute(text("ALTER TABLE recipes ADD COLUMN share_token VARCHAR(255)"))
+    # Add household_id column to recipes table (for household sharing)
+    if "household_id" not in recipe_cols:
+        conn.execute(text("ALTER TABLE recipes ADD COLUMN household_id INTEGER"))
     # Create recipe_media table if it doesn't exist
     if "recipe_media" not in insp.get_table_names():
         conn.execute(text("CREATE TABLE recipe_media (id INTEGER PRIMARY KEY AUTOINCREMENT, recipe_id INTEGER NOT NULL, owner_id INTEGER NOT NULL, file_path VARCHAR(1024) NOT NULL, thumbnail_path VARCHAR(1024), original_filename VARCHAR(255) NOT NULL, media_type VARCHAR(20) NOT NULL, file_size INTEGER, extracted_text TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE, FOREIGN KEY (owner_id) REFERENCES users(id))"))
@@ -119,6 +122,7 @@ def _ensure_indexes(conn, insp):
         "idx_household_recipes_recipe": ("household_recipes", "recipe_id"),
         "idx_recipes_household": ("recipes", "household_id"),
         "idx_users_email": ("users", "email"),
+        "idx_users_username": ("users", "username"),
     }
     existing = set()
     try:
@@ -171,6 +175,8 @@ def _migrate_mysql(conn):
     # Add share_token column to recipes table (MySQL)
     if "share_token" not in recipe_cols:
         conn.execute(text("ALTER TABLE recipes ADD COLUMN share_token VARCHAR(255)"))
+    if "household_id" not in recipe_cols:
+        conn.execute(text("ALTER TABLE recipes ADD COLUMN household_id INTEGER NULL"))
     # Create recipe_media table if it doesn't exist (MySQL)
     if "recipe_media" not in insp.get_table_names():
         conn.execute(text("CREATE TABLE recipe_media (id INTEGER PRIMARY KEY AUTO_INCREMENT, recipe_id INTEGER NOT NULL, owner_id INTEGER NOT NULL, file_path VARCHAR(1024) NOT NULL, thumbnail_path VARCHAR(1024), original_filename VARCHAR(255) NOT NULL, media_type VARCHAR(20) NOT NULL, file_size INTEGER, extracted_text TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE, FOREIGN KEY (owner_id) REFERENCES users(id))"))
