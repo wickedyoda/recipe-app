@@ -962,6 +962,16 @@
           <p id="settingsStatus" style="font-size:12px;color:#555;margin-top:8px;"></p>
         </div>
       </div>
+      <div id="tabPublicRecipe" class="tab hidden">
+        <div class="card">
+          <div class="top">
+            <button class="secondary small" onclick="goBackFromPublic()" style="padding:4px 8px;font-size:11px;">← Back</button>
+            <h2 style="margin:0;font-size:18px;" id="publicRecipeTitle"></h2>
+          </div>
+          <div id="publicRecipeBody" style="padding:8px 0;"></div>
+          <div id="publicRecipeRating" style="margin-top:12px;padding:8px;background:#fff;border-radius:8px;border:1px solid var(--border-light);display:none;"></div>
+        </div>
+      </div>
       <div id="tabProfile" class="tab hidden">
         <div class="card">
           <div class="top">
@@ -1513,6 +1523,19 @@ let cookingRecipe = null;
 
 if (token) initApp();
 
+// Check for public recipe share URL (no auth required)
+const pathMatch = window.location.pathname.match(/^\/recipes\/public\/(.+)$/);
+if (pathMatch && !token) {
+  // Show public recipe without login
+  document.getElementById('loginSection').classList.add('hidden');
+  document.getElementById('registerSection').classList.add('hidden');
+  document.getElementById('appSection').classList.remove('hidden');
+  document.getElementById('topNavRow').classList.add('hidden');
+  document.getElementById('nav').classList.add('hidden');
+  document.getElementById('tabPublicRecipe').classList.remove('hidden');
+  loadPublicRecipe(pathMatch[1]);
+}
+
 let savedLogin = JSON.parse(localStorage.getItem('saved_login') || 'null');
 if (savedLogin) {
   document.getElementById('loginEmail').value = savedLogin.email || '';
@@ -1667,7 +1690,13 @@ async function initApp() {
   const settingsProfile = document.getElementById('settingsProfileBtn');
   if (settingsDropdown) settingsDropdown.classList.toggle('hidden', user.role !== 'admin');
   if (settingsProfile) settingsProfile.classList.toggle('hidden', user.role !== 'admin');
-  switchTab('tabMenu');
+  // Check for public recipe share URL
+  const pathMatch = window.location.pathname.match(/^\/recipes\/public\/(.+)$/);
+  if (pathMatch) {
+    loadPublicRecipe(pathMatch[1]);
+  } else {
+    switchTab('tabMenu');
+  }
   _updateReadonlyButtons();
   await loadTags();
 }
@@ -2380,20 +2409,37 @@ function closeRecipeDetail() {
   currentRecipeId = null;
   _currentView = _navStack[_navStack.length - 2] || 'tabMenu';
 }
-function shareCurrentRecipe() {
+async function shareCurrentRecipe() {
   if (!currentRecipeId) return;
-  const url = window.location.origin + '/#recipe=' + currentRecipeId;
   const title = document.getElementById('detailTitle')?.textContent || 'CookieRue Recipe';
-  if (navigator.share) {
-    navigator.share({ title: title, url: url }).catch(() => {
-      copyToClipboard(url);
+  try {
+    const res = await fetch(API + '/recipes/' + currentRecipeId + '/share', {
+      method: 'POST',
+      headers: authHeaders()
     });
-  } else {
-    copyToClipboard(url);
+    const data = await res.json();
+    const url = window.location.origin + '/recipes/public/' + (data.share_token || data.public_url.split('/public/')[1]);
+    if (navigator.share) {
+      navigator.share({ title: title, url: url }).catch(() => {
+        copyToClipboard(url);
+      });
+    } else {
+      copyToClipboard(url);
+    }
+  } catch(e) {
+    // Fallback to hash-based URL if API fails
+    const url = window.location.origin + '/#recipe=' + currentRecipeId;
+    if (navigator.share) {
+      navigator.share({ title: title, url: url }).catch(() => {
+        copyToClipboard(url);
+      });
+    } else {
+      copyToClipboard(url);
+    }
   }
   function copyToClipboard(text) {
     navigator.clipboard.writeText(text).then(() => {
-      alert('Recipe link copied to clipboard: ' + text);
+      showConfirm('Public recipe link copied to clipboard: ' + text);
     }).catch(() => {
       prompt('Copy this recipe link:', text);
     });
@@ -3622,6 +3668,54 @@ async function addToCookbook() {
   } else {
     showConfirm('Failed to add to cookbook.');
   }
+}
+async function loadPublicRecipe(token) {
+  document.querySelectorAll('.tab').forEach(el => el.classList.add('hidden'));
+  document.getElementById('appSection').classList.remove('hidden');
+  document.getElementById('topNavRow').classList.add('hidden');
+  document.getElementById('nav').classList.add('hidden');
+  document.getElementById('tabPublicRecipe').classList.remove('hidden');
+  // Hide the main nav but show a simple header
+  const res = await fetch(API + '/recipes/public/' + token);
+  if (!res.ok) {
+    document.getElementById('publicRecipeTitle').textContent = 'Recipe not found';
+    return;
+  }
+  const r = await res.json();
+  document.getElementById('publicRecipeTitle').textContent = r.title;
+  let html = '';
+  if (r.description) html += '<p style="font-size:14px;color:#666;margin-bottom:12px;">' + escapeHtml(r.description) + '</p>';
+  if (r.servings || r.prep_time_minutes || r.cook_time_minutes) {
+    html += '<div style="display:flex;gap:12px;font-size:13px;color:#555;margin-bottom:12px;">';
+    if (r.servings) html += '<span>👥 ' + r.servings + '</span>';
+    if (r.prep_time_minutes) html += '<span>⏱️ Prep: ' + r.prep_time_minutes + 'm</span>';
+    if (r.cook_time_minutes) html += '<span>⏱️ Cook: ' + r.cook_time_minutes + 'm</span>';
+    if (r.difficulty) html += '<span>⭐ ' + escapeHtml(r.difficulty) + '</span>';
+    html += '</div>';
+  }
+  if (r.ingredients) {
+    html += '<h3 style="font-size:15px;font-weight:600;margin-bottom:4px;">Ingredients</h3>';
+    html += '<div style="white-space:pre-line;font-size:14px;line-height:1.6;">' + escapeHtml(r.ingredients) + '</div>';
+  }
+  if (r.instructions) {
+    html += '<h3 style="font-size:15px;font-weight:600;margin:16px 0 4px;">Instructions</h3>';
+    html += '<div style="white-space:pre-line;font-size:14px;line-height:1.6;">' + escapeHtml(r.instructions) + '</div>';
+  }
+  document.getElementById('publicRecipeBody').innerHTML = html;
+  // Show averaged rating from all users
+  if (r.rating !== null && r.rating !== undefined) {
+    const stars = '★'.repeat(Math.round(r.rating)) + '☆'.repeat(5 - Math.round(r.rating));
+    document.getElementById('publicRecipeRating').innerHTML =
+      '<div style="display:flex;align-items:center;gap:8px;"><span style="font-size:18px;color:#d97706;">' + stars + '</span><span style="font-weight:600;">' + r.rating.toFixed(1) + '</span><span style="font-size:12px;color:#777;">(' + (r.rating_count || 0) + ' ratings)</span></div>';
+    document.getElementById('publicRecipeRating').style.display = 'block';
+  }
+}
+function goBackFromPublic() {
+  // Return to normal app
+  document.getElementById('topNavRow').classList.remove('hidden');
+  document.getElementById('nav').classList.remove('hidden');
+  document.getElementById('tabPublicRecipe').classList.add('hidden');
+  switchTab('tabMenu');
 }
 </script>
 </body>

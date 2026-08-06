@@ -80,6 +80,7 @@ class Recipe(Base):
     category = Column(String(100), nullable=True)
     subcategory = Column(String(100), nullable=True)
     embedding = Column(Text, nullable=True)
+    share_token = Column(String(255), unique=True, index=True, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 class RecipeTag(Base):

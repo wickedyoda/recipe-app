@@ -59,6 +59,9 @@ def _migrate_sqlite(conn):
     recipe_cols = {c["name"] for c in insp.get_columns("recipes")}
     if "source_filename" not in recipe_cols:
         conn.execute(text("ALTER TABLE recipes ADD COLUMN source_filename VARCHAR(255)"))
+    # Add share_token column to recipes table (for public sharing)
+    if "share_token" not in recipe_cols:
+        conn.execute(text("ALTER TABLE recipes ADD COLUMN share_token VARCHAR(255)"))
     # Create recipe_media table if it doesn't exist
     if "recipe_media" not in insp.get_table_names():
         conn.execute(text("CREATE TABLE recipe_media (id INTEGER PRIMARY KEY AUTOINCREMENT, recipe_id INTEGER NOT NULL, owner_id INTEGER NOT NULL, file_path VARCHAR(1024) NOT NULL, thumbnail_path VARCHAR(1024), original_filename VARCHAR(255) NOT NULL, media_type VARCHAR(20) NOT NULL, file_size INTEGER, extracted_text TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE, FOREIGN KEY (owner_id) REFERENCES users(id))"))
@@ -90,6 +93,7 @@ def _ensure_indexes(conn, insp):
         "idx_grocery_items_recipe": ("grocery_items", "recipe_id"),
         "idx_tags_owner": ("tags", "owner_id"),
         "idx_cookbooks_owner": ("cookbooks", "owner_id"),
+        "idx_recipes_share_token": ("recipes", "share_token"),
         "idx_recipe_media_recipe": ("recipe_media", "recipe_id"),
         "idx_recipe_media_owner": ("recipe_media", "owner_id"),
         "idx_ratings_recipe": ("recipe_ratings", "recipe_id"),
@@ -138,6 +142,9 @@ def _migrate_mysql(conn):
     recipe_cols = {c["name"] for c in insp.get_columns("recipes")}
     if "source_filename" not in recipe_cols:
         conn.execute(text("ALTER TABLE recipes ADD COLUMN source_filename VARCHAR(255)"))
+    # Add share_token column to recipes table (MySQL)
+    if "share_token" not in recipe_cols:
+        conn.execute(text("ALTER TABLE recipes ADD COLUMN share_token VARCHAR(255)"))
     # Create recipe_media table if it doesn't exist (MySQL)
     if "recipe_media" not in insp.get_table_names():
         conn.execute(text("CREATE TABLE recipe_media (id INTEGER PRIMARY KEY AUTO_INCREMENT, recipe_id INTEGER NOT NULL, owner_id INTEGER NOT NULL, file_path VARCHAR(1024) NOT NULL, thumbnail_path VARCHAR(1024), original_filename VARCHAR(255) NOT NULL, media_type VARCHAR(20) NOT NULL, file_size INTEGER, extracted_text TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE, FOREIGN KEY (owner_id) REFERENCES users(id))"))
