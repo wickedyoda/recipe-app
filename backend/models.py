@@ -1,6 +1,6 @@
 import enum
 
-from sqlalchemy import Column, DateTime, Enum, Float, ForeignKey, Index, Integer, String, Text, UniqueConstraint
+from sqlalchemy import Column, DateTime, Enum, Float, ForeignKey, Index, Integer, String, Table, Text, UniqueConstraint
 from sqlalchemy.sql import func
 
 from backend.database import Base
@@ -21,6 +21,9 @@ class User(Base):
     hashed_password = Column(String(255), nullable=False)
     role = Column(Enum(Role), default=Role.user, nullable=False)
     display_name = Column(String(255), nullable=True)
+    first_name = Column(String(255), nullable=True)
+    last_name = Column(String(255), nullable=True)
+    username = Column(String(255), unique=True, index=True, nullable=True)
     avatar_url = Column(String(1024), nullable=True)
     is_active = Column(Integer, default=0, nullable=False)
     is_approved = Column(Integer, default=0, nullable=False)
@@ -37,6 +40,37 @@ class PasswordHistory(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     hashed_password = Column(String(255), nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+# Association table: household members (max 7 per household)
+household_members = Table(
+    "household_members",
+    Base.metadata,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("household_id", Integer, ForeignKey("households.id"), nullable=False, index=True),
+    Column("user_id", Integer, ForeignKey("users.id"), nullable=False, index=True),
+    Column("role", String(50), default="member", nullable=False),
+    UniqueConstraint("household_id", "user_id", name="uq_household_user"),
+)
+
+# Association table: recipes shared with households
+household_recipes = Table(
+    "household_recipes",
+    Base.metadata,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("household_id", Integer, ForeignKey("households.id"), nullable=False, index=True),
+    Column("recipe_id", Integer, ForeignKey("recipes.id"), nullable=False, index=True),
+    UniqueConstraint("household_id", "recipe_id", name="uq_household_recipe"),
+)
+
+
+class Household(Base):
+    __tablename__ = "households"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), nullable=False)
+    avatar_url = Column(String(1024), nullable=True)
+    owner_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 
@@ -81,6 +115,7 @@ class Recipe(Base):
     subcategory = Column(String(100), nullable=True)
     embedding = Column(Text, nullable=True)
     share_token = Column(String(255), unique=True, index=True, nullable=True)
+    household_id = Column(Integer, ForeignKey("households.id"), nullable=True, index=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 class RecipeTag(Base):

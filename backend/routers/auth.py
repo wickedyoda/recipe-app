@@ -41,6 +41,9 @@ class RegisterRequest(BaseModel):
     email: EmailStr
     password: str
     display_name: str | None = None
+    first_name: str | None = None
+    last_name: str | None = None
+    username: str | None = None
 
 
 class LoginRequest(BaseModel):
@@ -63,6 +66,9 @@ def register(payload: RegisterRequest, db: Session = Depends(get_db)):
         email=email,
         hashed_password=hash_password(payload.password),
         display_name=payload.display_name,
+        first_name=payload.first_name,
+        last_name=payload.last_name,
+        username=payload.username,
         is_active=0,
         is_approved=0,
         must_change_password=1,
@@ -104,6 +110,16 @@ def update_profile(payload: UpdateProfileRequest, db: Session = Depends(get_db),
         db.refresh(current_user)
     if payload.display_name is not None:
         current_user.display_name = payload.display_name
+    if payload.first_name is not None:
+        current_user.first_name = payload.first_name
+    if payload.last_name is not None:
+        current_user.last_name = payload.last_name
+    if payload.username is not None:
+        # Check uniqueness
+        existing = db.query(User).filter(User.username == payload.username, User.id != current_user.id).first()
+        if existing:
+            raise HTTPException(status_code=400, detail="Username already taken")
+        current_user.username = payload.username
     if payload.avatar_url is not None:
         current_user.avatar_url = payload.avatar_url
     db.add(current_user)
@@ -232,6 +248,9 @@ def create_user(payload: AdminUserCreate, _: User = Depends(require_role(Role.ad
         email=payload.email,
         hashed_password=hash_password(payload.password),
         display_name=payload.display_name,
+        first_name=payload.first_name,
+        last_name=payload.last_name,
+        username=payload.username,
         role=role,
         is_active=1 if payload.is_active else 0,
         is_approved=1 if payload.is_approved else 0,
@@ -270,6 +289,15 @@ def update_user(user_id: int, payload: AdminUserUpdate, _: User = Depends(requir
             target.approved_at = datetime.utcnow()
     if payload.display_name is not None:
         target.display_name = payload.display_name
+    if payload.first_name is not None:
+        target.first_name = payload.first_name
+    if payload.last_name is not None:
+        target.last_name = payload.last_name
+    if payload.username is not None:
+        existing = db.query(User).filter(User.username == payload.username, User.id != user_id).first()
+        if existing:
+            raise HTTPException(status_code=400, detail="Username already taken")
+        target.username = payload.username
     if payload.must_change_password is not None:
         target.must_change_password = 1 if payload.must_change_password else 0
     db.add(target)

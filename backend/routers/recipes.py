@@ -9,7 +9,20 @@ from sqlalchemy import func as _func
 from sqlalchemy.orm import Session
 
 from backend.database import get_db
-from backend.models import Cookbook, Recipe, RecipeMedia, RecipePhoto, RecipeRating, RecipeStepPhoto, RecipeTag, Store, Tag, User
+from backend.models import (
+    Cookbook,
+    Recipe,
+    RecipeMedia,
+    RecipePhoto,
+    RecipeRating,
+    RecipeStepPhoto,
+    RecipeTag,
+    Store,
+    Tag,
+    User,
+    household_members,
+    household_recipes,
+)
 from backend.schemas import RecipeCreate, RecipeOut
 from backend.services.auth import get_current_user
 
@@ -63,6 +76,16 @@ def create_recipe(payload: RecipeCreate, db: Session = Depends(get_db), current_
 @router.get("", response_model=list[RecipeOut])
 def list_recipes(db: Session = Depends(get_db), current_user: User = Depends(get_current_user), q: str = "", limit: int = 200):
     rows = db.query(Recipe).filter(Recipe.owner_id==current_user.id)
+    # Also include recipes shared with the user's household
+    household_subq = (
+        db.query(household_recipes.c.recipe_id)
+        .join(household_members, household_members.c.household_id == household_recipes.c.household_id)
+        .filter(household_members.c.user_id == current_user.id)
+        .subquery()
+    )
+    rows = db.query(Recipe).filter(
+        (Recipe.owner_id == current_user.id) | (Recipe.id.in_(household_subq))
+    )
     if q:
         # Search recipe title, description, ingredients, instructions, AND extracted media text
         media_subq = db.query(RecipeMedia.recipe_id).filter(
@@ -113,6 +136,17 @@ def list_recipes(db: Session = Depends(get_db), current_user: User = Depends(get
 def get_recipe(recipe_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     r = db.query(Recipe).filter(Recipe.id==recipe_id, Recipe.owner_id==current_user.id).first()
     if not r:
+        # Check if recipe is shared with user's household
+        shared_subq = (
+            db.query(household_recipes.c.recipe_id)
+            .join(household_members, household_members.c.household_id == household_recipes.c.household_id)
+            .filter(household_members.c.user_id == current_user.id)
+        )
+        r = db.query(Recipe).filter(
+            Recipe.id == recipe_id,
+            Recipe.id.in_(shared_subq)
+        ).first()
+    if not r:
         raise HTTPException(status_code=404, detail="Recipe not found")
     data = RecipeOut.model_validate(r).model_dump()
     data["tags"] = [t.name for t in db.query(Tag).join(RecipeTag, RecipeTag.tag_id==Tag.id).filter(RecipeTag.recipe_id==r.id).all()]
@@ -162,6 +196,7 @@ def update_recipe(recipe_id: int, payload: RecipeCreate, db: Session = Depends(g
     if payload.store:
         r.store = Store[payload.store]
     r.cookbook_id = payload.cookbook_id
+    r.household_id = payload.household_id
     r.rating = payload.rating
     r.flavor_rating = payload.flavor_rating
     r.effort_rating = payload.effort_rating

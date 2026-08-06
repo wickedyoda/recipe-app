@@ -7,6 +7,9 @@ class UserCreate(BaseModel):
     email: EmailStr
     password: str
     display_name: str | None = None
+    first_name: str | None = None
+    last_name: str | None = None
+    username: str | None = None
 
     @field_validator("password")
     @classmethod
@@ -27,6 +30,9 @@ class UserOut(BaseModel):
     email: str
     role: str
     display_name: str | None
+    first_name: str | None = None
+    last_name: str | None = None
+    username: str | None = None
     avatar_url: str | None
     is_active: bool
     is_approved: bool
@@ -39,8 +45,11 @@ class UserOut(BaseModel):
 
 class UpdateProfileRequest(BaseModel):
     display_name: str | None = None
-    avatar_url: str | None = None
+    first_name: str | None = None
+    last_name: str | None = None
+    username: str | None = None
     email: EmailStr | None = None
+    avatar_url: str | None = None
     is_active: bool | None = None
     is_approved: bool | None = None
 
@@ -50,6 +59,9 @@ class AdminUserUpdate(BaseModel):
     is_active: bool | None = None
     is_approved: bool | None = None
     display_name: str | None = None
+    first_name: str | None = None
+    last_name: str | None = None
+    username: str | None = None
     must_change_password: bool | None = None
 
 
@@ -57,6 +69,9 @@ class AdminUserCreate(BaseModel):
     email: EmailStr
     password: str
     display_name: str | None = None
+    first_name: str | None = None
+    last_name: str | None = None
+    username: str | None = None
     role: str | None = "user"
     is_active: bool = True
     is_approved: bool = True
@@ -167,6 +182,7 @@ class RecipeCreate(BaseModel):
     source_path: str | None = None
     store: str | None = "local"
     cookbook_id: int | None = None
+    household_id: int | None = None
     rating: float | None = None
     flavor_rating: float | None = None
     effort_rating: float | None = None
@@ -297,3 +313,23 @@ class GroceryItemOut(GroceryItemCreate):
     checked: bool
     owner_id: int
     model_config = {"from_attributes": True}
+
+
+class HouseholdCreate(BaseModel):
+    name: str
+    avatar_url: str | None = None
+
+class HouseholdOut(BaseModel):
+    id: int
+    name: str
+    avatar_url: str | None = None
+    owner_id: int
+    created_at: datetime
+    member_count: int = 0
+    members: list = []
+    model_config = {"from_attributes": True}
+
+class HouseholdMemberAdd(BaseModel):
+    email: str
+    role: str = "member"
+

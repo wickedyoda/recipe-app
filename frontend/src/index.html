@@ -503,6 +503,7 @@
       <button data-tab="tabMeals" onclick="switchTab('tabMeals')" class="nav-btn-small" title="Meal plans">📅</button>
       <button data-tab="tabGroceries" onclick="switchTab('tabGroceries')" class="nav-btn-small" title="Grocery lists">🛒</button>
       <button data-tab="tabCookbooks" onclick="switchTab('tabCookbooks')" class="nav-btn-small" title="Cookbooks">📚</button>
+      <button data-tab="tabHouseholds" onclick="switchTab('tabHouseholds')" class="nav-btn-small" title="Households">👨‍👩‍👧‍👦</button>
       <button id="adminTabBtnTop" data-tab="tabAdmin" onclick="switchTab('tabAdmin')" class="nav-btn-small hidden" title="Admin">👤</button>
       <button class="secondary small" id="menuBtn" onclick="toggleDropdown()" style="padding:2px 6px;font-size:13px;">☰</button>
       <button class="secondary small" id="themeToggle" onclick="toggleTheme()" style="padding:2px 6px;font-size:13px;">🌙</button>
@@ -516,6 +517,7 @@
     <button onclick="switchTab('tabMeals');closeDropdown()" class="dropdown-item">📅 Meal plans</button>
     <button onclick="switchTab('tabGroceries');closeDropdown()" class="dropdown-item">🛒 Grocery lists</button>
     <button onclick="switchTab('tabCookbooks');closeDropdown()" class="dropdown-item">📚 Cookbooks</button>
+    <button onclick="switchTab('tabHouseholds');closeDropdown()" class="dropdown-item">👨‍👩‍👧‍👦 Households</button>
     <button onclick="switchTab('tabProfile');closeDropdown()" class="dropdown-item">👤 Profile</button>
     <button id="settingsDropdownBtn" onclick="openSettingsCard();toggleDropdown()" class="dropdown-item hidden">⚙️ Settings</button>
     <div class="dropdown-divider"></div>
@@ -705,6 +707,7 @@
               <button class="secondary small" onclick="closeRecipeDetail()" style="padding:4px 8px;font-size:11px;">Close</button>
               <button class="secondary small" id="favBtn" onclick="toggleFavoriteFromDetail()" style="padding:4px 8px;font-size:11px;"><img src="/src/icons/favorites-icon.png" alt="fav" style="width:16px;height:16px;vertical-align:middle;" /></button>
               <button class="secondary small" onclick="shareCurrentRecipe()" style="padding:4px 8px;font-size:11px;">Share</button>
+              <button class="secondary small" id="shareHouseholdBtn" onclick="shareWithHousehold()" style="padding:4px 8px;font-size:11px;" title="Share with household 👨‍👩‍👧‍👦" hidden>🏠</button>
               <button class="secondary small" onclick="editCurrentRecipe()" style="padding:4px 8px;font-size:11px;">Edit</button>
               <button class="danger small" onclick="deleteCurrentRecipe()" style="padding:4px 8px;font-size:11px;">Delete</button>
             </div>
@@ -972,6 +975,20 @@
           <div id="publicRecipeRating" style="margin-top:12px;padding:8px;background:#fff;border-radius:8px;border:1px solid var(--border-light);display:none;"></div>
         </div>
       </div>
+      <div id="tabHouseholds" class="tab hidden">
+        <div class="card">
+          <div class="top">
+            <h2 style="margin:0;font-size:18px;">🏠 Households</h2>
+          </div>
+          <div id="householdList" style="margin-top:12px;"></div>
+          <div style="margin-top:16px;">
+            <h3 style="margin:0 0 8px;font-size:14px;">Create New Household</h3>
+            <input type="text" id="householdName" placeholder="Household name" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:14px;">
+            <input type="url" id="householdAvatar" placeholder="Avatar image URL (optional)" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:14px;margin-top:8px;">
+            <button class="primary" onclick="createHousehold()" style="margin-top:12px;width:100%;">Create Household</button>
+          </div>
+        </div>
+      </div>
       <div id="tabProfile" class="tab hidden">
         <div class="card">
           <div class="top">
@@ -980,8 +997,34 @@
           </div>
           <div id="profileInfo" class="profile-header" style="margin-bottom:12px;"></div>
           <div class="section">
-            <h3>Display name</h3>
-            <input id="profileName" placeholder="Display name" />
+            <h3>Profile</h3>
+            <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:8px;">
+              <div style="display:flex;align-items:center;gap:6px;">
+                <span style="font-size:13px;width:100px;">Username:</span>
+                <span id="profileUsername" style="flex:1;font-size:13px;"></span>
+                <button class="secondary small" onclick="editProfileField('username')" style="padding:2px 8px;font-size:11px;">✏️</button>
+              </div>
+              <div style="display:flex;align-items:center;gap:6px;">
+                <span style="font-size:13px;width:100px;">Email:</span>
+                <span id="profileEmail" style="flex:1;font-size:13px;"></span>
+                <button class="secondary small" onclick="editProfileField('email')" style="padding:2px 8px;font-size:11px;">✏️</button>
+              </div>
+              <div style="display:flex;align-items:center;gap:6px;">
+                <span style="font-size:13px;width:100px;">First name:</span>
+                <span id="profileFirstName" style="flex:1;font-size:13px;"></span>
+                <button class="secondary small" onclick="editProfileField('first_name')" style="padding:2px 8px;font-size:11px;">✏️</button>
+              </div>
+              <div style="display:flex;align-items:center;gap:6px;">
+                <span style="font-size:13px;width:100px;">Last name:</span>
+                <span id="profileLastName" style="flex:1;font-size:13px;"></span>
+                <button class="secondary small" onclick="editProfileField('last_name')" style="padding:2px 8px;font-size:11px;">✏️</button>
+              </div>
+              <div style="display:flex;align-items:center;gap:6px;">
+                <span style="font-size:13px;width:100px;">Display name:</span>
+                <span id="profileName" style="flex:1;font-size:13px;"></span>
+                <button class="secondary small" onclick="editProfileField('display_name')" style="padding:2px 8px;font-size:11px;">✏️</button>
+              </div>
+            </div>
             <div class="section">
               <h3>Profile Picture (125×125)</h3>
               <div id="avatarPreview" style="width:125px;height:125px;border-radius:50%;margin:8px auto;display:flex;align-items:center;justify-content:center;background:var(--beige);border:2px dashed var(--border-light);overflow:hidden;">
@@ -1155,6 +1198,7 @@ function switchTab(name) {
   if (name === 'tabProfile') { loadProfile(); }
   if (name === 'tabMenu') { loadRecentRecipes(); }
   if (name === 'tabCookbooks') { renderCookbooks(); }
+  if (name === 'tabHouseholds') { loadHouseholds(); }
   _updateReadonlyButtons();
   _pushNavState(name);
 }
@@ -1276,6 +1320,10 @@ async function loadProfile() {
   document.getElementById('profileInfo').innerHTML = '<div class="profile-avatar" style="background:' + (user.avatar_url ? 'transparent' : 'var(--beige)') + '">' + (user.avatar_url ? '<img src="' + escapeHtml(user.avatar_url) + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" />' : '👤') + '</div><div><div class="profile-name">' + escapeHtml(user.display_name || user.email) + '</div><div class="meta">' + escapeHtml(user.email) + ' • ' + escapeHtml(user.role || '') + '</div>' + (user.must_change_password ? '<div class="meta" style="color:#b91c1c;margin-top:4px;">⚠ Password must be changed</div>' : '') + '</div>';
   const saved = JSON.parse(localStorage.getItem('settings') || '{}');
   document.getElementById('profileName').value = user.display_name || '';
+  document.getElementById('profileUsername').textContent = user.username || 'Not set';
+  document.getElementById('profileEmail').textContent = user.email || '';
+  document.getElementById('profileFirstName').textContent = user.first_name || 'Not set';
+  document.getElementById('profileLastName').textContent = user.last_name || 'Not set';
   document.getElementById('profileAvatar').value = user.avatar_url || '';
   document.getElementById('defaultServings').value = (saved.defaultServings || 4);
   // Update avatar preview
@@ -1290,6 +1338,32 @@ async function loadProfile() {
   // Sync theme selector with current theme
   const themeSelect = document.getElementById('themeSelect');
   if (themeSelect) themeSelect.value = localStorage.getItem('theme') || 'light';
+}
+
+async function editProfileField(field) {
+  const labels = { username: 'Username', email: 'Email', first_name: 'First name', last_name: 'Last name', display_name: 'Display name' };
+  const currentVals = {
+    username: document.getElementById('profileUsername').textContent.replace(' (set)', ''),
+    email: document.getElementById('profileEmail').textContent,
+    first_name: document.getElementById('profileFirstName').textContent.replace(' (set)', ''),
+    last_name: document.getElementById('profileLastName').textContent.replace(' (set)', ''),
+    display_name: document.getElementById('profileName').value
+  };
+  const newValue = prompt(labels[field] + ':', currentVals[field] || '');
+  if (newValue === null) return;
+  const payload = {};
+  payload[field] = newValue.trim() || null;
+  const res = await fetch(API + '/auth/me', {
+    method: 'PATCH',
+    headers: authHeaders(),
+    body: JSON.stringify(payload)
+  });
+  if (res.ok) {
+    await loadProfile();
+  } else {
+    const data = await res.json();
+    showConfirm(data.detail || 'Failed to update');
+  }
 }
 
 async function loadRecentRecipes() {
@@ -2145,6 +2219,17 @@ async function openRecipeDetail(id) {
   if (!res.ok) return alert('Recipe not found');
   const r = await res.json();
   document.getElementById('detailTitle').innerHTML = (r.category ? categoryIcon(r.category) + ' ' : '') + escapeHtml(r.title || 'Untitled');
+  // Show household share button if user is a household owner
+  const hhBtn = document.getElementById('shareHouseholdBtn');
+  if (hhBtn) {
+    const hhRes = await fetch(API + '/households/', { headers: authHeaders() });
+    const households = await hhRes.json();
+    if (households.length > 0 && households.some(h => h.owner_id === currentUser.id)) {
+      hhBtn.hidden = false;
+    } else {
+      hhBtn.hidden = true;
+    }
+  }
   // Display star rating (average) + user's rating
   const avgRating = r.rating ? parseFloat(r.rating) : 0;
   const userRating = r.user_rating || 0;
@@ -3716,6 +3801,161 @@ function goBackFromPublic() {
   document.getElementById('nav').classList.remove('hidden');
   document.getElementById('tabPublicRecipe').classList.add('hidden');
   switchTab('tabMenu');
+}
+
+// Households
+async function loadHouseholds() {
+  try {
+    const res = await fetch(API + '/households/', { headers: authHeaders() });
+    const households = await res.json();
+    const container = document.getElementById('householdList');
+    container.innerHTML = '';
+    if (households.length === 0) {
+      container.innerHTML = '<p style="color:var(--text-secondary);font-size:13px;">No households yet. Create one below.</p>';
+      return;
+    }
+    for (const h of households) {
+      const isOwner = h.owner_id === currentUser.id;
+      let html = `<div style="border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:8px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <img src="${escapeHtml(h.avatar_url || '/static/default-avatar.png')}" style="width:40px;height:40px;border-radius:50%;object-fit:cover;">
+          <div style="flex:1;">
+            <strong>${escapeHtml(h.name)}</strong>
+            <div style="font-size:12px;color:var(--text-secondary);">${h.member_count} member(s)</div>
+          </div>
+          <button class="secondary small" onclick="openHouseholdView(${h.id})" style="padding:4px 10px;font-size:11px;">Open</button>
+          ${isOwner ? `<button class="secondary small" onclick="deleteHousehold(${h.id})" style="padding:4px 10px;font-size:11px;margin-left:4px;">Delete</button>` : ''}
+        </div>`;
+      // Show members
+      if (h.members && h.members.length > 0) {
+        html += '<div style="margin-top:8px;font-size:12px;">';
+        for (const m of h.members) {
+          html += `<div style="display:inline-flex;align-items:center;gap:4px;margin-right:6px;">
+            <img src="${escapeHtml(m.avatar_url || '/static/default-avatar.png')}" style="width:20px;height:20px;border-radius:50%;object-fit:cover;">
+            <span>${escapeHtml(m.display_name || m.email)}</span>
+            ${m.id === h.owner_id ? '<span style="color:#f59e0b;">👑</span>' : ''}
+            ${isOwner && m.id !== h.owner_id ? `<a href="#" onclick="removeHouseholdMember(${h.id}, ${m.id});return false;" style="color:#ef4444;font-size:11px;">✕</a>` : ''}
+          </div>`;
+        }
+        html += '</div>';
+      }
+      // Invite form (owner only)
+      if (isOwner) {
+        html += `<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);">
+          <input type="email" id="inviteEmail_${h.id}" placeholder="User email to invite" style="width:calc(100% - 90px);padding:6px;border:1px solid var(--border);border-radius:4px;font-size:12px;">
+          <button class="primary small" onclick="inviteHouseholdMember(${h.id})" style="padding:6px 10px;font-size:11px;width:80px;">Invite</button>
+        </div>`;
+      }
+      html += '</div>';
+      container.innerHTML += html;
+    }
+  } catch (e) {
+    showConfirm('Error loading households: ' + e.message);
+  }
+}
+
+async function createHousehold() {
+  const name = document.getElementById('householdName').value.trim();
+  if (!name) { showConfirm('Household name is required'); return; }
+  const avatar = document.getElementById('householdAvatar').value.trim();
+  const res = await fetch(API + '/households/', {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify({ name, avatar_url: avatar || null })
+  });
+  if (res.ok) {
+    document.getElementById('householdName').value = '';
+    document.getElementById('householdAvatar').value = '';
+    await loadHouseholds();
+  } else {
+    const data = await res.json();
+    showConfirm(data.detail || 'Failed to create household');
+  }
+}
+
+async function deleteHousehold(id) {
+  const ok = await showConfirm('Delete this household? This cannot be undone.');
+  if (!ok) return;
+  const res = await fetch(API + '/households/' + id, { method: 'DELETE', headers: authHeaders() });
+  if (res.ok) await loadHouseholds(); else showConfirm('Failed to delete household');
+}
+
+async function inviteHouseholdMember(household_id) {
+  const email = document.getElementById('inviteEmail_' + household_id).value.trim();
+  if (!email) return;
+  const res = await fetch(API + '/households/' + household_id + '/invite', {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify({ email })
+  });
+  if (res.ok) { showConfirm('User invited!'); document.getElementById('inviteEmail_' + household_id).value = ''; }
+  else { const data = await res.json(); showConfirm(data.detail || 'Failed to invite'); }
+}
+
+async function removeHouseholdMember(household_id, user_id) {
+  const ok = await showConfirm('Remove this member from the household?');
+  if (!ok) return;
+  const res = await fetch(API + '/households/' + household_id + '/members/' + user_id, { method: 'DELETE', headers: authHeaders() });
+  if (res.ok) await loadHouseholds(); else showConfirm('Failed to remove member');
+}
+
+let _currentHousehold = null;
+
+async function openHouseholdView(household_id) {
+  _currentHousehold = household_id;
+  switchTab('tabCookbooks'); // Reuse the cookbook tab container for household detail
+  const res = await fetch(API + '/households/' + household_id, { headers: authHeaders() });
+  const h = await res.json();
+  // Show household detail overlay
+  document.getElementById('cookbookOverlayTitle').textContent = h.name;
+  document.getElementById('cookbookOverlayBody').innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+      <img src="${escapeHtml(h.avatar_url || '/static/default-avatar.png')}" style="width:60px;height:60px;border-radius:50%;object-fit:cover;">
+      <div>
+        <strong style="font-size:18px;">${escapeHtml(h.name)}</strong>
+        <div style="font-size:12px;color:var(--text-secondary);">${h.member_count} member(s)</div>
+      </div>
+    </div>
+    <h3 style="margin:0 0 8px;font-size:14px;">Household Members</h3>
+    <div style="margin-bottom:12px;">${h.members.map(m => '<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;"><img src="' + escapeHtml(m.avatar_url || '/static/default-avatar.png') + '" style="width:24px;height:24px;border-radius:50%;"><span>' + escapeHtml(m.display_name || m.email) + '</span>' + (m.id === h.owner_id ? '<span>👑</span>' : '') + '</div>').join('')}</div>
+    <h3 style="margin:0 0 8px;font-size:14px;">Shared Recipes (${h.shared_recipe_count || 0})</h3>
+  `;
+  // Load household recipes
+  const recipesRes = await fetch(API + '/households/' + household_id + '/recipes', { headers: authHeaders() });
+  const recipes = await recipesRes.json();
+  let recipesHtml = '';
+  if (recipes.length === 0) {
+    recipesHtml = '<p style="color:var(--text-secondary);font-size:13px;">No recipes shared yet.</p>';
+  } else {
+    recipesHtml = '<div style="display:flex;flex-direction:column;gap:6px;">' + recipes.map(r => '<button class="secondary" onclick="openRecipeDetail(' + r.id + ');closeCookbookView();return false;" style="text-align:left;padding:8px;font-size:13px;">' + escapeHtml(r.title) + '</button>').join('') + '</div>';
+  }
+  document.getElementById('cookbookOverlayBody').insertAdjacentHTML('beforeend', recipesHtml);
+  openCookbookView();
+}
+
+function closeHouseholdView() {
+  _currentHousehold = null;
+  closeCookbookView();
+}
+
+async function shareWithHousehold() {
+  if (!currentRecipeId) return;
+  const res = await fetch(API + '/households/', { headers: authHeaders() });
+  const households = await res.json();
+  const myHouseholds = households.filter(h => h.owner_id === currentUser.id);
+  if (myHouseholds.length === 0) { showConfirm('You do not own any households'); return; }
+  // Use the first household (or prompt to choose)
+  const household = myHouseholds[0];
+  const shareRes = await fetch(API + '/households/' + household.id + '/share-recipe/' + currentRecipeId, {
+    method: 'POST',
+    headers: authHeaders(),
+  });
+  if (shareRes.ok) {
+    showConfirm('Recipe shared with ' + household.name + ' household!');
+  } else {
+    const data = await shareRes.json();
+    showConfirm(data.detail || 'Failed to share with household');
+  }
 }
 </script>
 </body>
