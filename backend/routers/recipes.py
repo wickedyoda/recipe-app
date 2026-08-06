@@ -1,5 +1,6 @@
 import json
 import os
+import secrets
 import time
 import uuid
 
@@ -210,6 +211,44 @@ def start_cooking(recipe_id: int, db: Session = Depends(get_db), current_user: U
         "prep_time_minutes": r.prep_time_minutes,
         "cook_time_minutes": r.cook_time_minutes,
         "difficulty": r.difficulty,
+    }
+
+@router.post("/{recipe_id}/share")
+def share_recipe(recipe_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    r = db.query(Recipe).filter(Recipe.id==recipe_id, Recipe.owner_id==current_user.id).first()
+    if not r:
+        raise HTTPException(status_code=404, detail="Recipe not found")
+    if not r.share_token:
+        r.share_token = secrets.token_urlsafe(16)
+        db.add(r)
+        db.commit()
+        db.refresh(r)
+    public_url = (os.getenv("PUBLIC_URL") or "").rstrip("/")
+    link = (public_url + "/recipes/public/" + r.share_token) if public_url else ("/recipes/public/" + r.share_token)
+    return {"share_token": r.share_token, "public_url": link, "shared": True}
+
+@router.get("/public/{share_token}")
+def public_recipe(share_token: str, db: Session = Depends(get_db)):
+    r = db.query(Recipe).filter(Recipe.share_token==share_token).first()
+    if not r:
+        raise HTTPException(status_code=404, detail="Recipe not found")
+    avg_rating = db.query(_func.avg(RecipeRating.score)).filter(RecipeRating.recipe_id==r.id).scalar()
+    rating_count = db.query(_func.count(RecipeRating.score)).filter(RecipeRating.recipe_id==r.id).scalar()
+    # Public-safe response: no user data, notes, source_path, personal info
+    return {
+        "title": r.title,
+        "description": r.description,
+        "ingredients": r.ingredients,
+        "instructions": r.instructions,
+        "servings": r.servings,
+        "prep_time_minutes": r.prep_time_minutes,
+        "cook_time_minutes": r.cook_time_minutes,
+        "difficulty": r.difficulty,
+        "category": r.category,
+        "subcategory": r.subcategory,
+        "rating": float(avg_rating) if avg_rating else None,
+        "rating_count": rating_count,
+        "created_at": r.created_at.isoformat() if r.created_at else None,
     }
 
 @router.post("/{recipe_id}/photos")
