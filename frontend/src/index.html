@@ -1529,6 +1529,22 @@ async function saveSmtpSettings() {
   if (res.ok) {
     document.getElementById('smtpPassword').value = '';
     loadSettings();
+    // Prompt for test email address
+    const testEmail = prompt('SMTP settings saved. Enter an email address to send a test email (or leave blank to skip):');
+    if (testEmail && testEmail.trim()) {
+      sendTestEmail(testEmail.trim());
+    }
+  }
+}
+
+async function sendTestEmail(email) {
+  document.getElementById('settingsStatus').textContent = 'Sending test email...';
+  const res = await fetch(API + '/settings/smtp/test', { method: 'POST', headers: authHeaders(), body: JSON.stringify({ email: email }) });
+  const data = await res.json();
+  if (res.ok) {
+    document.getElementById('settingsStatus').textContent = data.message || 'Test email sent successfully';
+  } else {
+    document.getElementById('settingsStatus').textContent = 'Failed to send test email: ' + (data.detail || 'unknown');
   }
 }
 async function backupDatabase() {

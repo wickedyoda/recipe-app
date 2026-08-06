@@ -12,6 +12,7 @@ from pydantic import BaseModel, field_validator
 from backend.config import settings
 from backend.models import Role, User
 from backend.services.auth import require_role
+from backend.services.email import send_email
 
 router = APIRouter(prefix="/settings", tags=["settings"])
 
@@ -268,3 +269,25 @@ def update_smtp_settings(
         "smtp_from_email": settings.SMTP_FROM_EMAIL,
         "smtp_use_tls": settings.SMTP_USE_TLS,
     }
+
+
+class TestEmailRequest(BaseModel):
+    email: str
+
+
+@router.post("/smtp/test", response_model=dict)
+def test_smtp_settings(
+    payload: TestEmailRequest,
+    _: User = Depends(require_role(Role.admin)),
+):
+    """Send a test email to verify SMTP settings are working."""
+    if not settings.SMTP_HOST or not settings.SMTP_FROM_EMAIL:
+        raise HTTPException(status_code=400, detail="SMTP settings are not configured")
+    sent = send_email(
+        to=payload.email,
+        subject="CookieRue SMTP Test",
+        body="<h2>✅ SMTP is working!</h2><p>If you received this email, your SMTP configuration is correct.</p><p> — CookieRue</p>",
+    )
+    if not sent:
+        raise HTTPException(status_code=502, detail="Failed to send test email — check SMTP settings and credentials")
+    return {"status": "ok", "message": "Test email sent to " + payload.email}
