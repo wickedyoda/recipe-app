@@ -278,7 +278,7 @@
   .recipe-detail-gallery { margin: 8px 0; }
   .recipe-detail-gallery img { width: 100%; border-radius: 12px; max-height: 280px; object-fit: cover; display: block; cursor: zoom-in; }
   .swipe-item { touch-action: none; }
-  .filter-row { padding: 8px 12px; gap: 8px; flex-wrap: wrap; }
+  .filter-row { padding: 8px 12px; gap: 8px; flex-wrap: wrap; justify-content: center; }
   .filter-pill {
     padding: 6px 12px; border-radius: 999px;
     font-size: 13px; font-weight: 500; cursor: pointer;
@@ -596,13 +596,10 @@
           <div style="display:flex;align-items:center;gap:8px;"><span style="font-size:18px;">🔍</span><input id="recipeSearch" placeholder="Search recipes..." oninput="renderRecipes()" style="flex:1;" /><button class="secondary" onclick="toggleViewType()" id="viewToggle" style="width:auto;padding:6px 10px;font-size:13px;">⊡</button></div>
         </div>
         <div class="filter-row">
-          <span class="filter-pill active" onclick="setMealFilter('')" id="mealAll">All</span>
+          <span class="filter-pill active" onclick="clearAllFilters()" id="filterAll">All</span>
           <span class="filter-pill" onclick="setMealFilter('Breakfast')" id="mealBreakfast">Breakfast</span>
           <span class="filter-pill" onclick="setMealFilter('Lunch')" id="mealLunch">Lunch</span>
           <span class="filter-pill" onclick="setMealFilter('Dinner')" id="mealDinner">Dinner</span>
-        </div>
-        <div class="row" style="padding:4px 12px 8px;gap:8px;flex-wrap:wrap;">
-          <span class="filter-pill active" onclick="setSubFilter('')" id="subAll">All types</span>
           <span class="filter-pill" onclick="setSubFilter('Entrees')" id="subEntrees">Entrees</span>
           <span class="filter-pill" onclick="setSubFilter('Snacks')" id="subSnacks">Snacks</span>
           <span class="filter-pill" onclick="setSubFilter('Appetizers')" id="subAppetizers">Appetizers</span>
@@ -1699,7 +1696,7 @@ async function renderRecipes() {
   const activeCategory = filterBox.dataset.active || '';
   const activeMeal = (filterBox.dataset.meal || '').trim();
   const activeSub = (filterBox.dataset.sub || '').trim();
-  filterBox.innerHTML = '<span class="filter-pill" onclick="setCategoryFilter(' + '\'' + ')">All</span>' + categories.map(c => '<span class="filter-pill" onclick="setCategoryFilter(' + '\'' + escapeHtml(c) + '\')">' + escapeHtml(categoryIcon(c)) + ' ' + escapeHtml(c) + '</span>').join('');
+  filterBox.innerHTML = categories.map(c => '<span class="filter-pill" onclick="setCategoryFilter(' + '\'' + escapeHtml(c) + '\')">' + escapeHtml(categoryIcon(c)) + ' ' + escapeHtml(c) + '</span>').join('');
   const box = document.getElementById('recipeList');
   box.classList.toggle('grid', viewType === 'grid');
   box.innerHTML = '';
@@ -1745,13 +1742,13 @@ window.setCategoryFilter = function(category) {
 window.setMealFilter = function(meal) {
   const filterBox = document.getElementById('recipeCategoryFilters');
   filterBox.dataset.meal = meal || '';
-  ['mealAll','mealBreakfast','mealLunch','mealDinner'].forEach(id => { const el = document.getElementById(id); if (el) el.classList.remove('active'); });
+  ['filterAll','mealBreakfast','mealLunch','mealDinner'].forEach(id => { const el = document.getElementById(id); if (el) el.classList.remove('active'); });
   if (meal) {
     const map = {Breakfast:'mealBreakfast',Lunch:'mealLunch',Dinner:'mealDinner'};
     const el = document.getElementById(map[meal]);
     if (el) el.classList.add('active');
   } else {
-    const el = document.getElementById('mealAll');
+    const el = document.getElementById('filterAll');
     if (el) el.classList.add('active');
   }
   renderRecipes();
@@ -1759,15 +1756,24 @@ window.setMealFilter = function(meal) {
 window.setSubFilter = function(sub) {
   const filterBox = document.getElementById('recipeCategoryFilters');
   filterBox.dataset.sub = sub || '';
-  ['subAll','subEntrees','subSnacks','subAppetizers','subDesserts'].forEach(id => { const el = document.getElementById(id); if (el) el.classList.remove('active'); });
+  ['filterAll','subEntrees','subSnacks','subAppetizers','subDesserts'].forEach(id => { const el = document.getElementById(id); if (el) el.classList.remove('active'); });
   if (sub) {
     const map = {Entrees:'subEntrees',Snacks:'subSnacks',Appetizers:'subAppetizers',Desserts:'subDesserts'};
     const el = document.getElementById(map[sub]);
     if (el) el.classList.add('active');
   } else {
-    const el = document.getElementById('subAll');
+    const el = document.getElementById('filterAll');
     if (el) el.classList.add('active');
   }
+  renderRecipes();
+};
+window.clearAllFilters = function() {
+  const filterBox = document.getElementById('recipeCategoryFilters');
+  filterBox.dataset.active = '';
+  filterBox.dataset.meal = '';
+  filterBox.dataset.sub = '';
+  filterBox.dataset.favs = '';
+  ['filterAll'].forEach(id => { const el = document.getElementById(id); if (el) el.classList.add('active'); });
   renderRecipes();
 };
 window.toggleFavoritesFilter = function() {
