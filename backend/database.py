@@ -55,6 +55,12 @@ def _migrate_sqlite(conn):
     users_cols = {c["name"] for c in insp.get_columns("users")}
     if "is_readonly" not in users_cols:
         conn.execute(text("ALTER TABLE users ADD COLUMN is_readonly INTEGER NOT NULL DEFAULT 0"))
+    if "first_name" not in users_cols:
+        conn.execute(text("ALTER TABLE users ADD COLUMN first_name VARCHAR(255)"))
+    if "last_name" not in users_cols:
+        conn.execute(text("ALTER TABLE users ADD COLUMN last_name VARCHAR(255)"))
+    if "username" not in users_cols:
+        conn.execute(text("ALTER TABLE users ADD COLUMN username VARCHAR(255)"))
     # Add source_filename column to recipes table
     recipe_cols = {c["name"] for c in insp.get_columns("recipes")}
     if "source_filename" not in recipe_cols:
@@ -67,6 +73,15 @@ def _migrate_sqlite(conn):
         conn.execute(text("CREATE TABLE recipe_media (id INTEGER PRIMARY KEY AUTOINCREMENT, recipe_id INTEGER NOT NULL, owner_id INTEGER NOT NULL, file_path VARCHAR(1024) NOT NULL, thumbnail_path VARCHAR(1024), original_filename VARCHAR(255) NOT NULL, media_type VARCHAR(20) NOT NULL, file_size INTEGER, extracted_text TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE, FOREIGN KEY (owner_id) REFERENCES users(id))"))
     if "recipe_ratings" not in insp.get_table_names():
         conn.execute(text("CREATE TABLE recipe_ratings (id INTEGER PRIMARY KEY AUTOINCREMENT, recipe_id INTEGER NOT NULL, user_id INTEGER NOT NULL, score INTEGER NOT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE, FOREIGN KEY (user_id) REFERENCES users(id), UNIQUE(recipe_id, user_id))"))
+    # Create households table
+    if "households" not in insp.get_table_names():
+        conn.execute(text("CREATE TABLE households (id INTEGER PRIMARY KEY AUTOINCREMENT, name VARCHAR(255) NOT NULL, avatar_url VARCHAR(1024), owner_id INTEGER NOT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (owner_id) REFERENCES users(id))"))
+    # Create household_members association table
+    if "household_members" not in insp.get_table_names():
+        conn.execute(text("CREATE TABLE household_members (id INTEGER PRIMARY KEY AUTOINCREMENT, household_id INTEGER NOT NULL, user_id INTEGER NOT NULL, role VARCHAR(50) NOT NULL DEFAULT 'member', FOREIGN KEY (household_id) REFERENCES households(id) ON DELETE CASCADE, FOREIGN KEY (user_id) REFERENCES users(id), UNIQUE(household_id, user_id))"))
+    # Create household_recipes association table
+    if "household_recipes" not in insp.get_table_names():
+        conn.execute(text("CREATE TABLE household_recipes (id INTEGER PRIMARY KEY AUTOINCREMENT, household_id INTEGER NOT NULL, recipe_id INTEGER NOT NULL, FOREIGN KEY (household_id) REFERENCES households(id) ON DELETE CASCADE, FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE, UNIQUE(household_id, recipe_id))"))
     try:
         _ensure_indexes(conn, insp)
     except Exception as exc:
@@ -98,6 +113,11 @@ def _ensure_indexes(conn, insp):
         "idx_recipe_media_owner": ("recipe_media", "owner_id"),
         "idx_ratings_recipe": ("recipe_ratings", "recipe_id"),
         "idx_ratings_user": ("recipe_ratings", "user_id"),
+        "idx_household_members_user": ("household_members", "user_id"),
+        "idx_household_members_household": ("household_members", "household_id"),
+        "idx_household_recipes_household": ("household_recipes", "household_id"),
+        "idx_household_recipes_recipe": ("household_recipes", "recipe_id"),
+        "idx_recipes_household": ("recipes", "household_id"),
         "idx_users_email": ("users", "email"),
     }
     existing = set()
@@ -132,6 +152,12 @@ def _migrate_mysql(conn):
         conn.execute(text("ALTER TABLE users ADD COLUMN password_changed_at DATETIME NULL AFTER must_change_password"))
     if "is_readonly" not in users_cols:
         conn.execute(text("ALTER TABLE users ADD COLUMN is_readonly TINYINT(1) NOT NULL DEFAULT 0 AFTER password_changed_at"))
+    if "first_name" not in users_cols:
+        conn.execute(text("ALTER TABLE users ADD COLUMN first_name VARCHAR(255) NULL AFTER is_readonly"))
+    if "last_name" not in users_cols:
+        conn.execute(text("ALTER TABLE users ADD COLUMN last_name VARCHAR(255) NULL AFTER first_name"))
+    if "username" not in users_cols:
+        conn.execute(text("ALTER TABLE users ADD COLUMN username VARCHAR(255) NULL AFTER last_name"))
     if "password_history" not in insp.get_table_names():
         conn.execute(text("CREATE TABLE password_history (id INTEGER PRIMARY KEY AUTO_INCREMENT, user_id INTEGER NOT NULL, hashed_password VARCHAR(255) NOT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (user_id) REFERENCES users(id))"))
     if "password_reset_tokens" not in insp.get_table_names():
@@ -151,6 +177,13 @@ def _migrate_mysql(conn):
     # Create recipe_ratings table if it doesn't exist (MySQL)
     if "recipe_ratings" not in insp.get_table_names():
         conn.execute(text("CREATE TABLE recipe_ratings (id INTEGER PRIMARY KEY AUTO_INCREMENT, recipe_id INTEGER NOT NULL, user_id INTEGER NOT NULL, score INTEGER NOT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE, FOREIGN KEY (user_id) REFERENCES users(id), UNIQUE(recipe_id, user_id))"))
+    # Create households table if it doesn't exist (MySQL)
+    if "households" not in insp.get_table_names():
+        conn.execute(text("CREATE TABLE households (id INTEGER PRIMARY KEY AUTO_INCREMENT, name VARCHAR(255) NOT NULL, avatar_url VARCHAR(1024), owner_id INTEGER NOT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (owner_id) REFERENCES users(id))"))
+    if "household_members" not in insp.get_table_names():
+        conn.execute(text("CREATE TABLE household_members (id INTEGER PRIMARY KEY AUTO_INCREMENT, household_id INTEGER NOT NULL, user_id INTEGER NOT NULL, role VARCHAR(50) NOT NULL DEFAULT 'member', FOREIGN KEY (household_id) REFERENCES households(id) ON DELETE CASCADE, FOREIGN KEY (user_id) REFERENCES users(id), UNIQUE(household_id, user_id))"))
+    if "household_recipes" not in insp.get_table_names():
+        conn.execute(text("CREATE TABLE household_recipes (id INTEGER PRIMARY KEY AUTO_INCREMENT, household_id INTEGER NOT NULL, recipe_id INTEGER NOT NULL, FOREIGN KEY (household_id) REFERENCES households(id) ON DELETE CASCADE, FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE, UNIQUE(household_id, recipe_id))"))
     try:
         _ensure_indexes(conn, insp)
     except Exception as exc:
