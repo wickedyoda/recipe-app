@@ -5,7 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project uses modified MIT licensing with attribution to upstream tool owners.
 
-## [0.2.0] - 2026-08-05
+## [Unreleased] - 2026-08-06
+
+### Added
+- Households: groups of up to 7 users with shared avatar and name
+- Household members can see recipes shared with their household in the recipe list
+- Recipe sharing within households: owner can share/unshare recipes with household members
+- Averaged dish ratings shown for shared household recipes (aggregated across all users)
+- Household management: create, invite members by email, remove members, delete (owner only)
+- Public recipe sharing: POST /recipes/{id}/share generates a public URL, GET /recipes/public/{token} returns only safe data (title, ingredients, instructions, rating) without user data, notes, or personal info
+- Profile: editable username, email, first name, last name fields with edit buttons (✏️) beside each
+
+### Fixed
+- PLR0912 ruff lint: added ignore for migration functions with many branches
+- Added missing household_id column migration to recipes table (SQLite + MySQL)
+
 
 ### Added
 - 5-star recipe rating system with average display and per-user ratings
