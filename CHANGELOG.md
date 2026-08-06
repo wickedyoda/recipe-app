@@ -38,6 +38,8 @@ and this project uses modified MIT licensing with attribution to upstream tool o
 - Duplicate recipe prevention (name + first 5 words of description)
 - Grocery list share/export functionality (blob API preserves auth headers)
 - `JSONResponse` import fixed in grocery router
+- Recipe detail metadata labels — `.detail-meta-labels` now uses `display:flex` so label/value pairs have proper spacing (prevents "Servings6" run-together)
+- Recipe detail ingredient checkboxes — `align-items:flex-start` with `margin-top:2px` for consistent vertical alignment
 - `DBIA0415` import-outside-function ruff errors in app.py
 - Removed missing `authArea` reference that caused JS error in `loadProfile()`, blocking admin button visibility
 - CodeQL workflow restructured into separate job with v4 action (was failing due to v3 deprecation + incorrect init order)
