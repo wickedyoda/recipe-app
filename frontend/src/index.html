@@ -1581,7 +1581,10 @@ function hideImportProgress(pct) {
   section.style.display = 'none';
 }
 function continueToRecipe() {
-  if (_currentRecipeId) openRecipeDetail(_currentRecipeId);
+  if (_currentRecipeId) {
+    switchTab('tabRecipes');
+    openRecipeDetail(_currentRecipeId);
+  }
 }
 async function extractRecipe() {
   const url = document.getElementById('recipeUrl').value.trim();
