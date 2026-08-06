@@ -1592,15 +1592,19 @@ async function exportUserData() {
   alert('Data exported to cookieRue-data.json');
 }
 async function deleteAccount() {
-  if (!await showConfirm('Are you sure? This will permanently delete your account and all your data. This cannot be undone.')) return;
-  if (!await showConfirm('Type DELETE to confirm deletion.')) return;
-  const confirmText = prompt('Type DELETE to confirm permanent deletion:');
-  if (confirmText !== 'DELETE') return alert('Deletion cancelled — confirmation text did not match');
-  const res = await fetch(API + '/auth/me/delete', { method:'POST', headers: authHeaders() });
+  // Step 1: Confirm intent with a clear warning
+  const step1 = await showConfirm('This will permanently delete your account and ALL your data (recipes, meal plans, grocery lists, cookbooks, households). This action cannot be undone.');
+  if (!step1) return;
+  // Step 2: Type confirmation text to prevent accidental clicks
+  const step2 = await showConfirm('Type DELETE in the box below to permanently delete your account.');
+  if (!step2) return;
+  const confirmText = prompt('Type DELETE to permanently delete your account:');
+  if (confirmText !== 'DELETE') return showConfirm('Deletion cancelled — confirmation text did not match.');
+  const res = await fetch(API + '/auth/me/delete', { method: 'POST', headers: authHeaders() });
   const data = await res.json();
-  if (!res.ok) return alert('Failed: ' + (data.detail || 'unknown'));
+  if (!res.ok) return showConfirm('Failed: ' + (data.detail || 'unknown'));
   localStorage.removeItem('token');
-  alert('Account deleted. You have been logged out.');
+  await showConfirm('Your account has been permanently deleted.');
   window.location.reload();
 }
 
