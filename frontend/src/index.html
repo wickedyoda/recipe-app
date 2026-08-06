@@ -1525,11 +1525,32 @@ async function sendTestEmail(email) {
   }
 }
 async function backupDatabase() {
-  document.getElementById('settingsStatus').textContent = 'Backing up...';
+  const statusEl = document.getElementById('settingsStatus');
+  statusEl.innerHTML = '<span style="color:#996600;">⏳ Creating compressed backup...</span>';
   const res = await fetch(API + '/settings/backup', { method: 'POST', headers: authHeaders() });
   const data = await res.json();
-  if (!res.ok) return document.getElementById('settingsStatus').textContent = 'Backup failed: ' + (data.detail || 'unknown');
-  document.getElementById('settingsStatus').textContent = 'Backup saved: ' + data.backup_path + ' (' + data.size_mb + ' MB)';
+  if (!res.ok) return statusEl.textContent = 'Backup failed: ' + (data.detail || 'unknown');
+  statusEl.innerHTML = '<span style="color:#996600;">⏬ Downloading ' + data.size_mb + ' MB (compressed)...</span>';
+  // Download the file through the browser with auth headers
+  const downloadRes = await fetch(API + data.download_url, { headers: authHeaders() });
+  if (!downloadRes.ok) {
+    statusEl.textContent = 'Download failed: ' + (downloadRes.statusText || 'unknown');
+    return;
+  }
+  const blob = await downloadRes.blob();
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  const filename = 'cookierue_backup_' + new Date().toISOString().slice(0, 10) + '.sql.gz';
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+  statusEl.innerHTML = '<span style="color:#166534;">✅ Backup downloaded successfully</span>';
+  setTimeout(() => {
+    statusEl.textContent = 'Backup ready — check your downloads.';
+  }, 2000);
 }
 function setTheme(mode) {
   document.body.classList.remove('dark','warm','dawn','cozy','contrast');
