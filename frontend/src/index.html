@@ -2983,11 +2983,19 @@ async function deleteUser(id) {
   loadUsers();
 }
 async function resetUserPassword(id) {
-  const pw = prompt('Enter new password for this user:');
+  const pw = prompt('Enter new password for this user:\n(Must be 6-12 chars, with 1 uppercase letter and 1 symbol)');
   if (!pw || pw.length < 6) return alert('Password must be at least 6 characters');
   const res = await fetch(API + '/auth/users/' + id + '/password', { method: 'PATCH', headers: authHeaders(), body: JSON.stringify({new_password: pw}) });
   const data = await res.json();
-  if (!res.ok) return alert('Failed: ' + (data.detail || 'unknown'));
+  if (!res.ok) {
+    let msg = 'Failed';
+    if (data.detail) {
+      msg = Array.isArray(data.detail)
+        ? data.detail.map(d => d.msg || d.detail || JSON.stringify(d)).join('; ')
+        : data.detail;
+    }
+    return alert('Failed: ' + msg);
+  }
   alert('Password reset successfully');
 }
 let timerInterval = null;
