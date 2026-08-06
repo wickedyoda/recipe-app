@@ -8,7 +8,7 @@ from sqlalchemy import func as _func
 from sqlalchemy.orm import Session
 
 from backend.database import get_db
-from backend.models import Recipe, RecipeMedia, RecipePhoto, RecipeRating, RecipeStepPhoto, RecipeTag, Store, Tag, User
+from backend.models import Cookbook, Recipe, RecipeMedia, RecipePhoto, RecipeRating, RecipeStepPhoto, RecipeTag, Store, Tag, User
 from backend.schemas import RecipeCreate, RecipeOut
 from backend.services.auth import get_current_user
 
@@ -78,6 +78,9 @@ def list_recipes(db: Session = Depends(get_db), current_user: User = Depends(get
         )
     rows = rows.order_by(Recipe.created_at.desc()).limit(limit).all()
     recipe_ids = [r.id for r in rows]
+    # Batch query cookbook names
+    cb_rows = db.query(Cookbook).filter(Cookbook.owner_id == current_user.id).all()
+    cb_map = {cb.id: cb.name for cb in cb_rows}
     # Batch queries to avoid N+1
     tag_results = db.query(RecipeTag.recipe_id, Tag.name).join(Tag, Tag.id==RecipeTag.tag_id).filter(RecipeTag.recipe_id.in_(recipe_ids)).all()
     recipe_tags = {}
@@ -96,6 +99,7 @@ def list_recipes(db: Session = Depends(get_db), current_user: User = Depends(get
     out = []
     for r in rows:
         data = RecipeOut.model_validate(r).model_dump()
+        data["cookbook_name"] = cb_map.get(r.cookbook_id) if r.cookbook_id else None
         data["tags"] = recipe_tags.get(r.id, [])
         data["photos"] = recipe_photos.get(r.id, [])
         data["rating"] = recipe_avg_ratings.get(r.id)  # average rating

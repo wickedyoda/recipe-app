@@ -293,6 +293,26 @@
   [data-theme="dark"] .filter-pill { background: #2a2d35; color: #c8a78a; border-color: #3a2a1a; }
   [data-theme="dark"] .filter-pill:hover { background: var(--orange); color: #0b0c0f; }
   [data-theme="dark"] .filter-pill.active { background: var(--orange); color: #0b0c0f; }
+  /* Cookbook page-turn animation */
+  .book-container {
+    perspective: 1000px;
+    margin: 16px 0;
+  }
+  .book-page {
+    background: #fff;
+    border-radius: 16px;
+    padding: 16px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    border: 1px solid var(--border-light);
+    position: relative;
+    min-height: 200px;
+    transition: transform 0.3s ease-in-out;
+  }
+  .book-page.flipping {
+    transform-origin: center center;
+  }
+  [data-theme="dark"] .book-page { background: var(--card-bg); border-color: var(--card-border); }
+  .book-nav button:disabled { cursor: not-allowed; opacity: 0.4; }
   .recipe-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
@@ -482,6 +502,7 @@
       <button data-tab="tabImport" onclick="switchTab('tabImport')" class="nav-btn-small" title="Add recipe">📥</button>
       <button data-tab="tabMeals" onclick="switchTab('tabMeals')" class="nav-btn-small" title="Meal plans">📅</button>
       <button data-tab="tabGroceries" onclick="switchTab('tabGroceries')" class="nav-btn-small" title="Grocery lists">🛒</button>
+      <button data-tab="tabCookbooks" onclick="switchTab('tabCookbooks')" class="nav-btn-small" title="Cookbooks">📚</button>
       <button id="adminTabBtnTop" data-tab="tabAdmin" onclick="switchTab('tabAdmin')" class="nav-btn-small hidden" title="Admin">👤</button>
       <button class="secondary small" id="menuBtn" onclick="toggleDropdown()" style="padding:2px 6px;font-size:13px;">☰</button>
       <button class="secondary small" id="themeToggle" onclick="toggleTheme()" style="padding:2px 6px;font-size:13px;">🌙</button>
@@ -494,6 +515,7 @@
     <button onclick="switchTab('tabImport');closeDropdown()" class="dropdown-item">📥 Add recipe</button>
     <button onclick="switchTab('tabMeals');closeDropdown()" class="dropdown-item">📅 Meal plans</button>
     <button onclick="switchTab('tabGroceries');closeDropdown()" class="dropdown-item">🛒 Grocery lists</button>
+    <button onclick="switchTab('tabCookbooks');closeDropdown()" class="dropdown-item">📚 Cookbooks</button>
     <button onclick="switchTab('tabProfile');closeDropdown()" class="dropdown-item">👤 Profile</button>
     <button id="settingsDropdownBtn" onclick="openSettingsCard();toggleDropdown()" class="dropdown-item hidden">⚙️ Settings</button>
     <div class="dropdown-divider"></div>
@@ -548,6 +570,9 @@
             </button>
             <button class="nav-square" onclick="switchTab('tabGroceries')" aria-label="Grocery lists">
               <span class="nav-icon">🛒</span><span class="nav-label">Groceries</span>
+            </button>
+            <button class="nav-square" onclick="switchTab('tabCookbooks')" aria-label="Cookbooks">
+              <span class="nav-icon">📚</span><span class="nav-label">Cookbooks</span>
             </button>
           </div>
         </div>
@@ -700,6 +725,7 @@
             <button class="secondary small" onclick="addToMealPlan()" style="padding:4px 8px;font-size:11px;">Meal plan</button>
             <button class="secondary small" onclick="createGroceryFromRecipe()" style="padding:4px 8px;font-size:11px;">Grocery list</button>
             <button class="secondary small" onclick="startCooking()" style="padding:4px 8px;font-size:11px;">Cook</button>
+            <button class="secondary small" onclick="addToCookbook()" style="padding:4px 8px;font-size:11px;" title="Add to cookbook">📚</button>
             <div style="flex:1;height:1px;background:#ddd;"></div>
             <button class="secondary small" onclick="resetIngredientChecks()" style="padding:4px 8px;font-size:11px;">Reset</button>
             <button class="secondary small" onclick="duplicateCurrentRecipe()" style="padding:4px 8px;font-size:11px;">Duplicate</button>
@@ -855,6 +881,34 @@
         </div>
       </div>
 
+      <div id="tabCookbooks" class="tab hidden">
+        <div class="card">
+          <div class="top">
+            <h2 style="margin-top:0;">Cookbooks</h2>
+            <button class="secondary" onclick="openCookbookForm()" style="width:auto;padding:8px 10px;font-size:13px;">New cookbook</button>
+          </div>
+          <div id="cookbookList"></div>
+        </div>
+
+        <div id="cookbookForm" class="card hidden">
+          <h2 style="margin-top:0;" id="cookbookFormTitle">New cookbook</h2>
+          <input id="cookbookName" placeholder="Cookbook name" style="width:100%;" />
+          <textarea id="cookbookDescription" placeholder="Description (optional)" style="width:100%;margin-top:8px;"></textarea>
+          <div class="row">
+            <button onclick="saveCookbook()">Save</button>
+            <button class="secondary" onclick="closeCookbookForm()">Cancel</button>
+          </div>
+        </div>
+
+        <div id="cookbookView" class="card hidden">
+          <div class="top">
+            <h2 id="cookbookViewTitle" style="margin-top:0;"></h2>
+            <button class="secondary" onclick="closeCookbookView()" style="width:auto;padding:8px 10px;font-size:13px;">← Back</button>
+          </div>
+          <div id="cookbookRecipeList" style="padding:8px 0;"></div>
+        </div>
+      </div>
+
       <div id="tabAdmin" class="tab hidden">
         <div class="card">
           <div class="top">
@@ -994,6 +1048,7 @@
     <button data-tab="tabRecipes" onclick="switchTab('tabRecipes');closeDropdown()" aria-label="Recipes">🏠</button>
     <button data-tab="tabMeals" onclick="switchTab('tabMeals');closeDropdown()" aria-label="Meal plans">📅</button>
     <button data-tab="tabGroceries" onclick="switchTab('tabGroceries')" aria-label="Grocery lists">🛒</button>
+    <button data-tab="tabCookbooks" onclick="switchTab('tabCookbooks')" aria-label="Cookbooks">📚</button>
     <button id="adminTabBtn" data-tab="tabAdmin" onclick="switchTab('tabAdmin')" class="hidden" aria-label="Admin">👤</button>
     <button data-tab="tabProfile" onclick="switchTab('tabProfile')" style="width:auto;padding:6px 10px;font-size:12px;" aria-label="Profile">👤</button>
   </div>
@@ -1086,6 +1141,7 @@ function switchTab(name) {
   if (name === 'tabAdmin') { loadPending(); loadUsers(); }
   if (name === 'tabProfile') { loadProfile(); }
   if (name === 'tabMenu') { loadRecentRecipes(); }
+  if (name === 'tabCookbooks') { renderCookbooks(); }
   _updateReadonlyButtons();
 }
 function toggleDropdown() {
@@ -3316,6 +3372,190 @@ function resetIngredientChecks() {
   setTimeout(() => {
     document.querySelectorAll('#detailBody input[type="checkbox"]').forEach((cb, idx) => { cb.checked = !!(checks[idx]); toggleIngredientCheck(cb); });
   }, 0);
+}
+// === Cookbook functions ===
+let _cookbookCurrentId = null;
+let _bookRecipes = [];
+let _bookCurrentPage = 0;
+async function renderCookbooks() {
+  const list = document.getElementById('cookbookList');
+  if (!list) return;
+  list.innerHTML = '<div style="font-size:13px;color:#888;padding:8px;text-align:center;">Loading cookbooks...</div>';
+  try {
+    const res = await fetch(API + '/cookbooks/', { headers: authHeaders() });
+    if (!res.ok) { list.innerHTML = '<p style="padding:12px;color:#999;text-align:center;">Failed to load cookbooks.</p>'; return; }
+    const cookbooks = await res.json();
+  if (!cookbooks.length) {
+    list.innerHTML = '<p style="padding:12px;color:#777;text-align:center;">No cookbooks yet. Click “New cookbook” to create one.</p>';
+    return;
+  }
+  list.innerHTML = cookbooks.map(cb => `
+    <div class="card" style="margin-bottom:8px;cursor:pointer;" onclick="openCookbookView(${cb.id})" data-cookbook-name="${escapeHtml(cb.name)}">
+      <div class="top">
+        <h3 style="margin:0;font-size:16px;">${escapeHtml(cb.name)}</h3>
+        <button class="secondary small" onclick="event.stopPropagation();openCookbookForm(${cb.id});" style="padding:4px 8px;font-size:12px;">Edit</button>
+        <button class="danger small" onclick="event.stopPropagation();deleteCookbook(${cb.id});" style="padding:4px 8px;font-size:12px;">✕</button>
+      </div>
+      <p style="font-size:13px;color:#666;margin:4px 0;">${escapeHtml(cb.description || 'No description')}</p>
+    </div>
+  `).join('');
+  } catch (err) {
+    list.innerHTML = '<p style="padding:12px;color:#999;text-align:center;">Error loading cookbooks.</p>';
+  }
+}
+function openCookbookForm(id) {
+  const isNew = !id;
+  _cookbookCurrentId = id || null;
+  document.getElementById('cookbookFormTitle').textContent = isNew ? 'New cookbook' : 'Edit cookbook';
+  document.getElementById('cookbookForm').classList.remove('hidden');
+  document.getElementById('cookbookList').classList.add('hidden');
+  document.getElementById('cookbookView').classList.add('hidden');
+  if (!isNew) {
+    loadCookbookForEdit(id);
+  } else {
+    document.getElementById('cookbookName').value = '';
+    document.getElementById('cookbookDescription').value = '';
+  }
+}
+async function loadCookbookForEdit(id) {
+  const res = await fetch(API + '/cookbooks/', { headers: authHeaders() });
+  if (!res.ok) return;
+  const cbs = await res.json();
+  const cb = cbs.find(c => c.id === id);
+  if (cb) {
+    document.getElementById('cookbookName').value = cb.name || '';
+    document.getElementById('cookbookDescription').value = cb.description || '';
+  }
+}
+function closeCookbookForm() {
+  document.getElementById('cookbookForm').classList.add('hidden');
+  document.getElementById('cookbookList').classList.remove('hidden');
+}
+async function saveCookbook() {
+  const name = document.getElementById('cookbookName').value.trim();
+  const description = document.getElementById('cookbookDescription').value.trim();
+  if (!name) { await showConfirm('Please enter a cookbook name.'); return; }
+  const method = _cookbookCurrentId ? 'PATCH' : 'POST';
+  const url = _cookbookCurrentId ? API + '/cookbooks/' + _cookbookCurrentId : API + '/cookbooks/';
+  const res = await fetch(url, { method, headers: authHeaders(), body: JSON.stringify({ name, description, store: 'local' }) });
+  if (!res.ok) { await showConfirm('Failed to save cookbook.'); return; }
+  closeCookbookForm();
+  renderCookbooks();
+}
+async function openCookbookView(id) {
+  _cookbookCurrentId = id;
+  document.getElementById('cookbookView').classList.remove('hidden');
+  document.getElementById('cookbookList').classList.add('hidden');
+  document.getElementById('cookbookForm').classList.add('hidden');
+  const res = await fetch(API + '/cookbooks/' + id + '/recipes', { headers: authHeaders() });
+  if (!res.ok) return;
+  const recipes = await res.json();
+  // Also get cookbook name
+  const cbRes = await fetch(API + '/cookbooks/', { headers: authHeaders() });
+  const cbs = cbRes.ok ? await cbRes.json() : [];
+  const cb = cbs.find(c => c.id === id);
+  document.getElementById('cookbookViewTitle').textContent = cb ? cb.name : 'Cookbook';
+  _bookRecipes = recipes;
+  _bookCurrentPage = 0;
+  renderCookbookPage();
+}
+function renderCookbookPage() {
+  const list = document.getElementById('cookbookRecipeList');
+  if (!_bookRecipes.length) {
+    list.innerHTML = '<p style="padding:12px;color:#999;text-align:center;">No recipes in this cookbook.</p>';
+    return;
+  }
+  const pageSize = 1;
+  const totalPages = Math.ceil(_bookRecipes.length / pageSize);
+  const start = _bookCurrentPage * pageSize;
+  const end = start + pageSize;
+  const current = _bookRecipes.slice(start, end);
+  // Build page-turn animation
+  let html = '<div class="book-container">';
+  html += '<div class="book-page" id="bookPage">';
+  html += current.map(r => `
+    <div class="card" style="margin-bottom:0;text-align:center;cursor:pointer;" onclick="switchTab('tabRecipes');setTimeout(()=>openRecipeDetail(${r.id}),10);">
+      ${r.photos && r.photos.length ? '<img src="/media/static/' + escapeHtml(r.photos[0]) + '" style="max-width:100%;max-height:200px;object-fit:cover;border-radius:8px;" />' : '<div style="width:100%;height:160px;background:#eee;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#999;">No photo</div>'}
+      <h3 style="margin:8px 0 4px;font-size:18px;">${escapeHtml(r.title)}</h3>
+      <p style="font-size:13px;color:#666;">${escapeHtml(r.description || '')}</p>
+    </div>
+  `).join('');
+  html += '</div>';
+  html += '</div>';
+  // Navigation
+  const prevDisabled = _bookCurrentPage === 0 ? 'disabled' : '';
+  const nextDisabled = _bookCurrentPage >= totalPages - 1 ? 'disabled' : '';
+  const prevStyle = _bookCurrentPage === 0 ? 'opacity:0.4;cursor:not-allowed;' : '';
+  const nextStyle = _bookCurrentPage >= totalPages - 1 ? 'opacity:0.4;cursor:not-allowed;' : '';
+  html += '<div class="book-nav" style="display:flex;justify-content:space-between;align-items:center;padding:16px 0;">';
+  html += '<button class="secondary" ' + prevDisabled + ' onclick="prevPage()" style="padding:8px 16px;font-size:14px;border-radius:8px;' + prevStyle + '">← Prev</button>';
+  html += '<span style="font-size:13px;color:#666;">Page ' + (_bookCurrentPage + 1) + ' of ' + totalPages + '</span>';
+  html += '<button class="secondary" ' + nextDisabled + ' onclick="nextPage()" style="padding:8px 16px;font-size:14px;border-radius:8px;' + nextStyle + '">Next →</button>';
+  html += '</div>';
+  list.innerHTML = html;
+}
+function prevPage() {
+  if (_bookCurrentPage > 0) {
+    _bookCurrentPage--;
+    renderCookbookPageWithFlip('left');
+  }
+}
+function nextPage() {
+  const totalPages = Math.ceil(_bookRecipes.length);
+  if (_bookCurrentPage < totalPages - 1) {
+    _bookCurrentPage++;
+    renderCookbookPageWithFlip('right');
+  }
+}
+function renderCookbookPageWithFlip(direction) {
+  const list = document.getElementById('cookbookRecipeList');
+  if (!list) return;
+  const oldPage = document.getElementById('bookPage');
+  if (oldPage) {
+    oldPage.style.transition = 'transform 0.3s ease-in-out';
+    if (direction === 'left') {
+      oldPage.style.transform = 'translateX(-100%) rotateY(-20deg)';
+    } else {
+      oldPage.style.transform = 'translateX(100%) rotateY(20deg)';
+    }
+  }
+  setTimeout(() => {
+    renderCookbookPage();
+  }, 300);
+}
+function closeCookbookView() {
+  document.getElementById('cookbookView').classList.add('hidden');
+  document.getElementById('cookbookList').classList.remove('hidden');
+  _bookRecipes = [];
+  _bookCurrentPage = 0;
+}
+async function deleteCookbook(id) {
+  if (!await showConfirm('Delete this cookbook? Recipes will be moved to another cookbook.')) return;
+  await fetch(API + '/cookbooks/' + id, { method: 'DELETE', headers: authHeaders() });
+  renderCookbooks();
+}
+async function addToCookbook() {
+  if (!currentRecipeId) return;
+  const res = await fetch(API + '/cookbooks/', { headers: authHeaders() });
+  if (!res.ok) return;
+  const cbs = await res.json();
+  if (!cbs.length) {
+    await showConfirm('You do not have any cookbooks yet. Create one in the Cookbooks tab.');
+    switchTab('tabCookbooks');
+    return;
+  }
+  // Add to first cookbook (or show selection via showConfirm)
+  const cb = cbs[0];
+  const recipeRes = await fetch(API + '/recipes/' + currentRecipeId, {
+    method: 'PATCH',
+    headers: authHeaders(),
+    body: JSON.stringify({ cookbook_id: cb.id })
+  });
+  if (recipeRes.ok) {
+    showConfirm('Added to cookbook: ' + cb.name);
+  } else {
+    showConfirm('Failed to add to cookbook.');
+  }
 }
 </script>
 </body>
