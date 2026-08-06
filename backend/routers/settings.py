@@ -1,3 +1,4 @@
+import gzip
 import logging
 import os
 import shutil
@@ -6,7 +7,7 @@ import tempfile
 from typing import Optional
 from urllib.parse import urlparse
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response
 from pydantic import BaseModel, field_validator
 
 from backend.config import settings
@@ -124,16 +125,17 @@ def get_storage_info(_: User = Depends(require_role(Role.admin))):
 
 @router.post("/backup", response_model=dict)
 def backup_database(_: User = Depends(require_role(Role.admin))):
-    """Create a database backup (MySQL dump or SQLite copy)."""
+    """Create a compressed database backup (MySQL dump or SQLite copy), then return a download URL."""
     db_url = settings.DATABASE_URL
     try:
-        fd, backup_path = tempfile.mkstemp(suffix=".sql", prefix="recipe_app_backup_")
+        fd, raw_path = tempfile.mkstemp(suffix=".sql", prefix="recipe_app_backup_")
         os.close(fd)
+        backup_path = raw_path + ".gz"
         if db_url.startswith("sqlite"):
             db_path = db_url.replace("sqlite:///", "")
             if not os.path.isfile(db_path):
                 raise FileNotFoundError("SQLite database not found")
-            shutil.copy2(db_path, backup_path)
+            shutil.copy2(db_path, raw_path)
         elif "mysql" in db_url:
             parsed = urlparse(db_url)
             user = parsed.username or ""
@@ -150,14 +152,20 @@ def backup_database(_: User = Depends(require_role(Role.admin))):
             )
             if result.returncode != 0:
                 raise RuntimeError("Database backup failed")
-            with open(backup_path, "w") as f:
+            with open(raw_path, "w") as f:
                 f.write(result.stdout)
         else:
             raise ValueError("Unsupported database type")
+        # Compress the backup
+        with open(raw_path, "rb") as f_in:
+            with gzip.open(backup_path, "wb") as f_out:
+                shutil.copyfileobj(f_in, f_out)
+        os.unlink(raw_path)
         file_size = os.path.getsize(backup_path)
         return {
             "status": "ok",
             "backup_path": backup_path,
+            "download_url": f"/settings/backup/download?path={backup_path}",
             "size_mb": round(file_size / (1024**2), 2),
         }
     except RuntimeError:
@@ -166,6 +174,29 @@ def backup_database(_: User = Depends(require_role(Role.admin))):
         raise HTTPException(status_code=500, detail="Database file not found")
     except Exception:
         raise HTTPException(status_code=500, detail="Unexpected error during backup")
+
+
+@router.get("/backup/download", response_class=Response)
+def download_backup(
+    path: str,
+    _: User = Depends(require_role(Role.admin)),
+):
+    """Download a compressed database backup file."""
+    # Security: only allow downloading files from the temp directory
+    real_path = os.path.realpath(path)
+    tmp_dir = os.path.realpath(tempfile.gettempdir())
+    if not real_path.startswith(tmp_dir) or not path.endswith(".sql.gz"):
+        raise HTTPException(status_code=403, detail="Access denied")
+    if not os.path.isfile(real_path):
+        raise HTTPException(status_code=404, detail="Backup file not found")
+    filename = os.path.basename(real_path)
+    with open(real_path, "rb") as f:
+        file_data = f.read()
+    return Response(
+        content=file_data,
+        media_type="application/gzip",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 
 def _update_env(key: str, value: str):
