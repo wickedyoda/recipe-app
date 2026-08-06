@@ -17,23 +17,11 @@ from backend.services.email import send_email
 router = APIRouter(prefix="/settings", tags=["settings"])
 
 
-class HostUpdate(BaseModel):
-    host: str
-
-    @field_validator("host")
-    @classmethod
-    def validate_host(cls, v: str) -> str:
-        v = v.strip()
-        if not v or "," in v or "=" in v or "\n" in v or "\r" in v:
-            raise ValueError("Invalid host: must not contain commas, equals, or newlines")
-        if "/" in v:
-            raise ValueError("Invalid host: must not contain slashes")
-        return v
+class TestEmailRequest(BaseModel):
+    email: str
 
 
 class SettingsOut(BaseModel):
-    allowed_hosts: list[str]
-    allowed_origins: list[str]
     media_root: str
     frontend_port: int
     backend_port: int
@@ -45,6 +33,9 @@ class SettingsOut(BaseModel):
     smtp_use_tls: bool
     public_url: Optional[str]
     disk_usage_gb: Optional[float] = None
+    disk_total_gb: Optional[str] = None
+    disk_used_gb: Optional[str] = None
+    disk_free_gb: Optional[str] = None
     guest_login_enabled: bool = True
     guest_email: Optional[str] = None
 
@@ -62,8 +53,6 @@ def get_settings(_: User = Depends(require_role(Role.admin))):
     except Exception as exc:
         logging.getLogger(__name__).warning("Could not compute disk usage: %s", exc)
     return SettingsOut(
-        allowed_hosts=settings.ALLOWED_HOSTS_LIST,
-        allowed_origins=settings.ALLOWED_ORIGINS_LIST,
         media_root=media_root,
         frontend_port=settings.FRONTEND_PORT if hasattr(settings, "FRONTEND_PORT") else 3000,
         backend_port=settings.BACKEND_PORT,
@@ -112,42 +101,6 @@ def toggle_guest_login(
 
 
 @router.get("/guest-login-enabled", response_model=dict)
-def get_guest_login_enabled():
-    return {"enabled": settings.GUEST_LOGIN_ENABLED}
-
-
-@router.post("/allowed-hosts", response_model=dict)
-def add_allowed_host(
-    payload: HostUpdate,
-    _: User = Depends(require_role(Role.admin)),
-):
-    hosts = settings.ALLOWED_HOSTS_LIST
-    if payload.host in hosts:
-        return {"status": "ok", "allowed_hosts": hosts, "message": "Host already in list"}
-    hosts.append(payload.host)
-    new_str = ",".join(hosts)
-    _update_env("ALLOWED_HOSTS", new_str)
-    object.__setattr__(settings, "ALLOWED_HOSTS", new_str)
-    return {"status": "ok", "allowed_hosts": settings.ALLOWED_HOSTS_LIST, "message": f"Added {payload.host}"}
-
-
-@router.delete("/allowed-hosts/{host}", response_model=dict)
-def remove_allowed_host(
-    host: str,
-    _: User = Depends(require_role(Role.admin)),
-):
-    hosts = settings.ALLOWED_HOSTS_LIST
-    if host not in hosts:
-        raise HTTPException(status_code=404, detail="Host not in allowed list")
-    if host in ("localhost", "127.0.0.1", "*"):
-        raise HTTPException(status_code=400, detail="Cannot remove default host")
-    hosts.remove(host)
-    new_str = ",".join(hosts)
-    _update_env("ALLOWED_HOSTS", new_str)
-    object.__setattr__(settings, "ALLOWED_HOSTS", new_str)
-    return {"status": "ok", "allowed_hosts": settings.ALLOWED_HOSTS_LIST, "message": f"Removed {host}"}
-
-
 @router.get("/storage", response_model=dict)
 def get_storage_info(_: User = Depends(require_role(Role.admin))):
     media_root = settings.MEDIA_ROOT
@@ -269,10 +222,6 @@ def update_smtp_settings(
         "smtp_from_email": settings.SMTP_FROM_EMAIL,
         "smtp_use_tls": settings.SMTP_USE_TLS,
     }
-
-
-class TestEmailRequest(BaseModel):
-    email: str
 
 
 @router.post("/smtp/test", response_model=dict)

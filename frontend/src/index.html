@@ -1437,15 +1437,7 @@ async function loadSettings() {
   const res = await fetch(API + '/settings/', { headers: authHeaders() });
   if (!res.ok) { document.getElementById('settingsStatus').textContent = 'Failed to load settings'; return; }
   const s = await res.json();
-  let html = '<div class="section"><h3>Allowed hosts</h3>';
-  html += '<div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;">';
-  (s.allowed_hosts || []).forEach(function(h) {
-    const removable = !['localhost','127.0.0.1','*'].includes(h);
-    html += '<span style="background:#eef;padding:4px 8px;border-radius:4px;font-size:12px;">' + escapeHtml(h) + '</span>';
-    if (removable) html += '<button onclick="removeHost(' + JSON.stringify(h) + ')" style="width:auto;padding:2px 6px;font-size:11px;">×</button>';
-  });
-  html += '</div><input id="newHost" type="text" placeholder="New host (e.g. docker.tail99133.ts.net)" style="font-size:13px;" /><button onclick="addHost()">Add</button></div>';
-  html += '<div class="section"><h3>Storage</h3>';
+  let html = '<div class="section"><h3>Storage</h3>';
   html += '<div class="meta">' + escapeHtml(s.media_root || '') + '</div>';
   if (s.disk_usage_gb !== null) html += '<div class="meta">Media usage: ' + s.disk_usage_gb + ' GB</div>';
   if (s.disk_total_gb) html += '<div class="meta">Disk: ' + s.disk_used_gb + ' / ' + s.disk_total_gb + ' GB (' + s.disk_free_gb + ' free)</div>';
@@ -1486,21 +1478,6 @@ async function loadSettings() {
     const toggle = document.getElementById('guestLoginToggle');
     if (toggle) toggle.checked = s.guest_login_enabled;
   }
-}
-async function addHost() {
-  const host = document.getElementById('newHost').value.trim();
-  if (!host) return alert('Enter a host name');
-  const res = await fetch(API + '/settings/allowed-hosts', { method: 'POST', headers: authHeaders(), body: JSON.stringify({host}) });
-  const data = await res.json();
-  document.getElementById('settingsStatus').textContent = data.message || (res.ok ? 'Host added' : 'Failed');
-  if (res.ok) { document.getElementById('newHost').value = ''; loadSettings(); }
-}
-async function removeHost(host) {
-  if (!await showConfirm('Remove host ' + host + '?')) return;
-  const res = await fetch(API + '/settings/allowed-hosts/' + encodeURIComponent(host), { method: 'DELETE', headers: authHeaders() });
-  const data = await res.json();
-  document.getElementById('settingsStatus').textContent = data.message || (res.ok ? 'Host removed' : 'Failed');
-  if (res.ok) loadSettings();
 }
 async function toggleGuestLogin(checkbox) {
   const res = await fetch(API + '/settings/guest-login', {
