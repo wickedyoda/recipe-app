@@ -4,13 +4,13 @@ Run: python3 backend/scripts/seed_demo.py
 """
 
 import os
-import sys
 import secrets
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+import sys
 
 import bcrypt
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
+
 from models import (
     GroceryItem,
     GroceryList,
@@ -22,6 +22,8 @@ from models import (
     Tag,
     User,
 )
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 DATABASE_URL = os.environ.get('DATABASE_URL', 'sqlite:///./recipes.db')
 DATABASE_URL = DATABASE_URL.replace('mysql://', 'mysql+pymysql://')
@@ -315,7 +317,6 @@ def main():
         user_id = user.id
 
         # Clear existing demo data (disable FK checks to avoid constraint errors)
-        from sqlalchemy import text
         db.execute(text("SET FOREIGN_KEY_CHECKS = 0"))
         db.query(Recipe).filter(Recipe.owner_id == user_id).delete(synchronize_session=False)
         db.query(Tag).filter(Tag.owner_id == user_id).delete(synchronize_session=False)
@@ -356,7 +357,6 @@ def main():
         ])
 
         # --- Meal Plan ---
-        from datetime import date
         create_meal_plan(db, user_id, 'This Week', 'week', [
             (recipe_ids[0], 'breakfast'),  # Pancakes
             (recipe_ids[6], 'lunch'),      # Avocado Toast
@@ -368,8 +368,8 @@ def main():
         print(f"\n✅ Seeded demo guest account: {GUEST_EMAIL} / {GUEST_PASSWORD}")
         print(f"   - {len(DEMO_RECIPES)} recipes")
         print(f"   - {len(all_tags)} tags")
-        print(f"   - 2 grocery lists (10 + 5 items)")
-        print(f"   - 1 meal plan (4 entries)")
+        print("   - 2 grocery lists (10 + 5 items)")
+        print("   - 1 meal plan (4 entries)")
 
     except Exception as e:
         db.rollback()
