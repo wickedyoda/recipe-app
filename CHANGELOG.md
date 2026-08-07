@@ -7,6 +7,11 @@ and this project uses modified MIT licensing with attribution to upstream tool o
 
 ## [Unreleased] - 2026-08-06
 
+### Changed
+- App renamed from CookieRue to WiskfFul ("Plan it. Cook it. Love it.")
+- Guest account email updated to `guest@wiskfful.app`
+- Logo replaced with chef's hat + heart + book design
+
 ### Added
 - Households: groups of up to 7 users with shared avatar and name
 - Household members can see recipes shared with their household in the recipe list

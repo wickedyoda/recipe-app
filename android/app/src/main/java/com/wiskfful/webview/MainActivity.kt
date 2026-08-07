@@ -1,4 +1,4 @@
-package com.cookierue.webview
+package com.wiskfful.webview
 
 import android.annotation.SuppressLint
 import android.content.Context

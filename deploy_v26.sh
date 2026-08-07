@@ -21,7 +21,7 @@ curl -s http://localhost:8456/health
 echo ""
 
 echo "=== Recipe count ==="
-TOKEN=$(curl -s http://localhost:3000/auth/login -X POST -H 'Content-Type: application/json' -d '{"email":"guest@cookierue.app","password":"guest123!"}' | python3 -c 'import sys,json; print(json.load(sys.stdin)["access_token"])')
+TOKEN=$(curl -s http://localhost:3000/auth/login -X POST -H 'Content-Type: application/json' -d '{"email":"guest@wiskfful.app","password":"guest123!"}' | python3 -c 'import sys,json; print(json.load(sys.stdin)["access_token"])')
 curl -s "http://localhost:3000/recipes/?limit=100" -H "Authorization: Bearer $TOKEN" | python3 -c "import sys,json; d=json.load(sys.stdin); recipes = d if isinstance(d, list) else d.get('items', d); print(f'Recipes: {len(recipes)}')"
 
 echo "=== Deploy done ==="
