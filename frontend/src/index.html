@@ -21,7 +21,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="format-detection" content="telephone=no, email=no, address=no, date=no, month=no, year=no">
   <meta name="mobile-web-app-capable" content="yes">
-  <title>CookieRue</title>
+  <title>WiskfFul - Plan it. Cook it. Love it.</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -516,7 +516,8 @@
 <div class="container" style="position:relative;">
 <div class="card">
   <div class="top" style="text-align:center;padding-top:12px;">
-    <h1 style="margin:0;font-size:20px;display:flex;flex-direction:column;align-items:center;gap:4px;"><a href="#" onclick="switchTab('tabMenu');return false" style="color:inherit;text-decoration:none;display:flex;flex-direction:column;align-items:center;gap:2px;"><img src="/src/icons/logo-lg.png" alt="CookieRue" style="width:64px;height:64px;object-fit:contain;" />CookieRue</a></h1>
+    <h1 style="margin:0;font-size:20px;display:flex;flex-direction:column;align-items:center;gap:4px;"><a href="#" onclick="switchTab('tabMenu');return false" style="color:inherit;text-decoration:none;display:flex;flex-direction:column;align-items:center;gap:2px;"><img src="/src/icons/logo-lg.png" alt="WiskfFul" style="width:64px;height:64px;object-fit:contain;" />WiskfFul</a></h1>
+    <div style="font-size:11px;color:var(--text-muted);font-weight:400;">Plan it. Cook it. Love it.</div>
   </div>
   <!-- Compact single-row navigation with 3-line menu, centered under logo -->
   <div id="headerNavWrapper" style="display:flex;justify-content:center;align-items:center;gap:2px;margin-top:8px;position:relative;">
@@ -1522,7 +1523,7 @@ async function loadSettings() {
   html += '</label>';
   html += '</div>';
   html += '<div class="meta" style="font-size:12px;color:var(--text-muted);margin-top:4px;">';
-  html += 'Guest account: <strong>' + escapeHtml(s.guest_email || 'guest@cookierue.app') + '</strong>';
+  html += 'Guest account: <strong>' + escapeHtml(s.guest_email || 'guest@wiskdful.app') + '</strong>';
   html += '</div></div>';
   document.getElementById('settingsContent').innerHTML = html;
   document.getElementById('settingsStatus').textContent = '';
@@ -1593,7 +1594,7 @@ async function backupDatabase() {
   const blob = await downloadRes.blob();
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
-  const filename = 'cookierue_backup_' + new Date().toISOString().slice(0, 10) + '.sql.gz';
+  const filename = 'wiskdful_backup_' + new Date().toISOString().slice(0, 10) + '.sql.gz';
   link.href = url;
   link.download = filename;
   document.body.appendChild(link);
@@ -2652,7 +2653,7 @@ function closeRecipeDetail() {
 }
 async function shareCurrentRecipe() {
   if (!currentRecipeId) return;
-  const title = document.getElementById('detailTitle')?.textContent || 'CookieRue Recipe';
+  const title = document.getElementById('detailTitle')?.textContent || 'WiskfFul Recipe';
   try {
     const res = await fetch(API + '/recipes/' + currentRecipeId + '/share', {
       method: 'POST',

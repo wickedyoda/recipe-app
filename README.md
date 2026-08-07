@@ -1,7 +1,7 @@
-# CookieRue
+# WiskfFul
 
 <div align="center">
-  <img src="frontend/src/icons/logo-lg.png" alt="CookieRue logo" width="120" height="120" />
+  <img src="frontend/src/icons/logo-lg.png" alt="WiskfFul logo" width="120" height="120" />
 </div>
 
 ![Security Status](https://github.com/wickedyoda/recipe-app/actions/workflows/verify.yml/badge.svg?branch=master)
@@ -52,7 +52,7 @@ The app is mobile-first and uses warm minimalist styling. Key screens:
 
 ## Privacy
 
-CookieRue is a **self-hosted** application — all your data stays on your server.
+WiskfFul is a **self-hosted** application — all your data stays on your server.
 
 - **No third-party analytics or tracking scripts** — the app collects nothing
 - **GDPR compliance**: Export your data (`GET /auth/me/export`) or delete your account (`POST /auth/me/delete`) anytime
@@ -86,9 +86,9 @@ CookieRue is a **self-hosted** application — all your data stays on your serve
 - You may optionally enable a cookie consent banner in settings
 
 ### Hosted vs Self-Hosted
-If you host CookieRue yourself:
+If you host WiskfFul yourself:
 - Data is stored only on your server
-- No data is transmitted to the CookieRue developers or any third party
+- No data is transmitted to the WiskfFul developers or any third party
 
 If you are using a hosted instance:
 - Contact your instance administrator for the privacy policy
