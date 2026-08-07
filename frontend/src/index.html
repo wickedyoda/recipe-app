@@ -1687,13 +1687,6 @@ if (pathMatch && !token) {
   loadPublicRecipe(pathMatch[1]);
 }
 
-let savedLogin = JSON.parse(localStorage.getItem('saved_login') || 'null');
-if (savedLogin) {
-  document.getElementById('loginEmail').value = savedLogin.email || '';
-  document.getElementById('loginPassword').value = savedLogin.password || '';
-  document.getElementById('saveLogin').checked = !!savedLogin.email;
-}
-
 async function login() {
   const email = document.getElementById('loginEmail').value.trim();
   const password = document.getElementById('loginPassword').value;
