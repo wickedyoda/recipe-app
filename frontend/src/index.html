@@ -280,6 +280,7 @@
   .swipe-item { touch-action: none; }
   .filter-row { padding: 8px 12px; gap: 8px; flex-wrap: wrap; justify-content: center; }
   .filter-row.scrollable-x { overflow-x: auto; overflow-y: hidden; padding: 4px 12px; gap: 6px; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; }
+  .filter-row.small-pills .filter-pill { padding: 4px 8px; font-size: 11px; }
   .filter-bar { display: flex; gap: 8px; padding: 8px 12px; overflow-x: auto; -webkit-overflow-scrolling: touch; position: relative; align-items: center; flex-wrap: wrap; }
   .filter-trigger {
     background: #f3f0e8; color: var(--orange-dark); border: 1px solid var(--border-light);
@@ -672,12 +673,8 @@
           <label class="filter-option"><input type="checkbox" onchange="toggleSubFilter('Appetizers')" id="chkAppetizers"> Appetizers</label>
           <label class="filter-option"><input type="checkbox" onchange="toggleSubFilter('Entrees')" id="chkEntrees"> Entrees</label>
           <label class="filter-option"><input type="checkbox" onchange="toggleSubFilter('Snacks')" id="chkSnacks"> Snacks</label>
-          <div class="filter-dropdown-header" style="display:flex;justify-content:space-between;margin-top:8px;">
-            <span><b>Tags</b></span>
-            <span onclick="clearCategoryFilter()" style="font-size:11px;color:var(--orange);">Clear</span>
-          </div>
-          <div id="categoryFilterOptions"></div>
         </div>
+        <div id="tagFilterRow" class="filter-row scrollable-x small-pills"></div>
         <div class="card">
           <div class="top">
             <h2 style="margin-top:0;">Recipes</h2>
@@ -1987,13 +1984,13 @@ async function renderRecipes() {
   const mealFilters = activeMeal ? activeMeal.split(',').map(m => m.trim().toLowerCase()) : [];
   const subFilters = activeSub ? activeSub.split(',').map(s => s.trim().toLowerCase()) : [];
   const categoryFilters = Array.from(activeCategoryFilters).map(c => c.toLowerCase());
-  // Populate the tags dropdown in the filter dropdown
-  const tagOptions = document.getElementById('categoryFilterOptions');
-  if (tagOptions) {
-    tagOptions.innerHTML = categories.map(c => {
-      const checked = activeCategoryFilters.has(c) ? 'checked' : '';
+  // Populate the tag filter row (scrollable pills)
+  const tagRow = document.getElementById('tagFilterRow');
+  if (tagRow) {
+    tagRow.innerHTML = categories.map(c => {
+      const isActive = activeCategoryFilters.has(c);
       const icon = categoryIcons[c] || '📝';
-      return '<label class="filter-option"><input type="checkbox" onchange="toggleCategoryFilter(\' + c + '\');" ' + checked + '> ' + icon + ' ' + escapeHtml(c) + '</label>';
+      return '<span class="filter-pill' + (isActive ? ' active' : '') + '" onclick="toggleCategoryFilter(\' + c + '\')">' + icon + ' ' + escapeHtml(c) + '</span>';
     }).join('');
   }
   const box = document.getElementById('recipeList');
