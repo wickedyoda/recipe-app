@@ -1728,16 +1728,6 @@ async function login() {
     button.disabled = false;
     button.textContent = 'Login';
   }
-  const res = await fetch(API + '/auth/login', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({email,password}) });
-  const data = await res.json();
-  if (!res.ok) return alert('Login failed: ' + (data.detail || 'unknown'));
-  token = data.access_token; localStorage.setItem('token', token);
-  if (saveLogin) {
-    const theme = localStorage.getItem('theme') || 'light';
-    applyTheme(theme);
-  }
-  initTheme();
-  initApp();
 }
 async function loginAsGuest() {
   document.getElementById('loginEmail').value = 'guest@cookierue.app';
