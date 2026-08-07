@@ -527,7 +527,7 @@
   </span>
   <div id="topNavRow" class="hidden" style="display:flex;align-items:center;gap:1px;">
     <button data-tab="tabMenu" onclick="switchTab('tabMenu')" class="nav-btn-small active" title="Menu">🏠</button>
-    <button data-tab="tabRecipes" onclick="switchTab('tabRecipes')" class="nav-btn-small" title="Recipes">📋</button>
+    <button data-tab="tabRecipes" onclick="switchTab(\'tabRecipes\')" class="nav-btn-small" title="Recipes">📋</button>
     <button data-tab="tabImport" onclick="switchTab('tabImport')" class="nav-btn-small" title="Add recipe">📥</button>
     <button data-tab="tabMeals" onclick="switchTab('tabMeals')" class="nav-btn-small" title="Meal plans">📅</button>
     <button data-tab="tabGroceries" onclick="switchTab('tabGroceries')" class="nav-btn-small" title="Grocery lists">🛒</button>
@@ -1447,7 +1447,7 @@ async function loadRecentRecipes() {
     const img = (r.images && r.images[0]) ? r.images[0] : (r.thumbnail_url || '');
     const rating = r.rating ? '★'.repeat(Math.round(r.rating)) : '';
     const imgHtml = img ? '<img src="/media/static/' + escapeHtml(img) + '" style="width:32px;height:32px;border-radius:4px;object-fit:cover;flex-shrink:0;" />' : '<span style="width:32px;height:32px;border-radius:4px;background:#eee;display:inline-block;flex-shrink:0;"></span>';
-    return '<div style="display:flex;align-items:center;gap:8px;padding:4px 0;cursor:pointer;" onclick="switchTab(\'tabRecipes\');setTimeout(()=>openRecipeDetail(\' + r.id + \',100);">' +
+    return '<div style="display:flex;align-items:center;gap:8px;padding:4px 0;cursor:pointer;" onclick="switchTab(' + String.fromCharCode(39) + 'tabRecipes' + String.fromCharCode(39) + ')";setTimeout(()=>openRecipeDetail(' + String.fromCharCode(39) + r.id + String.fromCharCode(39) + ',100);">' +
       imgHtml +
       '<div style="flex:1;min-width:0;">' +
       '<div style="font-size:13px;font-weight:500;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escapeHtml(r.title) + '</div>' +
@@ -1725,7 +1725,7 @@ async function login() {
 async function loginAsGuest() {
   document.getElementById('loginEmail').value = 'guest@cookierue.app';
   document.getElementById('loginPassword').value = 'guest123!';
-  login();
+  await login();
 }
 function toggleLoginPassword() {
   const input = document.getElementById('loginPassword');
@@ -1983,7 +1983,7 @@ async function renderRecipes() {
     tagRow.innerHTML = categories.map(c => {
       const isActive = activeCategoryFilters.has(c);
       const icon = categoryIcons[c] || '📝';
-      return '<span class="filter-pill' + (isActive ? ' active' : '') + '" onclick="toggleCategoryFilter(\' + c + '\')">' + icon + ' ' + escapeHtml(c) + '</span>';
+      return '<span class="filter-pill' + (isActive ? ' active' : '') + '" onclick="toggleCategoryFilter(' + String.fromCharCode(39) + c + String.fromCharCode(39) + ')">' + icon + ' ' + escapeHtml(c) + '</span>';
     }).join('');
   }
   const box = document.getElementById('recipeList');
@@ -2034,9 +2034,9 @@ function updateActiveFiltersDisplay() {
   const container = document.getElementById('activeFilters');
   if (!container) return;
   const pills = [];
-  activeMealFilters.forEach(m => pills.push('<span class="filter-pill" onclick="toggleMealFilter(\' + m + '\')">' + m + ' ×</span>'));
-  activeSubFilters.forEach(s => pills.push('<span class="filter-pill" onclick="toggleSubFilter(\' + s + '\')">' + s + ' ×</span>'));
-  activeCategoryFilters.forEach(c => pills.push('<span class="filter-pill" onclick="toggleCategoryFilter(\' + c + '\')">' + c + ' ×</span>'));
+  activeMealFilters.forEach(m => pills.push('<span class="filter-pill" onclick="toggleMealFilter(' + String.fromCharCode(39) + m + String.fromCharCode(39) + ')">' + m + ' ×</span>'));
+  activeSubFilters.forEach(s => pills.push('<span class="filter-pill" onclick="toggleSubFilter(' + String.fromCharCode(39) + s + String.fromCharCode(39) + ')">' + s + ' ×</span>'));
+  activeCategoryFilters.forEach(c => pills.push('<span class="filter-pill" onclick="toggleCategoryFilter(' + String.fromCharCode(39) + c + String.fromCharCode(39) + ')">' + c + ' ×</span>'));
   container.innerHTML = pills.join('');
   const allPill = document.getElementById('filterAll');
   if (allPill) allPill.style.display = (activeMealFilters.size === 0 && activeSubFilters.size === 0 && activeCategoryFilters.size === 0) ? 'inline-flex' : 'none';
