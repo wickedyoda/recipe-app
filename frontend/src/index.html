@@ -280,6 +280,25 @@
   .swipe-item { touch-action: none; }
   .filter-row { padding: 8px 12px; gap: 8px; flex-wrap: wrap; justify-content: center; }
   .filter-row.scrollable-x { overflow-x: auto; overflow-y: hidden; padding: 4px 12px; gap: 6px; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; }
+  .filter-bar { display: flex; gap: 8px; padding: 8px 12px; overflow-x: auto; -webkit-overflow-scrolling: touch; position: relative; align-items: center; flex-wrap: wrap; }
+  .filter-trigger {
+    background: #f3f0e8; color: var(--orange-dark); border: 1px solid var(--border-light);
+    border-radius: 999px; padding: 6px 14px; font-size: 13px; font-weight: 500;
+    cursor: pointer; white-space: nowrap; min-width: 80px; flex-shrink: 0;
+    transition: all 0.15s ease;
+  }
+  .filter-trigger:hover { background: #ede9e0; }
+  .filter-trigger.active { background: var(--orange); color: #0b0c0f; }
+  .filter-dropdown {
+    position: absolute; z-index: 900; background: #fff; border: 1px solid var(--border-light);
+    border-radius: 10px; padding: 8px; min-width: 200px; box-shadow: 0 6px 24px rgba(0,0,0,0.12);
+    margin-top: 4px;
+  }
+  body.dark .filter-dropdown { background: #1a1a1e; border-color: #3a3a45; }
+  body.dark .filter-trigger { background: #2a2a2e; color: #c8a78a; border-color: #3a3a45; }
+  body.dark .filter-trigger.active { background: var(--orange); color: #0b0c0f; }
+  .filter-dropdown-header { font-size: 12px; color: var(--text-muted); margin-bottom: 6px; cursor: default; }
+  .filter-option { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; font-size: 13px; cursor: pointer; }
   .filter-pill {
     padding: 6px 12px; border-radius: 999px;
     font-size: 13px; font-weight: 500; cursor: pointer;
@@ -630,26 +649,40 @@
         <div class="search">
           <div style="display:flex;align-items:center;gap:8px;"><span style="font-size:18px;">🔍</span><input id="recipeSearch" placeholder="Search recipes..." oninput="renderRecipes()" style="flex:1;" /><button class="secondary" onclick="toggleViewType()" id="viewToggle" style="width:auto;padding:6px 10px;font-size:13px;">⊡</button></div>
         </div>
-        <div class="filter-row scrollable-x">
+        <div class="filter-bar" id="filterBarContainer">
+          <button class="filter-trigger active" onclick="toggleFilterDropdown('filterDropdown')" id="filterTrigger">
+            <span id="filterTriggerLabel">Filter ▼</span>
+          </button>
           <span class="filter-pill active" onclick="clearAllFilters()" id="filterAll">All</span>
-          <span class="filter-pill" onclick="setMealFilter('Breakfast')" id="mealBreakfast">Breakfast</span>
-          <span class="filter-pill" onclick="setMealFilter('Lunch')" id="mealLunch">Lunch</span>
-          <span class="filter-pill" onclick="setMealFilter('Dinner')" id="mealDinner">Dinner</span>
-          <span class="filter-pill" onclick="setMealFilter('Dessert')" id="mealDessert">Dessert</span>
+          <span id="activeFilters"></span>
         </div>
-        <div class="filter-row scrollable-x">
-          <span class="filter-pill" onclick="setSubFilter('Appetizers')" id="subAppetizers">Appetizers</span>
-          <span class="filter-pill" onclick="setSubFilter('Entrees')" id="subEntrees">Entrees</span>
-          <span class="filter-pill" onclick="setSubFilter('Snacks')" id="subSnacks">Snacks</span>
+        <div id="filterDropdown" class="filter-dropdown hidden">
+          <div class="filter-dropdown-header" style="display:flex;justify-content:space-between;">
+            <span><b>Meal</b></span>
+            <span onclick="clearMealFilter()" style="font-size:11px;color:var(--orange);">Clear</span>
+          </div>
+          <label class="filter-option"><input type="checkbox" onchange="toggleMealFilter('Breakfast')" id="chkBreakfast"> Breakfast</label>
+          <label class="filter-option"><input type="checkbox" onchange="toggleMealFilter('Lunch')" id="chkLunch"> Lunch</label>
+          <label class="filter-option"><input type="checkbox" onchange="toggleMealFilter('Dinner')" id="chkDinner"> Dinner</label>
+          <label class="filter-option"><input type="checkbox" onchange="toggleMealFilter('Dessert')" id="chkDessert"> Dessert</label>
+          <div class="filter-dropdown-header" style="display:flex;justify-content:space-between;margin-top:8px;">
+            <span><b>Category</b></span>
+            <span onclick="clearSubFilter()" style="font-size:11px;color:var(--orange);">Clear</span>
+          </div>
+          <label class="filter-option"><input type="checkbox" onchange="toggleSubFilter('Appetizers')" id="chkAppetizers"> Appetizers</label>
+          <label class="filter-option"><input type="checkbox" onchange="toggleSubFilter('Entrees')" id="chkEntrees"> Entrees</label>
+          <label class="filter-option"><input type="checkbox" onchange="toggleSubFilter('Snacks')" id="chkSnacks"> Snacks</label>
+          <div class="filter-dropdown-header" style="display:flex;justify-content:space-between;margin-top:8px;">
+            <span><b>Tags</b></span>
+            <span onclick="clearCategoryFilter()" style="font-size:11px;color:var(--orange);">Clear</span>
+          </div>
+          <div id="categoryFilterOptions"></div>
         </div>
-        <div id="recipeCategoryFilters" class="filter-row scrollable-x"></div>
         <div class="card">
           <div class="top">
             <h2 style="margin-top:0;">Recipes</h2>
             <button class="secondary" onclick="openRecipeForm()" style="width:auto;padding:8px 10px;font-size:13px;">New recipe</button>
             <button class="secondary" onclick="exportRecipes()" style="width:auto;padding:8px 10px;font-size:13px;">Export</button>
-            <button class="secondary" id="selectModeBtn" onclick="toggleSelectMode()" style="width:auto;padding:8px 10px;font-size:13px;display:none;">Select</button>
-            <button class="secondary" id="exportSelectedBtn" onclick="exportSelectedRecipes()" style="width:auto;padding:8px 10px;font-size:13px;display:none;">Export selected</button>
             <button class="secondary" id="selectModeBtn" onclick="toggleSelectMode()" style="width:auto;padding:8px 10px;font-size:13px;display:none;">✓ Select</button>
             <button class="secondary" id="exportSelectedBtn" onclick="exportSelectedRecipes()" style="width:auto;padding:8px 10px;font-size:13px;display:none;">Export selected</button>
             </div>
@@ -1949,19 +1982,33 @@ async function renderRecipes() {
   const categories = Array.from(new Set(items.map(r => r.category).filter(Boolean))).slice(0, 20);
   const filterBox = document.getElementById('recipeCategoryFilters');
   const activeCategory = filterBox.dataset.active || '';
-  const activeMeal = (filterBox.dataset.meal || '').trim();
-  const activeSub = (filterBox.dataset.sub || '').trim();
-  filterBox.innerHTML = categories.map(c => '<span class="filter-pill" onclick="setCategoryFilter(' + '\'' + escapeHtml(c) + '\')">' + escapeHtml(categoryIcon(c)) + ' ' + escapeHtml(c) + '</span>').join('');
+  const activeMeal = (filterBox.dataset.meal || '');
+  const activeSub = (filterBox.dataset.sub || '');
+  const mealFilters = activeMeal ? activeMeal.split(',').map(m => m.trim().toLowerCase()) : [];
+  const subFilters = activeSub ? activeSub.split(',').map(s => s.trim().toLowerCase()) : [];
+  const categoryFilters = Array.from(activeCategoryFilters).map(c => c.toLowerCase());
+  // Populate the tags dropdown in the filter dropdown
+  const tagOptions = document.getElementById('categoryFilterOptions');
+  if (tagOptions) {
+    tagOptions.innerHTML = categories.map(c => {
+      const checked = activeCategoryFilters.has(c) ? 'checked' : '';
+      const icon = categoryIcons[c] || '📝';
+      return '<label class="filter-option"><input type="checkbox" onchange="toggleCategoryFilter(\' + c + '\');" ' + checked + '> ' + icon + ' ' + escapeHtml(c) + '</label>';
+    }).join('');
+  }
   const box = document.getElementById('recipeList');
   box.classList.toggle('grid', viewType === 'grid');
   box.innerHTML = '';
   const filtered = items.filter(r => {
     const matchesSearch = !q || (r.title||'').toLowerCase().includes(q) || (r.description||'').toLowerCase().includes(q);
-    const matchesCategory = !activeCategory || r.category === activeCategory;
-    const matchesMeal = !activeMeal || (r.category || '').toLowerCase() === activeMeal.toLowerCase();
-    const matchesSub = !activeSub || (r.subcategory || '').toLowerCase() === activeSub.toLowerCase();
+    const rCategory = (r.category || '').toLowerCase();
+    const rSub = (r.subcategory || '').toLowerCase();
+    const matchesCategory = !activeCategory || rCategory === activeCategory.toLowerCase();
+    const matchesMeal = mealFilters.length === 0 || mealFilters.includes(rCategory);
+    const matchesSub = subFilters.length === 0 || subFilters.includes(rSub);
+    const matchesTag = categoryFilters.length === 0 || categoryFilters.includes(rCategory);
     const matchesFav = !filterBox.dataset.favs || favsById.has(r.id);
-    return matchesSearch && matchesCategory && matchesMeal && matchesSub && matchesFav;
+    return matchesSearch && matchesCategory && matchesMeal && matchesSub && matchesTag && matchesFav;
   });
   const favPill = document.getElementById('favPill');
   if (favPill) favPill.classList.toggle('active', !!filterBox.dataset.favs);
@@ -1988,48 +2035,123 @@ async function renderRecipes() {
     box.appendChild(el);
   }
 }
-window.setCategoryFilter = function(category) {
-  const filterBox = document.getElementById('recipeCategoryFilters');
-  filterBox.dataset.active = category || '';
-  filterBox.dataset.favs = '';
-  renderRecipes();
-};
-window.setMealFilter = function(meal) {
-  const filterBox = document.getElementById('recipeCategoryFilters');
-  filterBox.dataset.meal = meal || '';
-  ['filterAll','mealBreakfast','mealLunch','mealDinner','mealDessert'].forEach(id => { const el = document.getElementById(id); if (el) el.classList.remove('active'); });
-  if (meal) {
-    const map = {Breakfast:'mealBreakfast',Lunch:'mealLunch',Dinner:'mealDinner',Dessert:'mealDessert'};
-    const el = document.getElementById(map[meal]);
-    if (el) el.classList.add('active');
-  } else {
-    const el = document.getElementById('filterAll');
-    if (el) el.classList.add('active');
+// Multi-select filter state
+const activeMealFilters = new Set();
+const activeSubFilters = new Set();
+const activeCategoryFilters = new Set();
+
+function updateActiveFiltersDisplay() {
+  const container = document.getElementById('activeFilters');
+  if (!container) return;
+  const pills = [];
+  activeMealFilters.forEach(m => pills.push('<span class="filter-pill" onclick="toggleMealFilter(\' + m + '\')">' + m + ' ×</span>'));
+  activeSubFilters.forEach(s => pills.push('<span class="filter-pill" onclick="toggleSubFilter(\' + s + '\')">' + s + ' ×</span>'));
+  activeCategoryFilters.forEach(c => pills.push('<span class="filter-pill" onclick="toggleCategoryFilter(\' + c + '\')">' + c + ' ×</span>'));
+  container.innerHTML = pills.join('');
+  const allPill = document.getElementById('filterAll');
+  if (allPill) allPill.style.display = (activeMealFilters.size === 0 && activeSubFilters.size === 0 && activeCategoryFilters.size === 0) ? 'inline-flex' : 'none';
+}
+
+window.toggleFilterDropdown = function(id) {
+  const dropdown = document.getElementById(id);
+  if (!dropdown) return;
+  dropdown.classList.toggle('hidden');
+  if (!dropdown.classList.contains('hidden')) {
+    const container = document.getElementById('filterBarContainer');
+    if (container) {
+      const rect = container.getBoundingClientRect();
+      dropdown.style.position = 'absolute';
+      dropdown.style.top = (rect.bottom + window.scrollY) + 'px';
+      dropdown.style.left = (rect.left + window.scrollX) + 'px';
+      dropdown.style.maxWidth = (rect.width) + 'px';
+    }
+    // Close on outside click
+    const closeFn = function(e) {
+      if (!dropdown.contains(e.target) && e.target.id !== 'filterTrigger') {
+        dropdown.classList.add('hidden');
+        document.removeEventListener('click', closeFn);
+      }
+    };
+    setTimeout(() => document.addEventListener('click', closeFn), 10);
   }
+};
+
+window.toggleMealFilter = function(meal) {
+  if (activeMealFilters.has(meal)) activeMealFilters.delete(meal);
+  else activeMealFilters.add(meal);
+  const checkbox = document.getElementById('chk' + meal.replace(/[^a-zA-Z]/g, ''));
+  if (checkbox) checkbox.checked = activeMealFilters.has(meal);
+  filterBox = document.getElementById('recipeCategoryFilters');
+  filterBox.dataset.meal = Array.from(activeMealFilters).join(',');
+  updateActiveFiltersDisplay();
   renderRecipes();
 };
-window.setSubFilter = function(sub) {
+
+window.toggleSubFilter = function(sub) {
+  if (activeSubFilters.has(sub)) activeSubFilters.delete(sub);
+  else activeSubFilters.add(sub);
+  const checkbox = document.getElementById('chk' + sub.replace(/[^a-zA-Z]/g, ''));
+  if (checkbox) checkbox.checked = activeSubFilters.has(sub);
   const filterBox = document.getElementById('recipeCategoryFilters');
-  filterBox.dataset.sub = sub || '';
-  ['filterAll','subEntrees','subSnacks','subAppetizers','subDesserts'].forEach(id => { const el = document.getElementById(id); if (el) el.classList.remove('active'); });
-  if (sub) {
-    const map = {Entrees:'subEntrees',Snacks:'subSnacks',Appetizers:'subAppetizers',Desserts:'subDesserts'};
-    const el = document.getElementById(map[sub]);
-    if (el) el.classList.add('active');
-  } else {
-    const el = document.getElementById('filterAll');
-    if (el) el.classList.add('active');
-  }
+  filterBox.dataset.sub = Array.from(activeSubFilters).join(',');
+  updateActiveFiltersDisplay();
   renderRecipes();
 };
+
+window.toggleCategoryFilter = function(category) {
+  if (activeCategoryFilters.has(category)) activeCategoryFilters.delete(category);
+  else activeCategoryFilters.add(category);
+  updateActiveFiltersDisplay();
+  renderRecipes();
+};
+
+window.clearMealFilter = function() {
+  activeMealFilters.clear();
+  ['chkBreakfast','chkLunch','chkDinner','chkDessert'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.checked = false;
+  });
+  document.getElementById('recipeCategoryFilters').dataset.meal = '';
+  updateActiveFiltersDisplay();
+  renderRecipes();
+  const dropdown = document.getElementById('filterDropdown');
+  if (dropdown) dropdown.classList.add('hidden');
+};
+
+window.clearSubFilter = function() {
+  activeSubFilters.clear();
+  document.getElementById('recipeCategoryFilters').dataset.sub = '';
+  updateActiveFiltersDisplay();
+  renderRecipes();
+  const dropdown = document.getElementById('filterDropdown');
+  if (dropdown) dropdown.classList.add('hidden');
+};
+
+window.clearCategoryFilter = function() {
+  activeCategoryFilters.clear();
+  updateActiveFiltersDisplay();
+  renderRecipes();
+  const dropdown = document.getElementById('filterDropdown');
+  if (dropdown) dropdown.classList.add('hidden');
+};
+
 window.clearAllFilters = function() {
+  activeMealFilters.clear();
+  activeSubFilters.clear();
+  activeCategoryFilters.clear();
+  ['chkBreakfast','chkLunch','chkDinner','chkDessert'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.checked = false;
+  });
   const filterBox = document.getElementById('recipeCategoryFilters');
   filterBox.dataset.active = '';
   filterBox.dataset.meal = '';
   filterBox.dataset.sub = '';
   filterBox.dataset.favs = '';
-  ['filterAll'].forEach(id => { const el = document.getElementById(id); if (el) el.classList.add('active'); });
+  updateActiveFiltersDisplay();
   renderRecipes();
+  const dropdown = document.getElementById('filterDropdown');
+  if (dropdown) dropdown.classList.add('hidden');
 };
 window.toggleFavoritesFilter = function() {
   const filterBox = document.getElementById('recipeCategoryFilters');
