@@ -279,6 +279,7 @@
   .recipe-detail-gallery img { width: 100%; border-radius: 12px; max-height: 280px; object-fit: cover; display: block; cursor: zoom-in; }
   .swipe-item { touch-action: none; }
   .filter-row { padding: 8px 12px; gap: 8px; flex-wrap: wrap; justify-content: center; }
+  .filter-row.scrollable-x { overflow-x: auto; overflow-y: hidden; padding: 4px 12px; gap: 6px; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; }
   .filter-pill {
     padding: 6px 12px; border-radius: 999px;
     font-size: 13px; font-weight: 500; cursor: pointer;
@@ -293,6 +294,10 @@
   [data-theme="dark"] .filter-pill { background: #2a2d35; color: #c8a78a; border-color: #3a2a1a; }
   [data-theme="dark"] .filter-pill:hover { background: var(--orange); color: #0b0c0f; }
   [data-theme="dark"] .filter-pill.active { background: var(--orange); color: #0b0c0f; }
+  .filter-row.scrollable-x::-webkit-scrollbar { height: 4px; }
+  .filter-row.scrollable-x::-webkit-scrollbar-track { background: transparent; }
+  .filter-row.scrollable-x::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 2px; }
+  body.dark .filter-row.scrollable-x::-webkit-scrollbar-thumb { background: #3a3a45; }
   /* Cookbook page-turn animation */
   .book-container {
     perspective: 1000px;
@@ -460,6 +465,7 @@
     .meta-label { min-width: 70px; }
     .meta-label-val { font-size: 13px; }
     .filter-row { padding: 6px 12px; gap: 6px; }
+    .filter-row.scrollable-x { flex-wrap: wrap; }
     .search { padding: 10px; }
     .share-card { width: 95%; max-width: 340px; }
     .share-btn { font-size: 15px; padding: 12px; margin: 3px 0; }
@@ -624,17 +630,19 @@
         <div class="search">
           <div style="display:flex;align-items:center;gap:8px;"><span style="font-size:18px;">🔍</span><input id="recipeSearch" placeholder="Search recipes..." oninput="renderRecipes()" style="flex:1;" /><button class="secondary" onclick="toggleViewType()" id="viewToggle" style="width:auto;padding:6px 10px;font-size:13px;">⊡</button></div>
         </div>
-        <div class="filter-row">
+        <div class="filter-row scrollable-x">
           <span class="filter-pill active" onclick="clearAllFilters()" id="filterAll">All</span>
           <span class="filter-pill" onclick="setMealFilter('Breakfast')" id="mealBreakfast">Breakfast</span>
           <span class="filter-pill" onclick="setMealFilter('Lunch')" id="mealLunch">Lunch</span>
           <span class="filter-pill" onclick="setMealFilter('Dinner')" id="mealDinner">Dinner</span>
+          <span class="filter-pill" onclick="setMealFilter('Dessert')" id="mealDessert">Dessert</span>
+        </div>
+        <div class="filter-row scrollable-x">
+          <span class="filter-pill" onclick="setSubFilter('Appetizers')" id="subAppetizers">Appetizers</span>
           <span class="filter-pill" onclick="setSubFilter('Entrees')" id="subEntrees">Entrees</span>
           <span class="filter-pill" onclick="setSubFilter('Snacks')" id="subSnacks">Snacks</span>
-          <span class="filter-pill" onclick="setSubFilter('Appetizers')" id="subAppetizers">Appetizers</span>
-          <span class="filter-pill" onclick="setSubFilter('Desserts')" id="subDesserts">Desserts</span>
         </div>
-        <div id="recipeCategoryFilters" class="filter-row"></div>
+        <div id="recipeCategoryFilters" class="filter-row scrollable-x"></div>
         <div class="card">
           <div class="top">
             <h2 style="margin-top:0;">Recipes</h2>
@@ -1989,9 +1997,9 @@ window.setCategoryFilter = function(category) {
 window.setMealFilter = function(meal) {
   const filterBox = document.getElementById('recipeCategoryFilters');
   filterBox.dataset.meal = meal || '';
-  ['filterAll','mealBreakfast','mealLunch','mealDinner'].forEach(id => { const el = document.getElementById(id); if (el) el.classList.remove('active'); });
+  ['filterAll','mealBreakfast','mealLunch','mealDinner','mealDessert'].forEach(id => { const el = document.getElementById(id); if (el) el.classList.remove('active'); });
   if (meal) {
-    const map = {Breakfast:'mealBreakfast',Lunch:'mealLunch',Dinner:'mealDinner'};
+    const map = {Breakfast:'mealBreakfast',Lunch:'mealLunch',Dinner:'mealDinner',Dessert:'mealDessert'};
     const el = document.getElementById(map[meal]);
     if (el) el.classList.add('active');
   } else {
