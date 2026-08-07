@@ -305,16 +305,15 @@ def main():
         user = create_demo_user(db)
         user_id = user.id
 
-        # Clear existing demo data (order matters for FK constraints)
-        db.query(GroceryItem).filter(GroceryItem.list_id == GroceryList.id).delete(synchronize_session=False)
-        db.query(MealPlanEntry).filter(MealPlanEntry.meal_plan_id == MealPlan.id).delete(synchronize_session=False)
-        db.query(RecipeTag).filter(RecipeTag.recipe_id == Recipe.id).delete(synchronize_session=False)
-        db.query(GroceryList).filter(GroceryList.owner_id == user_id).delete(synchronize_session=False)
-        db.query(MealPlanEntry).filter(MealPlanEntry.owner_id == user_id).delete(synchronize_session=False)
-        db.query(MealPlan).filter(MealPlan.owner_id == user_id).delete(synchronize_session=False)
+        # Clear existing demo data (disable FK checks to avoid constraint errors)
+        from sqlalchemy import text
+        db.execute(text("SET FOREIGN_KEY_CHECKS = 0"))
         db.query(Recipe).filter(Recipe.owner_id == user_id).delete(synchronize_session=False)
         db.query(Tag).filter(Tag.owner_id == user_id).delete(synchronize_session=False)
+        db.query(GroceryList).filter(GroceryList.owner_id == user_id).delete(synchronize_session=False)
+        db.query(MealPlan).filter(MealPlan.owner_id == user_id).delete(synchronize_session=False)
         db.query(PasswordHistory).filter(PasswordHistory.user_id == user_id).delete(synchronize_session=False)
+        db.execute(text("SET FOREIGN_KEY_CHECKS = 1"))
         db.flush()
 
         # --- Tags ---
