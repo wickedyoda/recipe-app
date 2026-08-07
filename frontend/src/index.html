@@ -21,7 +21,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="format-detection" content="telephone=no, email=no, address=no, date=no, month=no, year=no">
   <meta name="mobile-web-app-capable" content="yes">
-  <title>CookieRue</title>
+  <title>WiskfFul - Plan it. Cook it. Love it.</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -279,6 +279,27 @@
   .recipe-detail-gallery img { width: 100%; border-radius: 12px; max-height: 280px; object-fit: cover; display: block; cursor: zoom-in; }
   .swipe-item { touch-action: none; }
   .filter-row { padding: 8px 12px; gap: 8px; flex-wrap: wrap; justify-content: center; }
+  .filter-row.scrollable-x { overflow-x: auto; overflow-y: hidden; padding: 4px 12px; gap: 6px; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; }
+  .filter-row.small-pills .filter-pill { padding: 4px 8px; font-size: 11px; }
+  .filter-bar { display: flex; gap: 8px; padding: 8px 12px; overflow-x: auto; -webkit-overflow-scrolling: touch; position: relative; align-items: center; flex-wrap: wrap; }
+  .filter-trigger {
+    background: #f3f0e8; color: var(--orange-dark); border: 1px solid var(--border-light);
+    border-radius: 999px; padding: 6px 14px; font-size: 13px; font-weight: 500;
+    cursor: pointer; white-space: nowrap; min-width: 80px; flex-shrink: 0;
+    transition: all 0.15s ease;
+  }
+  .filter-trigger:hover { background: #ede9e0; }
+  .filter-trigger.active { background: var(--orange); color: #0b0c0f; }
+  .filter-dropdown {
+    position: absolute; z-index: 900; background: #fff; border: 1px solid var(--border-light);
+    border-radius: 10px; padding: 8px; min-width: 200px; box-shadow: 0 6px 24px rgba(0,0,0,0.12);
+    margin-top: 4px;
+  }
+  body.dark .filter-dropdown { background: #1a1a1e; border-color: #3a3a45; }
+  body.dark .filter-trigger { background: #2a2a2e; color: #c8a78a; border-color: #3a3a45; }
+  body.dark .filter-trigger.active { background: var(--orange); color: #0b0c0f; }
+  .filter-dropdown-header { font-size: 12px; color: var(--text-muted); margin-bottom: 6px; cursor: default; }
+  .filter-option { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; font-size: 13px; cursor: pointer; }
   .filter-pill {
     padding: 6px 12px; border-radius: 999px;
     font-size: 13px; font-weight: 500; cursor: pointer;
@@ -293,6 +314,11 @@
   [data-theme="dark"] .filter-pill { background: #2a2d35; color: #c8a78a; border-color: #3a2a1a; }
   [data-theme="dark"] .filter-pill:hover { background: var(--orange); color: #0b0c0f; }
   [data-theme="dark"] .filter-pill.active { background: var(--orange); color: #0b0c0f; }
+  .filter-row.scrollable-x::-webkit-scrollbar { height: 4px; }
+  .filter-row.scrollable-x::-webkit-scrollbar-track { background: transparent; }
+  .filter-row.scrollable-x::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 2px; }
+  body.dark .filter-row.scrollable-x::-webkit-scrollbar-thumb { background: #3a3a45; }
+  .dropdown-menu { background: #fcfafa; border: 1px solid #e0ddd7; }
   /* Cookbook page-turn animation */
   .book-container {
     perspective: 1000px;
@@ -460,6 +486,7 @@
     .meta-label { min-width: 70px; }
     .meta-label-val { font-size: 13px; }
     .filter-row { padding: 6px 12px; gap: 6px; }
+    .filter-row.scrollable-x { flex-wrap: wrap; }
     .search { padding: 10px; }
     .share-card { width: 95%; max-width: 340px; }
     .share-btn { font-size: 15px; padding: 12px; margin: 3px 0; }
@@ -489,22 +516,24 @@
 <div class="container" style="position:relative;">
 <div class="card">
   <div class="top" style="text-align:center;padding-top:12px;">
-    <h1 style="margin:0;font-size:20px;display:flex;flex-direction:column;align-items:center;gap:4px;"><a href="#" onclick="switchTab('tabMenu');return false" style="color:inherit;text-decoration:none;display:flex;flex-direction:column;align-items:center;gap:2px;"><img src="/src/icons/logo-lg.png" alt="CookieRue" style="width:64px;height:64px;object-fit:contain;" />CookieRue</a></h1>
+    <h1 style="margin:0;font-size:20px;display:flex;flex-direction:column;align-items:center;gap:4px;"><a href="#" onclick="switchTab('tabMenu');return false" style="color:inherit;text-decoration:none;display:flex;flex-direction:column;align-items:center;gap:2px;"><img src="/src/icons/logo-lg.png" alt="WiskfFul" style="width:64px;height:64px;object-fit:contain;" />WiskfFul</a></h1>
+    <div style="font-size:11px;color:var(--text-muted);font-weight:400;">Plan it. Cook it. Love it.</div>
   </div>
   <!-- Compact single-row navigation with 3-line menu, centered under logo -->
   <div id="headerNavWrapper" style="display:flex;justify-content:center;align-items:center;gap:2px;margin-top:8px;position:relative;">
+  <div style="display:flex;justify-content:center;align-items:center;gap:1px;">
   <span id="userEmailRow" style="font-size:10px;color:#555;margin:0 4px;display:flex;flex-direction:column;align-items:center;gap:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px;">
     <span id="userEmail" style="font-size:10px;font-weight:500;"></span>
     <span id="userEmailBadge" class="hidden" style="font-size:8px;color:#996600;background:#fff3cd;padding:0 4px;border-radius:4px;">READ-ONLY</span>
   </span>
   <div id="topNavRow" class="hidden" style="display:flex;align-items:center;gap:1px;">
     <button data-tab="tabMenu" onclick="switchTab('tabMenu')" class="nav-btn-small active" title="Menu">🏠</button>
-    <button data-tab="tabRecipes" onclick="switchTab('tabRecipes')" class="nav-btn-small" title="Recipes">📋</button>
+    <button data-tab="tabRecipes" onclick="switchTab(\'tabRecipes\')" class="nav-btn-small" title="Recipes">📋</button>
     <button data-tab="tabImport" onclick="switchTab('tabImport')" class="nav-btn-small" title="Add recipe">📥</button>
     <button data-tab="tabMeals" onclick="switchTab('tabMeals')" class="nav-btn-small" title="Meal plans">📅</button>
     <button data-tab="tabGroceries" onclick="switchTab('tabGroceries')" class="nav-btn-small" title="Grocery lists">🛒</button>
     <button data-tab="tabCookbooks" onclick="switchTab('tabCookbooks')" class="nav-btn-small" title="Cookbooks">📚</button>
-    <button data-tab="tabHouseholds" onclick="switchTab('tabHouseholds')" class="nav-btn-small" title="Households">👨‍👩‍👧‍👦</button>
+    <button data-tab="tabHouseholds" onclick="switchTab('tabHouseholds')" class="nav-btn-small" title="Households">👨‍👩‍👧‍👨</button>
     <button id="adminTabBtnTop" data-tab="tabAdmin" onclick="switchTab('tabAdmin')" class="nav-btn-small hidden" title="Admin">👤</button>
     <button class="secondary small" id="menuBtn" onclick="toggleDropdown()" style="display:none;padding:2px 6px;font-size:11px;">☰</button>
   </div>
@@ -512,7 +541,7 @@
   <button class="secondary small" id="themeToggle" onclick="toggleTheme()" style="margin-left:auto;padding:2px 4px;font-size:14px;line-height:1;">🌙</button>
   </div>
   <!-- Dropdown menu positioned at top-right -->
-  <div id="dropdownMenu" class="hidden" style="position:absolute;top:56px;right:12px;background:#fcfafa;border:1px solid #e0ddd7;border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,0.12);z-index:1000;min-width:160px;">
+  <div id="dropdownMenu" class="hidden dropdown-menu" style="position:absolute;top:56px;right:12px;border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,0.12);z-index:1000;min-width:160px;">
     <button onclick="switchTab('tabMenu');closeDropdown()" class="dropdown-item">🏠 Menu</button>
     <button onclick="switchTab('tabRecipes');closeDropdown()" class="dropdown-item">📋 Recipes</button>
     <button onclick="switchTab('tabImport');closeDropdown()" class="dropdown-item">📥 Add recipe</button>
@@ -562,7 +591,7 @@
     <div id="appSection" class="hidden">
       <div id="tabMenu" class="tab">
         <div class="card">
-          <div class="nav-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;">
+          <div class="nav-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:0 8px;">
             <button class="nav-square" onclick="switchTab('tabImport')" aria-label="Add recipe">
               <span class="nav-icon">📥</span><span class="nav-label">Add recipe</span>
             </button>
@@ -624,24 +653,39 @@
         <div class="search">
           <div style="display:flex;align-items:center;gap:8px;"><span style="font-size:18px;">🔍</span><input id="recipeSearch" placeholder="Search recipes..." oninput="renderRecipes()" style="flex:1;" /><button class="secondary" onclick="toggleViewType()" id="viewToggle" style="width:auto;padding:6px 10px;font-size:13px;">⊡</button></div>
         </div>
-        <div class="filter-row">
+        <div class="filter-bar" id="filterBarContainer">
+          <button class="filter-trigger active" onclick="toggleFilterDropdown('filterDropdown')" id="filterTrigger">
+            <span id="filterTriggerLabel">Filter ▼</span>
+          </button>
           <span class="filter-pill active" onclick="clearAllFilters()" id="filterAll">All</span>
-          <span class="filter-pill" onclick="setMealFilter('Breakfast')" id="mealBreakfast">Breakfast</span>
-          <span class="filter-pill" onclick="setMealFilter('Lunch')" id="mealLunch">Lunch</span>
-          <span class="filter-pill" onclick="setMealFilter('Dinner')" id="mealDinner">Dinner</span>
-          <span class="filter-pill" onclick="setSubFilter('Entrees')" id="subEntrees">Entrees</span>
-          <span class="filter-pill" onclick="setSubFilter('Snacks')" id="subSnacks">Snacks</span>
-          <span class="filter-pill" onclick="setSubFilter('Appetizers')" id="subAppetizers">Appetizers</span>
-          <span class="filter-pill" onclick="setSubFilter('Desserts')" id="subDesserts">Desserts</span>
+          <span id="activeFilters"></span>
         </div>
-        <div id="recipeCategoryFilters" class="filter-row"></div>
+        <div id="filterDropdown" class="filter-dropdown hidden">
+          <div class="filter-dropdown-header" style="display:flex;justify-content:space-between;">
+            <span><b>Meal</b></span>
+            <span onclick="clearMealFilter()" style="font-size:11px;color:var(--orange);">Clear</span>
+          </div>
+          <label class="filter-option"><input type="checkbox" onchange="toggleMealFilter('Breakfast')" id="chkBreakfast"> Breakfast</label>
+          <label class="filter-option"><input type="checkbox" onchange="toggleMealFilter('Lunch')" id="chkLunch"> Lunch</label>
+          <label class="filter-option"><input type="checkbox" onchange="toggleMealFilter('Dinner')" id="chkDinner"> Dinner</label>
+          <label class="filter-option"><input type="checkbox" onchange="toggleMealFilter('Dessert')" id="chkDessert"> Dessert</label>
+          <div class="filter-dropdown-header" style="display:flex;justify-content:space-between;margin-top:8px;">
+            <span><b>Category</b></span>
+            <span onclick="clearSubFilter()" style="font-size:11px;color:var(--orange);">Clear</span>
+          </div>
+          <label class="filter-option"><input type="checkbox" onchange="toggleSubFilter('Appetizers')" id="chkAppetizers"> Appetizers</label>
+          <label class="filter-option"><input type="checkbox" onchange="toggleSubFilter('Entrees')" id="chkEntrees"> Entrees</label>
+          <label class="filter-option"><input type="checkbox" onchange="toggleSubFilter('Snacks')" id="chkSnacks"> Snacks</label>
+        </div>
+        <div style="padding:8px;border-top:1px solid var(--border);margin-top:4px;">
+          <button class="secondary" onclick="applyFilters()" style="width:100%;padding:10px;font-weight:600;">Apply Filters</button>
+        </div>
+        <div id="tagFilterRow" class="filter-row scrollable-x small-pills"></div>
         <div class="card">
           <div class="top">
             <h2 style="margin-top:0;">Recipes</h2>
             <button class="secondary" onclick="openRecipeForm()" style="width:auto;padding:8px 10px;font-size:13px;">New recipe</button>
             <button class="secondary" onclick="exportRecipes()" style="width:auto;padding:8px 10px;font-size:13px;">Export</button>
-            <button class="secondary" id="selectModeBtn" onclick="toggleSelectMode()" style="width:auto;padding:8px 10px;font-size:13px;display:none;">Select</button>
-            <button class="secondary" id="exportSelectedBtn" onclick="exportSelectedRecipes()" style="width:auto;padding:8px 10px;font-size:13px;display:none;">Export selected</button>
             <button class="secondary" id="selectModeBtn" onclick="toggleSelectMode()" style="width:auto;padding:8px 10px;font-size:13px;display:none;">✓ Select</button>
             <button class="secondary" id="exportSelectedBtn" onclick="exportSelectedRecipes()" style="width:auto;padding:8px 10px;font-size:13px;display:none;">Export selected</button>
             </div>
@@ -1061,7 +1105,7 @@
           <div class="section">
             <h3>Preferences</h3>
             <label style="font-size:13px;display:block;margin-bottom:6px;">Default servings</label>
-            <input id="defaultServings" type="number" min="1" max="20" value="4" />
+            <input id="defaultServings" type="number" min="1" max="20" value="4" onchange="saveSettings()" />
           </div>
           <div class="section">
             <h3>Theme</h3>
@@ -1276,19 +1320,29 @@ function toggleDropdown() {
     // Position dropdown relative to the button
     if (btn) {
       const rect = btn.getBoundingClientRect();
-      const menuWidth = 176; // min-width is 160px + some padding
+      const container = btn.parentElement; // .container or parent with position:relative
+      let containerRect = {top: 0, left: 0};
+      if (container) {
+        const cr = container.getBoundingClientRect();
+        // Get scroll-adjusted position of the container
+        containerRect = {
+          top: cr.top + window.scrollY,
+          left: cr.left + window.scrollX
+        };
+      }
+      const menuWidth = 176; // min-width is 160px + padding
       const spaceRight = window.innerWidth - rect.right;
       const spaceLeft = rect.left;
       // If not enough space on the right, align to right edge of button
       if (spaceRight < menuWidth && spaceLeft >= menuWidth) {
-        menu.style.right = '0px';
+        menu.style.right = '8px';
         menu.style.left = 'auto';
       } else {
-        menu.style.left = (rect.right - menuWidth) + 'px';
+        menu.style.left = (rect.left - containerRect.left + 8) + 'px';
         menu.style.right = 'auto';
       }
-      // Position below the button
-      menu.style.top = (rect.bottom + window.scrollY - 4) + 'px';
+      // Position below the button, accounting for container offset
+      menu.style.top = (rect.bottom + window.scrollY - containerRect.top - 4) + 'px';
     }
   } else {
     menu.classList.add('hidden');
@@ -1397,7 +1451,7 @@ async function loadRecentRecipes() {
     const img = (r.images && r.images[0]) ? r.images[0] : (r.thumbnail_url || '');
     const rating = r.rating ? '★'.repeat(Math.round(r.rating)) : '';
     const imgHtml = img ? '<img src="/media/static/' + escapeHtml(img) + '" style="width:32px;height:32px;border-radius:4px;object-fit:cover;flex-shrink:0;" />' : '<span style="width:32px;height:32px;border-radius:4px;background:#eee;display:inline-block;flex-shrink:0;"></span>';
-    return '<div style="display:flex;align-items:center;gap:8px;padding:4px 0;cursor:pointer;" onclick="switchTab(\'tabRecipes\');setTimeout(()=>openRecipeDetail(\' + r.id + \',100);">' +
+    return `<div style="display:flex;align-items:center;gap:8px;padding:4px 0;cursor:pointer;" onclick="switchTab('tabRecipes');setTimeout(()=>openRecipeDetail('${r.id}',100);">` +
       imgHtml +
       '<div style="flex:1;min-width:0;">' +
       '<div style="font-size:13px;font-weight:500;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escapeHtml(r.title) + '</div>' +
@@ -1469,7 +1523,7 @@ async function loadSettings() {
   html += '</label>';
   html += '</div>';
   html += '<div class="meta" style="font-size:12px;color:var(--text-muted);margin-top:4px;">';
-  html += 'Guest account: <strong>' + escapeHtml(s.guest_email || 'guest@cookierue.app') + '</strong>';
+  html += 'Guest account: <strong>' + escapeHtml(s.guest_email || 'guest@wiskdful.app') + '</strong>';
   html += '</div></div>';
   document.getElementById('settingsContent').innerHTML = html;
   document.getElementById('settingsStatus').textContent = '';
@@ -1540,7 +1594,7 @@ async function backupDatabase() {
   const blob = await downloadRes.blob();
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
-  const filename = 'cookierue_backup_' + new Date().toISOString().slice(0, 10) + '.sql.gz';
+  const filename = 'wiskdful_backup_' + new Date().toISOString().slice(0, 10) + '.sql.gz';
   link.href = url;
   link.download = filename;
   document.body.appendChild(link);
@@ -1563,13 +1617,13 @@ function saveSettings() {
   const existing = JSON.parse(localStorage.getItem('settings') || '{}');
   existing.defaultServings = isNaN(servings) ? 4 : servings;
   localStorage.setItem('settings', JSON.stringify(existing));
-  alert('Settings saved');
+  showConfirm('Settings saved');
 }
 async function changePassword() {
   const current = document.getElementById('changePasswordCurrent').value;
   const newPass = document.getElementById('changePasswordNew').value;
   const verify = document.getElementById('changePasswordVerify').value;
-  if (!current || !newPass) return alert('All fields are required');
+  if (!current || !newPass || !verify) return alert('All fields are required');
   if (newPass !== verify) return alert('New passwords do not match');
   if (newPass.length < 6) return alert('New password must be at least 6 characters');
   const res = await fetch(API + '/auth/change-password', { method:'POST', headers: authHeaders(), body: JSON.stringify({current_password: current, new_password: newPass}) });
@@ -1610,8 +1664,6 @@ async function deleteAccount() {
   const step1 = await showConfirm('This will permanently delete your account and ALL your data (recipes, meal plans, grocery lists, cookbooks, households). This action cannot be undone.');
   if (!step1) return;
   // Step 2: Type confirmation text to prevent accidental clicks
-  const step2 = await showConfirm('Type DELETE in the box below to permanently delete your account.');
-  if (!step2) return;
   const confirmText = prompt('Type DELETE to permanently delete your account:');
   if (confirmText !== 'DELETE') return showConfirm('Deletion cancelled — confirmation text did not match.');
   const res = await fetch(API + '/auth/me/delete', { method: 'POST', headers: authHeaders() });
@@ -1637,13 +1689,6 @@ if (pathMatch && !token) {
   document.getElementById('nav').classList.add('hidden');
   document.getElementById('tabPublicRecipe').classList.remove('hidden');
   loadPublicRecipe(pathMatch[1]);
-}
-
-let savedLogin = JSON.parse(localStorage.getItem('saved_login') || 'null');
-if (savedLogin) {
-  document.getElementById('loginEmail').value = savedLogin.email || '';
-  document.getElementById('loginPassword').value = savedLogin.password || '';
-  document.getElementById('saveLogin').checked = !!savedLogin.email;
 }
 
 async function login() {
@@ -1680,21 +1725,11 @@ async function login() {
     button.disabled = false;
     button.textContent = 'Login';
   }
-  const res = await fetch(API + '/auth/login', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({email,password}) });
-  const data = await res.json();
-  if (!res.ok) return alert('Login failed: ' + (data.detail || 'unknown'));
-  token = data.access_token; localStorage.setItem('token', token);
-  if (saveLogin) {
-    const theme = localStorage.getItem('theme') || 'light';
-    applyTheme(theme);
-  }
-  initTheme();
-  initApp();
 }
 async function loginAsGuest() {
-  document.getElementById('loginEmail').value = 'guest@cookierue.app';
+  document.getElementById('loginEmail').value = 'guest@wiskdful.app';
   document.getElementById('loginPassword').value = 'guest123!';
-  login();
+  await login();
 }
 function toggleLoginPassword() {
   const input = document.getElementById('loginPassword');
@@ -1941,19 +1976,33 @@ async function renderRecipes() {
   const categories = Array.from(new Set(items.map(r => r.category).filter(Boolean))).slice(0, 20);
   const filterBox = document.getElementById('recipeCategoryFilters');
   const activeCategory = filterBox.dataset.active || '';
-  const activeMeal = (filterBox.dataset.meal || '').trim();
-  const activeSub = (filterBox.dataset.sub || '').trim();
-  filterBox.innerHTML = categories.map(c => '<span class="filter-pill" onclick="setCategoryFilter(' + '\'' + escapeHtml(c) + '\')">' + escapeHtml(categoryIcon(c)) + ' ' + escapeHtml(c) + '</span>').join('');
+  const activeMeal = (filterBox.dataset.meal || '');
+  const activeSub = (filterBox.dataset.sub || '');
+  const mealFilters = activeMeal ? activeMeal.split(',').map(m => m.trim().toLowerCase()) : [];
+  const subFilters = activeSub ? activeSub.split(',').map(s => s.trim().toLowerCase()) : [];
+  const categoryFilters = Array.from(activeCategoryFilters).map(c => c.toLowerCase());
+  // Populate the tag filter row (scrollable pills)
+  const tagRow = document.getElementById('tagFilterRow');
+  if (tagRow) {
+    tagRow.innerHTML = categories.map(c => {
+      const isActive = activeCategoryFilters.has(c);
+      const icon = categoryIcons[c] || '📝';
+      return '<span class="filter-pill' + (isActive ? ' active' : '') + '" onclick="toggleCategoryFilter(' + String.fromCharCode(39) + c + String.fromCharCode(39) + ')">' + icon + ' ' + escapeHtml(c) + '</span>';
+    }).join('');
+  }
   const box = document.getElementById('recipeList');
   box.classList.toggle('grid', viewType === 'grid');
   box.innerHTML = '';
   const filtered = items.filter(r => {
     const matchesSearch = !q || (r.title||'').toLowerCase().includes(q) || (r.description||'').toLowerCase().includes(q);
-    const matchesCategory = !activeCategory || r.category === activeCategory;
-    const matchesMeal = !activeMeal || (r.category || '').toLowerCase() === activeMeal.toLowerCase();
-    const matchesSub = !activeSub || (r.subcategory || '').toLowerCase() === activeSub.toLowerCase();
+    const rCategory = (r.category || '').toLowerCase();
+    const rSub = (r.subcategory || '').toLowerCase();
+    const matchesCategory = !activeCategory || rCategory === activeCategory.toLowerCase();
+    const matchesMeal = mealFilters.length === 0 || mealFilters.includes(rCategory);
+    const matchesSub = subFilters.length === 0 || subFilters.includes(rSub);
+    const matchesTag = categoryFilters.length === 0 || categoryFilters.includes(rCategory);
     const matchesFav = !filterBox.dataset.favs || favsById.has(r.id);
-    return matchesSearch && matchesCategory && matchesMeal && matchesSub && matchesFav;
+    return matchesSearch && matchesCategory && matchesMeal && matchesSub && matchesTag && matchesFav;
   });
   const favPill = document.getElementById('favPill');
   if (favPill) favPill.classList.toggle('active', !!filterBox.dataset.favs);
@@ -1980,48 +2029,126 @@ async function renderRecipes() {
     box.appendChild(el);
   }
 }
-window.setCategoryFilter = function(category) {
-  const filterBox = document.getElementById('recipeCategoryFilters');
-  filterBox.dataset.active = category || '';
-  filterBox.dataset.favs = '';
-  renderRecipes();
-};
-window.setMealFilter = function(meal) {
-  const filterBox = document.getElementById('recipeCategoryFilters');
-  filterBox.dataset.meal = meal || '';
-  ['filterAll','mealBreakfast','mealLunch','mealDinner'].forEach(id => { const el = document.getElementById(id); if (el) el.classList.remove('active'); });
-  if (meal) {
-    const map = {Breakfast:'mealBreakfast',Lunch:'mealLunch',Dinner:'mealDinner'};
-    const el = document.getElementById(map[meal]);
-    if (el) el.classList.add('active');
-  } else {
-    const el = document.getElementById('filterAll');
-    if (el) el.classList.add('active');
+// Multi-select filter state
+const activeMealFilters = new Set();
+const activeSubFilters = new Set();
+const activeCategoryFilters = new Set();
+
+function updateActiveFiltersDisplay() {
+  const container = document.getElementById('activeFilters');
+  if (!container) return;
+  const pills = [];
+  activeMealFilters.forEach(m => pills.push(`<span class="filter-pill" onclick="toggleMealFilter('${m}')">${m} ×</span>`));
+  activeSubFilters.forEach(s => pills.push(`<span class="filter-pill" onclick="toggleSubFilter('${s}')">${s} ×</span>`));
+  activeCategoryFilters.forEach(c => pills.push(`<span class="filter-pill" onclick="toggleCategoryFilter('${c}')">${c} ×</span>`));
+  container.innerHTML = pills.join('');
+  const allPill = document.getElementById('filterAll');
+  if (allPill) allPill.style.display = (activeMealFilters.size === 0 && activeSubFilters.size === 0 && activeCategoryFilters.size === 0) ? 'inline-flex' : 'none';
+}
+
+window.toggleFilterDropdown = function(id) {
+  const dropdown = document.getElementById(id);
+  if (!dropdown) return;
+  dropdown.classList.toggle('hidden');
+  if (!dropdown.classList.contains('hidden')) {
+    const container = document.getElementById('filterBarContainer');
+    if (container) {
+      const rect = container.getBoundingClientRect();
+      dropdown.style.position = 'absolute';
+      dropdown.style.top = (rect.bottom + window.scrollY) + 'px';
+      dropdown.style.left = (rect.left + window.scrollX) + 'px';
+      dropdown.style.maxWidth = (rect.width) + 'px';
+    }
+    // Close on outside click
+    const closeFn = function(e) {
+      if (!dropdown.contains(e.target) && e.target.id !== 'filterTrigger') {
+        dropdown.classList.add('hidden');
+        document.removeEventListener('click', closeFn);
+      }
+    };
+    setTimeout(() => document.addEventListener('click', closeFn), 10);
   }
+};
+
+window.applyFilters = function() {
+  const dropdown = document.getElementById('filterDropdown');
+  if (dropdown) dropdown.classList.add('hidden');
   renderRecipes();
 };
-window.setSubFilter = function(sub) {
+
+window.toggleMealFilter = function(meal) {
+  if (activeMealFilters.has(meal)) activeMealFilters.delete(meal);
+  else activeMealFilters.add(meal);
+  const checkbox = document.getElementById('chk' + meal.replace(/[^a-zA-Z]/g, ''));
+  if (checkbox) checkbox.checked = activeMealFilters.has(meal);
+  filterBox = document.getElementById('recipeCategoryFilters');
+  filterBox.dataset.meal = Array.from(activeMealFilters).join(',');
+  updateActiveFiltersDisplay();
+};
+
+window.toggleSubFilter = function(sub) {
+  if (activeSubFilters.has(sub)) activeSubFilters.delete(sub);
+  else activeSubFilters.add(sub);
+  const checkbox = document.getElementById('chk' + sub.replace(/[^a-zA-Z]/g, ''));
+  if (checkbox) checkbox.checked = activeSubFilters.has(sub);
   const filterBox = document.getElementById('recipeCategoryFilters');
-  filterBox.dataset.sub = sub || '';
-  ['filterAll','subEntrees','subSnacks','subAppetizers','subDesserts'].forEach(id => { const el = document.getElementById(id); if (el) el.classList.remove('active'); });
-  if (sub) {
-    const map = {Entrees:'subEntrees',Snacks:'subSnacks',Appetizers:'subAppetizers',Desserts:'subDesserts'};
-    const el = document.getElementById(map[sub]);
-    if (el) el.classList.add('active');
-  } else {
-    const el = document.getElementById('filterAll');
-    if (el) el.classList.add('active');
-  }
-  renderRecipes();
+  filterBox.dataset.sub = Array.from(activeSubFilters).join(',');
+  updateActiveFiltersDisplay();
 };
+
+window.toggleCategoryFilter = function(category) {
+  if (activeCategoryFilters.has(category)) activeCategoryFilters.delete(category);
+  else activeCategoryFilters.add(category);
+  updateActiveFiltersDisplay();
+};
+
+window.clearMealFilter = function() {
+  activeMealFilters.clear();
+  ['chkBreakfast','chkLunch','chkDinner','chkDessert'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.checked = false;
+  });
+  document.getElementById('recipeCategoryFilters').dataset.meal = '';
+  updateActiveFiltersDisplay();
+  renderRecipes();
+  const dropdown = document.getElementById('filterDropdown');
+  if (dropdown) dropdown.classList.add('hidden');
+};
+
+window.clearSubFilter = function() {
+  activeSubFilters.clear();
+  document.getElementById('recipeCategoryFilters').dataset.sub = '';
+  updateActiveFiltersDisplay();
+  renderRecipes();
+  const dropdown = document.getElementById('filterDropdown');
+  if (dropdown) dropdown.classList.add('hidden');
+};
+
+window.clearCategoryFilter = function() {
+  activeCategoryFilters.clear();
+  updateActiveFiltersDisplay();
+  renderRecipes();
+  const dropdown = document.getElementById('filterDropdown');
+  if (dropdown) dropdown.classList.add('hidden');
+};
+
 window.clearAllFilters = function() {
+  activeMealFilters.clear();
+  activeSubFilters.clear();
+  activeCategoryFilters.clear();
+  ['chkBreakfast','chkLunch','chkDinner','chkDessert'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.checked = false;
+  });
   const filterBox = document.getElementById('recipeCategoryFilters');
   filterBox.dataset.active = '';
   filterBox.dataset.meal = '';
   filterBox.dataset.sub = '';
   filterBox.dataset.favs = '';
-  ['filterAll'].forEach(id => { const el = document.getElementById(id); if (el) el.classList.add('active'); });
+  updateActiveFiltersDisplay();
   renderRecipes();
+  const dropdown = document.getElementById('filterDropdown');
+  if (dropdown) dropdown.classList.add('hidden');
 };
 window.toggleFavoritesFilter = function() {
   const filterBox = document.getElementById('recipeCategoryFilters');
@@ -2526,7 +2653,7 @@ function closeRecipeDetail() {
 }
 async function shareCurrentRecipe() {
   if (!currentRecipeId) return;
-  const title = document.getElementById('detailTitle')?.textContent || 'CookieRue Recipe';
+  const title = document.getElementById('detailTitle')?.textContent || 'WiskfFul Recipe';
   try {
     const res = await fetch(API + '/recipes/' + currentRecipeId + '/share', {
       method: 'POST',

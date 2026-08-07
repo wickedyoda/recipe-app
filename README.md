@@ -1,7 +1,9 @@
-# CookieRue
+# WiskfFul
+
+> **Plan it. Cook it. Love it.**
 
 <div align="center">
-  <img src="frontend/src/icons/logo-lg.png" alt="CookieRue logo" width="120" height="120" />
+  <img src="frontend/src/icons/logo-lg.png" alt="WiskfFul logo" width="120" height="120" />
 </div>
 
 ![Security Status](https://github.com/wickedyoda/recipe-app/actions/workflows/verify.yml/badge.svg?branch=master)
@@ -24,7 +26,7 @@ Self-hosted recipe/media app with:
 - Dark embedded cooking mode
 - 5-star recipe ratings with average display
 - 5 color themes (light, dark, dawn, cozy, high-contrast) with high contrast option
-- Per-user profiles with avatar upload or 10 vegetable avatar selections
+- Per-user profiles with avatar upload (125×125, auto-resized) or 10 fruit avatar selections
 - Guest/demo account with read-only access (admin can enable/disable)
 - Top navigation bar with compact icon buttons centered under the logo + 3-line hamburger dropdown menu
 - Admin-only settings page for server config and user management (SMTP email configuration, guest login toggle, allowed hosts, database backup)
@@ -52,7 +54,7 @@ The app is mobile-first and uses warm minimalist styling. Key screens:
 
 ## Privacy
 
-CookieRue is a **self-hosted** application — all your data stays on your server.
+WiskfFul is a **self-hosted** application — all your data stays on your server.
 
 - **No third-party analytics or tracking scripts** — the app collects nothing
 - **GDPR compliance**: Export your data (`GET /auth/me/export`) or delete your account (`POST /auth/me/delete`) anytime
@@ -86,9 +88,9 @@ CookieRue is a **self-hosted** application — all your data stays on your serve
 - You may optionally enable a cookie consent banner in settings
 
 ### Hosted vs Self-Hosted
-If you host CookieRue yourself:
+If you host WiskfFul yourself:
 - Data is stored only on your server
-- No data is transmitted to the CookieRue developers or any third party
+- No data is transmitted to the WiskfFul developers or any third party
 
 If you are using a hosted instance:
 - Contact your instance administrator for the privacy policy
@@ -107,6 +109,30 @@ Open:
 - Frontend: http://localhost:3000
 - API: http://localhost:8000
 
+### Guest / Demo Account
+
+WiskfFul ships with a pre-seeded guest account for quick demos:
+
+- **Email**: `guest@wiskfful.app`
+- **Password**: `guest123!`
+- **Display name**: Demo Chef
+- **Access**: Read-only (cannot edit or delete recipes)
+
+The guest account comes with:
+- ~30 sample recipes across Breakfast, Lunch, Dinner, Dessert, Appetizer, Soup categories
+- 2 grocery lists (Weekly Shopping, Dessert Night)
+- A meal plan for the week
+- Tags for easy filtering
+
+To enable/disable guest login, an admin can use the Settings page or:
+```bash
+# Via API (admin only)
+curl -X POST http://localhost:8000/settings/guest-login \
+  -H "Authorization: Bearer <admin_token>" \
+  -H "Content-Type: application/json" \
+  -d '{"enabled": true}'
+```
+
 ## Env
 
 - `DATABASE_URL` - default MySQL in compose
@@ -121,7 +147,47 @@ Open:
 - `BACKEND_PULL_POLICY` / `FRONTEND_PULL_POLICY` - image pull behavior, e.g. `always`
 - `GHCR_TOKEN` - optional PAT with `read:packages` for private images
 
-## CI / security
+## How to...
+
+### Add an avatar
+1. Go to **Profile** → **Avatar** section
+2. **Upload** a photo (PNG/JPG/WebP, max 2MB) — it's auto-resized to 125×125px
+3. **Or select** from 10 fruit avatars (🍋🍓🍉🔵🥝🍊🍒🍑🍇🍍) — tap any to select instantly
+4. The avatar appears in your profile header immediately
+
+### Ingest a recipe from TikTok/YouTube
+1. Go to **Settings** → paste the video URL into the "Video URL" field
+2. Click **Ingest** — the backend downloads the video, extracts audio/subtitles via Whisper, and parses ingredients/instructions
+3. Edit and save the recipe
+
+### Create a grocery list from a recipe
+1. Open a recipe → click **Add to Grocery List**
+2. Adjust quantities and categories
+3. Share via link, copy, or email
+
+### Plan meals and add recipes
+1. Go to **Meal Plan** → click a plan (e.g., "This Week")
+2. Click **Add** on Breakfast/Lunch/Dinner
+3. A modal appears showing your **5 most recent recipes** on the left and a **search box** to find more
+4. Select a recipe to add it to that meal slot
+
+### Enable guest/demo login
+1. Log in as admin
+2. Go to **Settings** → toggle **Guest Login** to ON
+3. Share the guest credentials (`guest@wiskfful.app` / `guest123!`)
+
+### Export your data
+```bash
+curl -X POST http://localhost:8000/auth/me/export \
+  -H "Authorization: Bearer <your_token>" \
+  -o my-data.json
+```
+
+### Delete your account
+```bash
+curl -X POST http://localhost:8000/auth/me/delete \
+  -H "Authorization: Bearer <your_token>"
+```
 
 CI runs on pull requests via GitHub Actions:
 - Python Lint

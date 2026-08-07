@@ -36,7 +36,7 @@ class Settings(BaseSettings):
     DEFAULT_ADMIN_PASSWORD: str = "ChangeMe123!"
     DEFAULT_ADMIN_DISPLAY_NAME: str = "Admin"
 
-    DEFAULT_GUEST_EMAIL: str = "guest@cookierue.app"
+    DEFAULT_GUEST_EMAIL: str = "guest@wiskfful.app"
     DEFAULT_GUEST_PASSWORD: str = "guest123!"
     DEFAULT_GUEST_DISPLAY_NAME: str = "Guest"
     GUEST_LOGIN_ENABLED: bool = True

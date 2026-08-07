@@ -102,6 +102,10 @@ def toggle_guest_login(
 
 
 @router.get("/guest-login-enabled", response_model=dict)
+def get_guest_login_enabled():
+    return {"enabled": settings.GUEST_LOGIN_ENABLED}
+
+
 @router.get("/storage", response_model=dict)
 def get_storage_info(_: User = Depends(require_role(Role.admin))):
     media_root = settings.MEDIA_ROOT
@@ -265,8 +269,8 @@ def test_smtp_settings(
         raise HTTPException(status_code=400, detail="SMTP settings are not configured")
     sent = send_email(
         to=payload.email,
-        subject="CookieRue SMTP Test",
-        body="<h2>✅ SMTP is working!</h2><p>If you received this email, your SMTP configuration is correct.</p><p> — CookieRue</p>",
+        subject="WiskfFul SMTP Test",
+        body="<h2>✅ SMTP is working!</h2><p>If you received this email, your SMTP configuration is correct.</p><p> — WiskfFul</p>",
     )
     if not sent:
         raise HTTPException(status_code=502, detail="Failed to send test email — check SMTP settings and credentials")

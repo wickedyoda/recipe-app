@@ -1,8 +1,14 @@
 ---
+networks:
+  app-network:
+    driver: bridge
+
 services:
   mysql:
     image: mysql:8.0
     restart: unless-stopped
+    networks:
+      - app-network
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-change-me}
       MYSQL_DATABASE: ${MYSQL_DATABASE:-recipes}
@@ -41,6 +47,8 @@ services:
       DEFAULT_ADMIN_PASSWORD: ${DEFAULT_ADMIN_PASSWORD:-ChangeMe123!}
       DEFAULT_ADMIN_DISPLAY_NAME: ${DEFAULT_ADMIN_DISPLAY_NAME:-Admin}
       PYTHONUNBUFFERED: "1"
+    networks:
+      - app-network
     ports:
       - "${BACKEND_PORT:-8000}:8000"
     depends_on:
@@ -55,6 +63,8 @@ services:
       context: .
       dockerfile: Dockerfile.frontend
     restart: unless-stopped
+    networks:
+      - app-network
     ports:
       - "${FRONTEND_PORT:-3000}:80"
     depends_on:
