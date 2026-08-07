@@ -318,6 +318,7 @@
   .filter-row.scrollable-x::-webkit-scrollbar-track { background: transparent; }
   .filter-row.scrollable-x::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 2px; }
   body.dark .filter-row.scrollable-x::-webkit-scrollbar-thumb { background: #3a3a45; }
+  .dropdown-menu { background: #fcfafa; border: 1px solid #e0ddd7; }
   /* Cookbook page-turn animation */
   .book-container {
     perspective: 1000px;
@@ -539,7 +540,7 @@
   <button class="secondary small" id="themeToggle" onclick="toggleTheme()" style="margin-left:auto;padding:2px 4px;font-size:14px;line-height:1;">🌙</button>
   </div>
   <!-- Dropdown menu positioned at top-right -->
-  <div id="dropdownMenu" class="hidden" style="position:absolute;top:56px;right:12px;background:#fcfafa;border:1px solid #e0ddd7;border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,0.12);z-index:1000;min-width:160px;">
+  <div id="dropdownMenu" class="hidden dropdown-menu" style="position:absolute;top:56px;right:12px;border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,0.12);z-index:1000;min-width:160px;">
     <button onclick="switchTab('tabMenu');closeDropdown()" class="dropdown-item">🏠 Menu</button>
     <button onclick="switchTab('tabRecipes');closeDropdown()" class="dropdown-item">📋 Recipes</button>
     <button onclick="switchTab('tabImport');closeDropdown()" class="dropdown-item">📥 Add recipe</button>
@@ -1100,7 +1101,7 @@
           <div class="section">
             <h3>Preferences</h3>
             <label style="font-size:13px;display:block;margin-bottom:6px;">Default servings</label>
-            <input id="defaultServings" type="number" min="1" max="20" value="4" />
+            <input id="defaultServings" type="number" min="1" max="20" value="4" onchange="saveSettings()" />
           </div>
           <div class="section">
             <h3>Theme</h3>
@@ -1315,19 +1316,29 @@ function toggleDropdown() {
     // Position dropdown relative to the button
     if (btn) {
       const rect = btn.getBoundingClientRect();
-      const menuWidth = 176; // min-width is 160px + some padding
+      const container = btn.parentElement; // .container or parent with position:relative
+      let containerRect = {top: 0, left: 0};
+      if (container) {
+        const cr = container.getBoundingClientRect();
+        // Get scroll-adjusted position of the container
+        containerRect = {
+          top: cr.top + window.scrollY,
+          left: cr.left + window.scrollX
+        };
+      }
+      const menuWidth = 176; // min-width is 160px + padding
       const spaceRight = window.innerWidth - rect.right;
       const spaceLeft = rect.left;
       // If not enough space on the right, align to right edge of button
       if (spaceRight < menuWidth && spaceLeft >= menuWidth) {
-        menu.style.right = '0px';
+        menu.style.right = '8px';
         menu.style.left = 'auto';
       } else {
-        menu.style.left = (rect.right - menuWidth) + 'px';
+        menu.style.left = (rect.left - containerRect.left + 8) + 'px';
         menu.style.right = 'auto';
       }
-      // Position below the button
-      menu.style.top = (rect.bottom + window.scrollY - 4) + 'px';
+      // Position below the button, accounting for container offset
+      menu.style.top = (rect.bottom + window.scrollY - containerRect.top - 4) + 'px';
     }
   } else {
     menu.classList.add('hidden');
@@ -1602,13 +1613,13 @@ function saveSettings() {
   const existing = JSON.parse(localStorage.getItem('settings') || '{}');
   existing.defaultServings = isNaN(servings) ? 4 : servings;
   localStorage.setItem('settings', JSON.stringify(existing));
-  alert('Settings saved');
+  showConfirm('Settings saved');
 }
 async function changePassword() {
   const current = document.getElementById('changePasswordCurrent').value;
   const newPass = document.getElementById('changePasswordNew').value;
   const verify = document.getElementById('changePasswordVerify').value;
-  if (!current || !newPass) return alert('All fields are required');
+  if (!current || !newPass || !verify) return alert('All fields are required');
   if (newPass !== verify) return alert('New passwords do not match');
   if (newPass.length < 6) return alert('New password must be at least 6 characters');
   const res = await fetch(API + '/auth/change-password', { method:'POST', headers: authHeaders(), body: JSON.stringify({current_password: current, new_password: newPass}) });
@@ -1649,8 +1660,6 @@ async function deleteAccount() {
   const step1 = await showConfirm('This will permanently delete your account and ALL your data (recipes, meal plans, grocery lists, cookbooks, households). This action cannot be undone.');
   if (!step1) return;
   // Step 2: Type confirmation text to prevent accidental clicks
-  const step2 = await showConfirm('Type DELETE in the box below to permanently delete your account.');
-  if (!step2) return;
   const confirmText = prompt('Type DELETE to permanently delete your account:');
   if (confirmText !== 'DELETE') return showConfirm('Deletion cancelled — confirmation text did not match.');
   const res = await fetch(API + '/auth/me/delete', { method: 'POST', headers: authHeaders() });
