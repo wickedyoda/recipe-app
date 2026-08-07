@@ -3,16 +3,25 @@
 Run: python3 backend/scripts/seed_demo.py
 """
 
-import sys
 import os
+import sys
 import secrets
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
+import bcrypt
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from models import User, Recipe, Tag, RecipeTag, MealPlan, MealPlanEntry, GroceryList, GroceryItem, PasswordHistory
-
-import bcrypt
+from models import (
+    GroceryItem,
+    GroceryList,
+    MealPlan,
+    MealPlanEntry,
+    PasswordHistory,
+    Recipe,
+    RecipeTag,
+    Tag,
+    User,
+)
 
 DATABASE_URL = os.environ.get('DATABASE_URL', 'sqlite:///./recipes.db')
 DATABASE_URL = DATABASE_URL.replace('mysql://', 'mysql+pymysql://')
