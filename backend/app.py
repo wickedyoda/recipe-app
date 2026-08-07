@@ -415,7 +415,7 @@ def _get_or_create_cookbook(db, guest_id):
 def _get_or_create_tags(db, guest_id):
     tag_objs = {}
     for tag_name in SEED_TAGS:
-        tag = db.query(Tag).filter(Tag.owner_id == guest_id, Tag.name == tag_name).first()
+        tag = db.query(Tag).filter(Tag.name == tag_name).first()
         if not tag:
             tag = Tag(owner_id=guest_id, name=tag_name)
             db.add(tag)
