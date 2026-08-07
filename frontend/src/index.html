@@ -519,6 +519,7 @@
   </div>
   <!-- Compact single-row navigation with 3-line menu, centered under logo -->
   <div id="headerNavWrapper" style="display:flex;justify-content:center;align-items:center;gap:2px;margin-top:8px;position:relative;">
+  <div style="display:flex;justify-content:center;align-items:center;gap:1px;">
   <span id="userEmailRow" style="font-size:10px;color:#555;margin:0 4px;display:flex;flex-direction:column;align-items:center;gap:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px;">
     <span id="userEmail" style="font-size:10px;font-weight:500;"></span>
     <span id="userEmailBadge" class="hidden" style="font-size:8px;color:#996600;background:#fff3cd;padding:0 4px;border-radius:4px;">READ-ONLY</span>
@@ -530,7 +531,7 @@
     <button data-tab="tabMeals" onclick="switchTab('tabMeals')" class="nav-btn-small" title="Meal plans">📅</button>
     <button data-tab="tabGroceries" onclick="switchTab('tabGroceries')" class="nav-btn-small" title="Grocery lists">🛒</button>
     <button data-tab="tabCookbooks" onclick="switchTab('tabCookbooks')" class="nav-btn-small" title="Cookbooks">📚</button>
-    <button data-tab="tabHouseholds" onclick="switchTab('tabHouseholds')" class="nav-btn-small" title="Households">👨‍👩‍👧‍👦</button>
+    <button data-tab="tabHouseholds" onclick="switchTab('tabHouseholds')" class="nav-btn-small" title="Households">👨‍👩‍👧‍👨</button>
     <button id="adminTabBtnTop" data-tab="tabAdmin" onclick="switchTab('tabAdmin')" class="nav-btn-small hidden" title="Admin">👤</button>
     <button class="secondary small" id="menuBtn" onclick="toggleDropdown()" style="display:none;padding:2px 6px;font-size:11px;">☰</button>
   </div>
@@ -588,7 +589,7 @@
     <div id="appSection" class="hidden">
       <div id="tabMenu" class="tab">
         <div class="card">
-          <div class="nav-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;">
+          <div class="nav-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:0 8px;">
             <button class="nav-square" onclick="switchTab('tabImport')" aria-label="Add recipe">
               <span class="nav-icon">📥</span><span class="nav-label">Add recipe</span>
             </button>
