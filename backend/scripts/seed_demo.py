@@ -98,7 +98,7 @@ def create_grocery_list(db, user_id, name, items):
     db.flush()
 
     for item_text in items:
-        item = GroceryItem(list_id=grocery_list.id, text=item_text, checked=0)
+        item = GroceryItem(list_id=grocery_list.id, name=item_text, checked=0, owner_id=user_id)
         db.add(item)
 
     return grocery_list
