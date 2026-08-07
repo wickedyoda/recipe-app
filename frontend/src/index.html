@@ -1523,7 +1523,7 @@ async function loadSettings() {
   html += '</label>';
   html += '</div>';
   html += '<div class="meta" style="font-size:12px;color:var(--text-muted);margin-top:4px;">';
-  html += 'Guest account: <strong>' + escapeHtml(s.guest_email || 'guest@wiskdful.app') + '</strong>';
+  html += 'Guest account: <strong>' + escapeHtml(s.guest_email || 'guest@wiskfful.app') + '</strong>';
   html += '</div></div>';
   document.getElementById('settingsContent').innerHTML = html;
   document.getElementById('settingsStatus').textContent = '';
@@ -1594,7 +1594,7 @@ async function backupDatabase() {
   const blob = await downloadRes.blob();
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
-  const filename = 'wiskdful_backup_' + new Date().toISOString().slice(0, 10) + '.sql.gz';
+  const filename = 'wiskfful_backup_' + new Date().toISOString().slice(0, 10) + '.sql.gz';
   link.href = url;
   link.download = filename;
   document.body.appendChild(link);
@@ -1727,7 +1727,7 @@ async function login() {
   }
 }
 async function loginAsGuest() {
-  document.getElementById('loginEmail').value = 'guest@wiskdful.app';
+  document.getElementById('loginEmail').value = 'guest@wiskfful.app';
   document.getElementById('loginPassword').value = 'guest123!';
   await login();
 }
