@@ -2,11 +2,11 @@
 set -e
 cd /root/docker/recipe-app
 
-cp .env /tmp/saved_env
-
-tar xzf recipe-app-icons.tar.gz
-cp /tmp/saved_env .env
-
+TMP_ENV="$(mktemp)"
+cp .env "$TMP_ENV"
+trap 'cp "$TMP_ENV" .env; rm -f "$TMP_ENV"' EXIT
+tar xzf recipe-app-icons.tar.gz --exclude=.env
+cp "$TMP_ENV" .env
 docker compose -f docker-compose.yml up -d --build --force-recreate frontend
 
 echo "=== Waiting ==="
