@@ -102,6 +102,10 @@ def toggle_guest_login(
 
 
 @router.get("/guest-login-enabled", response_model=dict)
+def get_guest_login_enabled():
+    return {"enabled": settings.GUEST_LOGIN_ENABLED}
+
+
 @router.get("/storage", response_model=dict)
 def get_storage_info(_: User = Depends(require_role(Role.admin))):
     media_root = settings.MEDIA_ROOT
