@@ -60,7 +60,7 @@ def create_demo_user(db):
     return user
 
 def create_tag(db, user_id, name):
-    tag = db.query(Tag).filter(Tag.owner_id == user_id, Tag.name == name).first()
+    tag = db.query(Tag).filter(Tag.name == name).first()
     if not tag:
         tag = Tag(name=name, owner_id=user_id)
         db.add(tag)
