@@ -30,7 +30,7 @@ def hash_password(password: str) -> str:
 def create_demo_user(db):
     """Create or update the demo guest account."""
     user = db.query(User).filter(User.email == 'guest@cookierue.app').first()
-    password_hash = hash_password('guest123!')
+    password_hash = hash_password('Demo123!')
 
     if user:
         user.hashed_password = password_hash
@@ -199,7 +199,7 @@ def main():
         ])
 
         db.commit()
-        print(f"\n✅ Seeded demo guest account: guest@cookierue.app / guest123!")
+        print(f"\n✅ Seeded demo guest account: guest@cookierue.app / Demo123!")
         print(f"   - 7 recipes")
         print(f"   - 16 tags")
         print(f"   - 2 grocery lists (5 items each)")
