@@ -5,7 +5,6 @@ Run: python3 backend/scripts/seed_demo.py
 
 import sys
 import os
-import hashlib
 import secrets
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
@@ -16,8 +15,14 @@ from models import User, Recipe, Tag, MealPlan, MealPlanItem, GroceryList, Groce
 import bcrypt
 
 DATABASE_URL = os.environ.get('DATABASE_URL', 'sqlite:///./recipes.db')
-engine = create_engine(DATABASE_URL.replace('mysql://', 'mysql+pymysql://'))
-SessionLocal = sessionmaker(bind=engine)
+DATABASE_URL = DATABASE_URL.replace('mysql://', 'mysql+pymysql://')
+
+# Try to use backend's SessionLocal first, fall back to direct engine
+try:
+    from database import SessionLocal
+except ImportError:
+    engine = create_engine(DATABASE_URL)
+    SessionLocal = sessionmaker(bind=engine)
 
 def hash_password(password: str) -> str:
     return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
@@ -28,25 +33,25 @@ def create_demo_user(db):
     password_hash = hash_password('Demo123!')
 
     if user:
-        user.password_hash = password_hash
+        user.hashed_password = password_hash
         user.is_active = True
         user.is_readonly = True
         print(f"Updated existing demo user: {user.email}")
     else:
         user = User(
             email='guest@cookierue.app',
-            name='Guest Demo',
-            password_hash=password_hash,
+            display_name='Guest Demo',
+            username='guest',
+            hashed_password=password_hash,
             is_active=True,
-            is_readonly=True,
-            is_demo=True
+            is_readonly=True
         )
         db.add(user)
         db.flush()  # Get the ID without committing
         print(f"Created demo user: {user.email}")
 
     # Record password history
-    ph = PasswordHistory(user_id=user.id, password_hash=password_hash)
+    ph = PasswordHistory(user_id=user.id, hashed_password=password_hash)
     db.add(ph)
 
     return user
