@@ -676,6 +676,9 @@
           <label class="filter-option"><input type="checkbox" onchange="toggleSubFilter('Entrees')" id="chkEntrees"> Entrees</label>
           <label class="filter-option"><input type="checkbox" onchange="toggleSubFilter('Snacks')" id="chkSnacks"> Snacks</label>
         </div>
+        <div style="padding:8px;border-top:1px solid var(--border);margin-top:4px;">
+          <button class="secondary" onclick="applyFilters()" style="width:100%;padding:10px;font-weight:600;">Apply Filters</button>
+        </div>
         <div id="tagFilterRow" class="filter-row scrollable-x small-pills"></div>
         <div class="card">
           <div class="top">
@@ -2066,6 +2069,12 @@ window.toggleFilterDropdown = function(id) {
   }
 };
 
+window.applyFilters = function() {
+  const dropdown = document.getElementById('filterDropdown');
+  if (dropdown) dropdown.classList.add('hidden');
+  renderRecipes();
+};
+
 window.toggleMealFilter = function(meal) {
   if (activeMealFilters.has(meal)) activeMealFilters.delete(meal);
   else activeMealFilters.add(meal);
@@ -2074,7 +2083,6 @@ window.toggleMealFilter = function(meal) {
   filterBox = document.getElementById('recipeCategoryFilters');
   filterBox.dataset.meal = Array.from(activeMealFilters).join(',');
   updateActiveFiltersDisplay();
-  renderRecipes();
 };
 
 window.toggleSubFilter = function(sub) {
@@ -2085,14 +2093,12 @@ window.toggleSubFilter = function(sub) {
   const filterBox = document.getElementById('recipeCategoryFilters');
   filterBox.dataset.sub = Array.from(activeSubFilters).join(',');
   updateActiveFiltersDisplay();
-  renderRecipes();
 };
 
 window.toggleCategoryFilter = function(category) {
   if (activeCategoryFilters.has(category)) activeCategoryFilters.delete(category);
   else activeCategoryFilters.add(category);
   updateActiveFiltersDisplay();
-  renderRecipes();
 };
 
 window.clearMealFilter = function() {
