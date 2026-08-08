@@ -35,16 +35,21 @@
 <body>
 <div class="container" style="position:relative;">
 <!-- Top bar with username at top-left, back button, theme toggle at top-right -->
-<div id="topBar" class="hidden" style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border-light);margin-bottom:8px;">
-  <button id="backBtn" onclick="_handleBack()" class="hidden secondary small" style="padding:2px 6px;font-size:12px;line-height:1;display:none;">←</button>
-  <span id="userEmailRow" style="font-size:11px;color:#555;margin:0;display:flex;flex-direction:column;align-items:flex-start;gap:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px;">
-    <span id="userEmail" style="font-size:11px;font-weight:500;color:#3a2e23;"></span>
-    <span id="userEmailBadge" class="hidden" style="font-size:8px;color:#996600;background:#fff3cd;padding:0 3px;border-radius:4px;">READ-ONLY</span>
-  </span>
-  <button class="secondary small" onclick="logout()" style="padding:2px 6px;font-size:10px;line-height:1;">Logout</button>
+<div id="topBar" class="hidden" style="display:flex;align-items:center;justify-content:space-between;padding:6px 8px;border-bottom:1px solid var(--border-light);margin-bottom:8px;">
+  <div style="display:flex;align-items:center;gap:6px;">
+    <button id="backBtn" onclick="_handleBack()" class="hidden secondary small" style="padding:2px 6px;font-size:12px;line-height:1;display:none;">←</button>
+    <span id="userEmailRow" style="font-size:11px;color:#555;margin:0;display:flex;flex-direction:column;align-items:flex-start;gap:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px;">
+      <span id="userEmail" style="font-size:11px;font-weight:500;color:#3a2e23;"></span>
+      <span id="userEmailBadge" class="hidden" style="font-size:8px;color:#996600;background:#fff3cd;padding:0 3px;border-radius:4px;">READ-ONLY</span>
+    </span>
+  </div>
+  <div style="display:flex;align-items:center;gap:4px;">
+    <button class="secondary small" onclick="logout()" style="padding:2px 6px;font-size:10px;line-height:1;">Logout</button>
+    <button class="secondary small" id="themeToggle" onclick="toggleTheme()" style="padding:3px 5px;font-size:14px;line-height:1;border-radius:5px;background:rgba(255,255,255,0.9);">🌙</button>
+  </div>
 </div>
-<!-- Theme toggle fixed at top-right corner of window -->
-<button class="secondary small" id="themeToggle" onclick="toggleTheme()" style="position:fixed;top:10px;right:10px;z-index:1000;padding:3px 5px;font-size:14px;line-height:1;border-radius:5px;background:rgba(255,255,255,0.9);box-shadow:0 2px 8px rgba(0,0,0,0.1);">🌙</button>
+<!-- Theme toggle fixed at top-right for login screen (always visible) -->
+<button class="secondary small" id="themeToggleLogin" onclick="toggleTheme()" style="position:fixed;top:12px;right:12px;z-index:1000;padding:4px 6px;font-size:14px;line-height:1;border-radius:5px;background:rgba(255,255,255,0.9);box-shadow:0 2px 8px rgba(0,0,0,0.1);display:none;">🌙</button>
 <div class="card">
   <div class="top" style="text-align:center;padding-top:12px;">
     <h1 style="margin:0;font-size:18px;display:flex;flex-direction:column;align-items:center;gap:4px;"><a href="#" onclick="switchTab('tabMenu');return false" style="color:inherit;text-decoration:none;display:flex;flex-direction:column;align-items:center;gap:2px;"><img src="/src/icons/logo-lg.png" alt="WhiskFul" style="width:56px;height:56px;object-fit:contain;" />WhiskFul</a></h1>
@@ -1394,7 +1399,7 @@ function showLogin() {
   document.getElementById('topNavRow').classList.add('hidden');
   document.getElementById('topBar').classList.add('hidden');
   // Keep theme toggle visible on login screen too
-  const themeBtn = document.getElementById('themeToggle');
+  const themeBtn = document.getElementById('themeToggleLogin');
   if (themeBtn) themeBtn.style.display = 'inline-block';
 }
 
@@ -1419,6 +1424,9 @@ async function initApp() {
   document.getElementById('appSection').classList.remove('hidden');
   document.getElementById('topNavRow').classList.remove('hidden');
   document.getElementById('topBar').classList.remove('hidden');
+  // Hide the login-screen fixed theme toggle (the one in topBar is now visible)
+  const loginThemeBtn = document.getElementById('themeToggleLogin');
+  if (loginThemeBtn) loginThemeBtn.style.display = 'none';
   localStorage.setItem('isReadonly', user.is_readonly ? '1' : '0');
   localStorage.setItem('userRole', user.role || 'user');
   document.getElementById('userEmail').innerHTML = escapeHtml(user.display_name || user.email);
