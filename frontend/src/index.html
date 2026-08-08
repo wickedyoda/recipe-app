@@ -34,8 +34,9 @@
 </head>
 <body>
 <div class="container" style="position:relative;">
-<!-- Top bar with username at top-left (inside container) -->
-<div id="topBar" class="hidden" style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border-light);margin-bottom:8px;">
+<!-- Top bar with username at top-left, back button, theme toggle at top-right -->
+<div id="topBar" class="hidden" style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border-light);margin-bottom:8px;">
+  <button id="backBtn" onclick="_handleBack()" class="hidden secondary small" style="padding:2px 6px;font-size:12px;line-height:1;display:none;">←</button>
   <span id="userEmailRow" style="font-size:11px;color:#555;margin:0;display:flex;flex-direction:column;align-items:flex-start;gap:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px;">
     <span id="userEmail" style="font-size:11px;font-weight:500;color:#3a2e23;"></span>
     <span id="userEmailBadge" class="hidden" style="font-size:8px;color:#996600;background:#fff3cd;padding:0 3px;border-radius:4px;">READ-ONLY</span>
@@ -840,6 +841,17 @@ function switchTab(name) {
   if (name === 'tabLicense') { loadLicense(); }
   if (name === 'tabPrivacy') { loadPrivacy(); }
   _updateReadonlyButtons();
+  // Show/hide back button based on nav stack depth
+  const backBtn = document.getElementById('backBtn');
+  if (backBtn) {
+    if (_navStack.length > 1) {
+      backBtn.style.display = 'inline-block';
+      backBtn.classList.remove('hidden');
+    } else {
+      backBtn.style.display = 'none';
+      backBtn.classList.add('hidden');
+    }
+  }
   // Show ☰ menu button on secondary screens, hide on main screens (menu, recipes)
   const menuBtn = document.getElementById('menuBtn');
   if (menuBtn) {
