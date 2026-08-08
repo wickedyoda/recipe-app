@@ -8,8 +8,8 @@ and this project uses modified MIT licensing with attribution to upstream tool o
 ## [Unreleased] - 2026-08-06
 
 ### Changed
-- App renamed from CookieRue to WiskfFul ("Plan it. Cook it. Love it.")
-- Guest account email updated to `guest@wiskfful.app`
+- App renamed from CookieRue to WhiskFul ("Plan it. Cook it. Love it.")
+- Guest account email updated to `guest@whiskful.app`
 - Logo replaced with chef's hat + heart + book design
 
 ### Added

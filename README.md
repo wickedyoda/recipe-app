@@ -1,8 +1,8 @@
 <div align="center">
-  <img src="frontend/src/icons/logo-lg.png" alt="WiskfFul logo" width="120" height="120" />
+  <img src="frontend/src/icons/logo-lg.png" alt="WhiskFul logo" width="120" height="120" />
 </div>
 
-# WiskfFul
+# WhiskFul
 
 > **Plan it. Cook it. Love it.**
 
@@ -54,7 +54,7 @@ The app is mobile-first and uses warm minimalist styling. Key screens:
 
 ## Privacy
 
-WiskfFul is a **self-hosted** application — all your data stays on your server.
+WhiskFul is a **self-hosted** application — all your data stays on your server.
 
 - **No third-party analytics or tracking scripts** — the app collects nothing
 - **GDPR compliance**: Export your data (`GET /auth/me/export`) or delete your account (`POST /auth/me/delete`) anytime
@@ -88,9 +88,9 @@ WiskfFul is a **self-hosted** application — all your data stays on your server
 - You may optionally enable a cookie consent banner in settings
 
 ### Hosted vs Self-Hosted
-If you host WiskfFul yourself:
+If you host WhiskFul yourself:
 - Data is stored only on your server
-- No data is transmitted to the WiskfFul developers or any third party
+- No data is transmitted to the WhiskFul developers or any third party
 
 If you are using a hosted instance:
 - Contact your instance administrator for the privacy policy
@@ -111,9 +111,9 @@ Open:
 
 ### Guest / Demo Account
 
-WiskfFul ships with a pre-seeded guest account for quick demos:
+WhiskFul ships with a pre-seeded guest account for quick demos:
 
-- **Email**: `guest@wiskfful.app`
+- **Email**: `guest@whiskful.app`
 - **Password**: `guest123!`
 - **Display name**: Demo Chef
 - **Access**: Read-only (cannot edit or delete recipes)
@@ -174,7 +174,7 @@ curl -X POST http://localhost:8000/settings/guest-login \
 ### Enable guest/demo login
 1. Log in as admin
 2. Go to **Settings** → toggle **Guest Login** to ON
-3. Share the guest credentials (`guest@wiskfful.app` / `guest123!`)
+3. Share the guest credentials (`guest@whiskful.app` / `guest123!`)
 
 ### Export your data
 ```bash

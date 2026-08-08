@@ -269,8 +269,8 @@ def test_smtp_settings(
         raise HTTPException(status_code=400, detail="SMTP settings are not configured")
     sent = send_email(
         to=payload.email,
-        subject="WiskfFul SMTP Test",
-        body="<h2>✅ SMTP is working!</h2><p>If you received this email, your SMTP configuration is correct.</p><p> — WiskfFul</p>",
+        subject="WhiskFul SMTP Test",
+        body="<h2>✅ SMTP is working!</h2><p>If you received this email, your SMTP configuration is correct.</p><p> — WhiskFul</p>",
     )
     if not sent:
         raise HTTPException(status_code=502, detail="Failed to send test email — check SMTP settings and credentials")
