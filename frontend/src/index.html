@@ -3709,6 +3709,153 @@ async function shareWithHousehold() {
   }
 }
 
+function renderMarkdown(md) {
+  // Simple markdown to HTML converter for LICENSE, CHANGELOG, PRIVACY pages
+  md = md.replace(/\r\n/g, '\n');
+  const lines = md.split('\n');
+  let html = '';
+  let inUl = false, inOl = false, inCode = false, inTable = false, tableRows = [];
+  let tableHeader = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    let line = lines[i];
+    const tline = line.trim();
+
+    if (inCode) {
+      if (line.startsWith('```')) {
+        html += '</code></pre>';
+        inCode = false;
+      } else {
+        html += escapeHtml(line) + '\n';
+      }
+      continue;
+    }
+
+    if (line.startsWith('```')) {
+      html += '<pre><code class="code-block">';
+      inCode = true;
+      continue;
+    }
+
+    // Table separator (---|---|---)
+    if (inTable && /^[\s|:-]+$/.test(tline)) {
+      continue;
+    }
+
+    // Table rows
+    if (tline.startsWith('|') && tline.endsWith('|')) {
+      const cells = tline.split('|').slice(1, -1);
+      if (!inTable) {
+        inTable = true;
+        tableHeader = cells.map(c => c.trim());
+        continue;
+      }
+      if (tableRows.length === 0 && /^[\s:|-]+$/.test(cells[0].trim())) {
+        continue;
+      }
+      tableRows.push(cells.map(c => c.trim()));
+      continue;
+    }
+
+    if (inTable) {
+      if (tableRows.length > 0) {
+        html += '<table><tr>' + tableHeader.map(h => '<th>' + renderInline(h) + '</th>').join('') + '</tr>';
+        for (const row of tableRows) {
+          html += '<tr>' + row.map(c => '<td>' + renderInline(c) + '</td>').join('') + '</tr>';
+        }
+        html += '</table>';
+      }
+      inTable = false;
+      tableRows = [];
+    }
+
+    // Headers
+    const h = tline.match(/^(#{1,6})\s+(.*)/);
+    if (h) {
+      if (inUl) { html += '</ul>'; inUl = false; }
+      if (inOl) { html += '</ol>'; inOl = false; }
+      html += '<h' + h[1].length + '>' + renderInline(h[2]) + '</h' + h[1].length + '>';
+      continue;
+    }
+
+    // Horizontal rule
+    if (/^---+$/.test(tline) || /^___+$/.test(tline) || /^\*+$/.test(tline.replace(/\*+$/, '')) && tline.replace(/\*/g, '').trim() === '') {
+      if (inUl) { html += '</ul>'; inUl = false; }
+      if (inOl) { html += '</ol>'; inOl = false; }
+      html += '<hr>';
+      continue;
+    }
+    if (/^---+$/.test(tline.replace(/^-+$/, '').trim()) && tline.trim().replace(/-/g, '').trim() === '') {
+      // could be separator or setext header
+    }
+
+    // Unordered list
+    if (/^[-*•]\s+/.test(tline)) {
+      if (inOl) { html += '</ol>'; inOl = false; }
+      if (!inUl) { html += '<ul>'; inUl = true; }
+      html += '<li>' + renderInline(tline.replace(/^[-*•]\s+/, '')) + '</li>';
+      continue;
+    }
+
+    // Ordered list
+    if (/^\d+\.\s+/.test(tline)) {
+      if (inUl) { html += '</ul>'; inUl = false; }
+      if (!inOl) { html += '<ol>'; inOl = true; }
+      html += '<li>' + renderInline(tline.replace(/^\d+\.\s+/, '')) + '</li>';
+      continue;
+    }
+
+    // Blockquote
+    if (tline.startsWith('> ')) {
+      if (inUl) { html += '</ul>'; inUl = false; }
+      if (inOl) { html += '</ol>'; inOl = false; }
+      html += '<blockquote>' + renderInline(tline.substring(2)) + '</blockquote>';
+      continue;
+    }
+
+    // Empty line
+    if (tline === '') {
+      if (inUl) { html += '</ul>'; inUl = false; }
+      if (inOl) { html += '</ol>'; inOl = false; }
+      html += '';
+      continue;
+    }
+
+    // Regular paragraph
+    if (inUl) { html += '</ul>'; inUl = false; }
+    if (inOl) { html += '</ol>'; inOl = false; }
+    html += '<p>' + renderInline(tline) + '</p>';
+  }
+
+  if (inUl) html += '</ul>';
+  if (inOl) html += '</ol>';
+  if (inTable && tableRows.length > 0) {
+    html += '<table><tr>' + tableHeader.map(h => '<th>' + renderInline(h) + '</th>').join('') + '</tr>';
+    for (const row of tableRows) {
+      html += '<tr>' + row.map(c => '<td>' + renderInline(c) + '</td>').join('') + '</tr>';
+    }
+    html += '</table>';
+  }
+
+  return html;
+}
+
+function renderInline(text) {
+  // Code spans first (before bold/italic to avoid conflicts)
+  text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
+  // Bold
+  text = text.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  text = text.replace(/__([^_]+)__/g, '<strong>$1</strong>');
+  // Italic
+  text = text.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+  text = text.replace(/_([^_]+)_/g, '<em>$1</em>');
+  // Strikethrough
+  text = text.replace(/~~([^~]+)~~/g, '<del>$1</del>');
+  // Links
+  text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+  return text;
+}
+
 async function loadChangelog() {
   const el = document.getElementById('changelogContent');
   if (!el || el.dataset.loaded) return;
@@ -3717,7 +3864,7 @@ async function loadChangelog() {
     const res = await fetch(API + '/docs/changelog');
     if (res.ok) {
       const md = await res.text();
-      el.textContent = md;
+      el.innerHTML = renderMarkdown(md);
       el.dataset.loaded = '1';
     } else {
       el.textContent = 'Changelog not available.';
@@ -3732,7 +3879,7 @@ async function loadLicense() {
     const res = await fetch(API + '/docs/license');
     if (res.ok) {
       const md = await res.text();
-      el.textContent = md;
+      el.innerHTML = renderMarkdown(md);
       el.dataset.loaded = '1';
     } else {
       el.textContent = 'License not available.';
@@ -3747,7 +3894,7 @@ async function loadPrivacy() {
     const res = await fetch(API + '/docs/privacy');
     if (res.ok) {
       const md = await res.text();
-      el.textContent = md;
+      el.innerHTML = renderMarkdown(md);
       el.dataset.loaded = '1';
     } else {
       el.textContent = 'Privacy policy not available.';
