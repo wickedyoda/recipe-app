@@ -463,3 +463,59 @@
     .recipe-detail-gallery img { max-height: none; max-width: 100%; }
     input[type="checkbox"] { display: none; }
   }
+
+  /* Markdown rendering for License, Changelog, Privacy pages */
+  #licenseContent, #changelogContent, #privacyContent {
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--text-primary);
+    max-height: 500px;
+    overflow-y: auto;
+    padding: 12px;
+  }
+  #licenseContent h1, #changelogContent h1, #privacyContent h1 { font-size: 18px; margin: 8px 0 4px; }
+  #licenseContent h2, #changelogContent h2, #privacyContent h2 { font-size: 16px; margin: 8px 0 4px; }
+  #licenseContent h3, #changelogContent h3, #privacyContent h3 { font-size: 14px; margin: 6px 0 3px; }
+  #licenseContent p, #changelogContent p, #privacyContent p { margin: 4px 0; }
+  #licenseContent ul, #changelogContent ul, #privacyContent ul { margin: 4px 0 4px 16px; padding: 0; }
+  #licenseContent ol, #changelogContent ol, #privacyContent ol { margin: 4px 0 4px 16px; padding: 0; }
+  #licenseContent li, #changelogContent li, #privacyContent li { margin: 2px 0; }
+  #licenseContent pre, #changelogContent pre, #privacyContent pre {
+    background: #f0f0f0;
+    border-radius: 6px;
+    padding: 8px;
+    overflow-x: auto;
+    margin: 6px 0;
+    font-size: 11px;
+  }
+  [data-theme="dark"] #licenseContent pre, [data-theme="dark"] #changelogContent pre, [data-theme="dark"] #privacyContent pre {
+    background: #1a1a1a;
+  }
+  #licenseContent code, #changelogContent code, #privacyContent code {
+    font-family: 'Fira Code', 'Courier New', monospace;
+    font-size: 11px;
+    background: #f0f0f0;
+    padding: 1px 4px;
+    border-radius: 3px;
+  }
+  [data-theme="dark"] #licenseContent code, [data-theme="dark"] #changelogContent code, [data-theme="dark"] #privacyContent code {
+    background: #1a1a1a;
+  }
+  #licenseContent a, #changelogContent a, #privacyContent a {
+    color: var(--orange);
+    text-decoration: none;
+  }
+  #licenseContent a:hover, #changelogContent a:hover, #privacyContent a:hover {
+    text-decoration: underline;
+  }
+  #licenseContent hr, #changelogContent hr, #privacyContent hr {
+    border: none;
+    border-top: 1px solid #ddd;
+    margin: 8px 0;
+  }
+  #licenseContent blockquote, #changelogContent blockquote, #privacyContent blockquote {
+    border-left: 3px solid var(--orange);
+    padding-left: 8px;
+    margin: 6px 0;
+    font-style: italic;
+  }
