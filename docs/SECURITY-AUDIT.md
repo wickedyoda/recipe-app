@@ -1,4 +1,4 @@
-# Security Audit Report — WiskfFul Recipe App
+# Security Audit Report — WhiskFul Recipe App
 
 **Date:** 2026-08-05  
 **Scope:** Full-stack application (FastAPI backend + vanilla JS frontend)  
@@ -183,7 +183,7 @@ No critical, high, or medium severity vulnerabilities were identified. The appli
 
 **Overall Audit Result: ✅ PASS**
 
-The WiskfFul recipe app demonstrates strong security practices across all major OWASP Top 10 categories. All previously identified low-risk findings have been addressed:
+The WhiskFul recipe app demonstrates strong security practices across all major OWASP Top 10 categories. All previously identified low-risk findings have been addressed:
 
 - **XSS:** `escapeHtml()` applied to all photo paths in frontend (defense-in-depth)
 - **Default credentials:** Runtime warning implemented for `SECRET_KEY` detection

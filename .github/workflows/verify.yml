@@ -252,7 +252,7 @@ jobs:
         run: |
           test -f frontend/src/index.html
           grep -q "<!DOCTYPE html>" frontend/src/index.html
-          grep -q "<title>WiskfFul" frontend/src/index.html
+          grep -q "<title>WhiskFul" frontend/src/index.html
           grep -q "Extract recipe from video" frontend/src/index.html
           grep -q "Extract recipe from file" frontend/src/index.html
           grep -q "Edit recipe" frontend/src/index.html

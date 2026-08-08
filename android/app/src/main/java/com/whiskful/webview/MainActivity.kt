@@ -1,4 +1,4 @@
-package com.wiskfful.webview
+package com.whiskful.webview
 
 import android.annotation.SuppressLint
 import android.content.Context
