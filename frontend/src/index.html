@@ -1954,8 +1954,10 @@ async function loadTags() {
 }
 
 const categoryIcons = {
-  Breakfast:'🳑', Entrees:'🍽️', Snacks:'🍏', Appetizers:'🥟', Desserts:'🍰',
-  Soups:'🍲', Salads:'🥗', Bread:'🍞', Pasta:'🍝', Drinks:'☕',
+  Breakfast:'🥞', Entrees:'🍽️', Snacks:'🍏', Appetizers:'🥟', Appetizer:'🥟', Dessert:'🍰', Desserts:'🍰',
+  Soup:'🍲', Soups:'🍲', Salad:'🥗', Salads:'🥗', Bread:'🍞', Pasta:'🍝', Drinks:'☕',
+  American:'🍔', Asian:'🍜', Healthy:'🥗', Indian:'🌶️', Italian:'🍕', Japanese:'🍱',
+  Lunch:'🥪', Main:'🍲', Mexican:'🌮', Seafood:'🦐',
 };
 function categoryIcon(cat) { return (cat && categoryIcons[cat]) || '📝'; }
 
