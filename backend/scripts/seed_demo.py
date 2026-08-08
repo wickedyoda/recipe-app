@@ -33,7 +33,7 @@ except ImportError:
     engine = create_engine(DATABASE_URL)
     SessionLocal = sessionmaker(bind=engine)
 
-GUEST_EMAIL = 'guest@wiskfful.app'
+GUEST_EMAIL = 'guest@whiskful.app'
 GUEST_PASSWORD = 'guest123!'
 
 def hash_password(password: str) -> str:

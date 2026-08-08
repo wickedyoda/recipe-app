@@ -1,6 +1,6 @@
 {
-  "name": "WiskfFul",
-  "short_name": "WiskfFul",
+  "name": "WhiskFul",
+  "short_name": "WhiskFul",
   "description": "Recipe management, meal planning, and grocery lists",
   "start_url": "/",
   "display": "standalone",

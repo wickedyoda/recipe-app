@@ -21,7 +21,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="format-detection" content="telephone=no, email=no, address=no, date=no, month=no, year=no">
   <meta name="mobile-web-app-capable" content="yes">
-  <title>WiskfFul - Plan it. Cook it. Love it.</title>
+  <title>WhiskFul - Plan it. Cook it. Love it.</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -36,12 +36,11 @@
 <div class="container" style="position:relative;">
 <div class="card">
   <div class="top" style="text-align:center;padding-top:12px;">
-    <h1 style="margin:0;font-size:20px;display:flex;flex-direction:column;align-items:center;gap:4px;"><a href="#" onclick="switchTab('tabMenu');return false" style="color:inherit;text-decoration:none;display:flex;flex-direction:column;align-items:center;gap:2px;"><img src="/src/icons/logo-lg.png" alt="WiskfFul" style="width:64px;height:64px;object-fit:contain;" />WiskfFul</a></h1>
+    <h1 style="margin:0;font-size:20px;display:flex;flex-direction:column;align-items:center;gap:4px;"><a href="#" onclick="switchTab('tabMenu');return false" style="color:inherit;text-decoration:none;display:flex;flex-direction:column;align-items:center;gap:2px;"><img src="/src/icons/logo-lg.png" alt="WhiskFul" style="width:69px;height:69px;object-fit:contain;" />WhiskFul</a></h1>
     <div style="font-size:11px;color:var(--text-muted);font-weight:400;">Plan it. Cook it. Love it.</div>
   </div>
   <!-- Compact single-row navigation with 3-line menu, centered under logo -->
-  <div id="headerNavWrapper" style="display:flex;justify-content:center;align-items:center;gap:2px;margin-top:8px;position:relative;">
-  <div style="display:flex;justify-content:center;align-items:center;gap:1px;">
+  <div id="headerNavWrapper" style="display:flex;align-items:center;gap:2px;margin-top:8px;position:relative;">
   <span id="userEmailRow" style="font-size:10px;color:#555;margin:0 4px;display:flex;flex-direction:column;align-items:center;gap:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px;">
     <span id="userEmail" style="font-size:10px;font-weight:500;"></span>
     <span id="userEmailBadge" class="hidden" style="font-size:8px;color:#996600;background:#fff3cd;padding:0 4px;border-radius:4px;">READ-ONLY</span>
@@ -672,12 +671,12 @@
     <div id="tabAbout" class="tab hidden">
       <div class="card">
         <div class="top" style="display:flex;align-items:center;justify-content:space-between;">
-          <h2 style="margin:0;font-size:18px;">About WiskfFul</h2>
+          <h2 style="margin:0;font-size:18px;">About WhiskFul</h2>
           <button class="secondary small" onclick="switchTab('tabMenu')" style="padding:2px 8px;font-size:12px;">Back</button>
         </div>
         <div style="padding:16px;text-align:center;">
-          <img src="/src/icons/logo-lg.png" alt="WiskfFul" style="width:96px;height:96px;object-fit:contain;margin-bottom:12px;" />
-          <h3 style="margin:8px 0;font-size:20px;font-family:'Cormorant Garamond',serif;">WiskfFul</h3>
+          <img src="/src/icons/logo-lg.png" alt="WhiskFul" style="width:96px;height:96px;object-fit:contain;margin-bottom:12px;" />
+          <h3 style="margin:8px 0;font-size:20px;font-family:'Cormorant Garamond',serif;">WhiskFul</h3>
           <p style="font-size:14px;color:var(--text-muted);margin:8px 0 16px;">Plan it. Cook it. Love it.</p>
           <p style="font-size:13px;color:var(--text-secondary);margin-bottom:12px;">
             A self-hosted recipe manager with meal planning, grocery lists, and household sharing.
@@ -1091,7 +1090,7 @@ async function loadSettings() {
   html += '</label>';
   html += '</div>';
   html += '<div class="meta" style="font-size:12px;color:var(--text-muted);margin-top:4px;">';
-  html += 'Guest account: <strong>' + escapeHtml(s.guest_email || 'guest@wiskdful.app') + '</strong>';
+  html += 'Guest account: <strong>' + escapeHtml(s.guest_email || 'guest@whiskful.app') + '</strong>';
   html += '</div></div>';
   document.getElementById('settingsContent').innerHTML = html;
   document.getElementById('settingsStatus').textContent = '';
@@ -1162,7 +1161,7 @@ async function backupDatabase() {
   const blob = await downloadRes.blob();
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
-  const filename = 'wiskdful_backup_' + new Date().toISOString().slice(0, 10) + '.sql.gz';
+  const filename = 'whiskful_backup_' + new Date().toISOString().slice(0, 10) + '.sql.gz';
   link.href = url;
   link.download = filename;
   document.body.appendChild(link);
@@ -1294,7 +1293,7 @@ async function login() {
   }
 }
 async function loginAsGuest() {
-  document.getElementById('loginEmail').value = 'guest@wiskdful.app';
+  document.getElementById('loginEmail').value = 'guest@whiskful.app';
   document.getElementById('loginPassword').value = 'guest123!';
   await login();
 }
@@ -2219,7 +2218,7 @@ function closeRecipeDetail() {
 }
 async function shareCurrentRecipe() {
   if (!currentRecipeId) return;
-  const title = document.getElementById('detailTitle')?.textContent || 'WiskfFul Recipe';
+  const title = document.getElementById('detailTitle')?.textContent || 'WhiskFul Recipe';
   try {
     const res = await fetch(API + '/recipes/' + currentRecipeId + '/share', {
       method: 'POST',
