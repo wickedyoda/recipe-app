@@ -1622,7 +1622,11 @@ window.toggleFilterDropdown = function(id) {
       dropdown.style.position = 'absolute';
       dropdown.style.top = (rect.bottom + window.scrollY) + 'px';
       dropdown.style.left = (rect.left + window.scrollX) + 'px';
-      dropdown.style.maxWidth = (rect.width) + 'px';
+      dropdown.style.width = (window.innerWidth * 0.25) + 'px';
+      dropdown.style.minWidth = '200px';
+      dropdown.style.maxHeight = '60vh';
+      dropdown.style.overflowY = 'auto';
+      dropdown.style.zIndex = '1000';
     }
     // Close on outside click
     const closeFn = function(e) {
