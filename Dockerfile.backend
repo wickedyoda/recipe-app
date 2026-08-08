@@ -13,7 +13,6 @@ RUN apt-get update && apt-get upgrade -y --no-install-recommends \
 
 COPY backend/ /app/backend/
 COPY run.py /app/run.py
-COPY CHANGELOG.md LICENSE PRIVACY.md /app/
 
 # Create media directories writable by non-root user
 RUN mkdir -p /media && chown -R appuser:appgroup /app /media

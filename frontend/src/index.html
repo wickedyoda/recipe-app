@@ -21,7 +21,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="format-detection" content="telephone=no, email=no, address=no, date=no, month=no, year=no">
   <meta name="mobile-web-app-capable" content="yes">
-  <title>WiskfFul - Plan it. Cook it. Love it.</title>
+  <title>WhiskFul - Plan it. Cook it. Love it.</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -36,15 +36,15 @@
 <div class="container" style="position:relative;">
 <div class="card">
   <div class="top" style="text-align:center;padding-top:12px;">
-    <h1 style="margin:0;font-size:20px;display:flex;flex-direction:column;align-items:center;gap:4px;"><a href="#" onclick="switchTab('tabMenu');return false" style="color:inherit;text-decoration:none;display:flex;flex-direction:column;align-items:center;gap:2px;"><img src="/src/icons/logo-lg.png" alt="WiskfFul" style="width:69px;height:69px;object-fit:contain;" />WiskfFul</a></h1>
+    <h1 style="margin:0;font-size:20px;display:flex;flex-direction:column;align-items:center;gap:4px;"><a href="#" onclick="switchTab('tabMenu');return false" style="color:inherit;text-decoration:none;display:flex;flex-direction:column;align-items:center;gap:2px;"><img src="/src/icons/logo-lg.png" alt="WhiskFul" style="width:69px;height:69px;object-fit:contain;" />WhiskFul</a></h1>
     <div style="font-size:11px;color:var(--text-muted);font-weight:400;">Plan it. Cook it. Love it.</div>
   </div>
   <!-- Compact single-row navigation with 3-line menu, centered under logo -->
   <div id="headerNavWrapper" style="display:flex;align-items:center;gap:2px;margin-top:8px;position:relative;">
-  <div id="userEmailRow" style="font-size:10px;color:#555;margin:0 4px;display:flex;flex-direction:column;align-items:center;gap:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px;">
+  <span id="userEmailRow" style="font-size:10px;color:#555;margin:0 4px;display:flex;flex-direction:column;align-items:center;gap:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px;">
     <span id="userEmail" style="font-size:10px;font-weight:500;"></span>
     <span id="userEmailBadge" class="hidden" style="font-size:8px;color:#996600;background:#fff3cd;padding:0 4px;border-radius:4px;">READ-ONLY</span>
-  </div>
+  </span>
   <div id="topNavRow" class="hidden" style="display:flex;align-items:center;gap:1px;">
     <button data-tab="tabMenu" onclick="switchTab('tabMenu')" class="nav-btn-small active" title="Menu">🏠</button>
     <button data-tab="tabRecipes" onclick="switchTab(\'tabRecipes\')" class="nav-btn-small" title="Recipes">📋</button>
@@ -56,8 +56,8 @@
     <button id="adminTabBtnTop" data-tab="tabAdmin" onclick="switchTab('tabAdmin')" class="nav-btn-small hidden" title="Admin">👤</button>
     <button class="secondary small" id="menuBtn" onclick="toggleDropdown()" style="display:none;padding:2px 6px;font-size:11px;">☰</button>
   </div>
-  <!-- Theme toggle at top-right corner -->
-  <button class="secondary small" id="themeToggle" onclick="toggleTheme()" style="margin-left:auto;padding:2px 6px;font-size:14px;line-height:1;">🌙</button>
+  <!-- Smaller theme toggle icon at top-right -->
+  <button class="secondary small" id="themeToggle" onclick="toggleTheme()" style="margin-left:auto;padding:2px 4px;font-size:14px;line-height:1;">🌙</button>
   </div>
   <!-- Dropdown menu positioned at top-right -->
   <div id="dropdownMenu" class="hidden dropdown-menu" style="position:absolute;top:56px;right:12px;border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,0.12);z-index:1000;min-width:160px;">
@@ -93,7 +93,7 @@
       <button class="secondary" onclick="showRegister()">Create account</button>
       <div class="section" style="margin-top:12px;">
         <button class="secondary" onclick="loginAsGuest()" style="width:100%;font-size:14px;padding:12px;">🍪 Sign in as Demo (Guest)</button>
-        <p style="font-size:11px;color:var(--text-muted);margin-top:6px;text-align:center;">Read-only demo account — 36 sample recipes</p>
+        <p style="font-size:11px;color:var(--text-muted);margin-top:6px;text-align:center;">Read-only demo account — 30 sample recipes</p>
       </div>
     </div>
 
@@ -196,7 +196,6 @@
           <label class="filter-option"><input type="checkbox" onchange="toggleSubFilter('Entrees')" id="chkEntrees"> Entrees</label>
           <label class="filter-option"><input type="checkbox" onchange="toggleSubFilter('Snacks')" id="chkSnacks"> Snacks</label>
         </div>
-        <div id="recipeCategoryFilters" class="hidden" data-active="" data-meal="" data-sub="" data-favs=""></div>
         <div style="padding:8px;border-top:1px solid var(--border);margin-top:4px;">
           <button class="secondary" onclick="applyFilters()" style="width:100%;padding:10px;font-weight:600;">Apply Filters</button>
         </div>
@@ -495,7 +494,7 @@
 
         <div id="userForm" class="card hidden">
           <h2 style="margin-top:0;" id="userFormTitle">New user</h2>
-          <input id="regEmail" type="email" placeholder="Email" />
+          <input id="userEmail" type="email" placeholder="Email" />
           <input id="userPassword" type="password" placeholder="Password (min 6 chars, uppercase, symbol)" />
           <input id="userDisplayName" placeholder="Display name" />
           <select id="userRole">
@@ -672,12 +671,12 @@
     <div id="tabAbout" class="tab hidden">
       <div class="card">
         <div class="top" style="display:flex;align-items:center;justify-content:space-between;">
-          <h2 style="margin:0;font-size:18px;">About WiskfFul</h2>
+          <h2 style="margin:0;font-size:18px;">About WhiskFul</h2>
           <button class="secondary small" onclick="switchTab('tabMenu')" style="padding:2px 8px;font-size:12px;">Back</button>
         </div>
         <div style="padding:16px;text-align:center;">
-          <img src="/src/icons/logo-lg.png" alt="WiskfFul" style="width:96px;height:96px;object-fit:contain;margin-bottom:12px;" />
-          <h3 style="margin:8px 0;font-size:20px;font-family:'Cormorant Garamond',serif;">WiskfFul</h3>
+          <img src="/src/icons/logo-lg.png" alt="WhiskFul" style="width:96px;height:96px;object-fit:contain;margin-bottom:12px;" />
+          <h3 style="margin:8px 0;font-size:20px;font-family:'Cormorant Garamond',serif;">WhiskFul</h3>
           <p style="font-size:14px;color:var(--text-muted);margin:8px 0 16px;">Plan it. Cook it. Love it.</p>
           <p style="font-size:13px;color:var(--text-secondary);margin-bottom:12px;">
             A self-hosted recipe manager with meal planning, grocery lists, and household sharing.
@@ -1037,7 +1036,7 @@ function openSettingsCard() {
     if (el && el.textContent.includes('(admin)')) role = 'admin';
   }
   if (role !== 'admin') {
-    showConfirm('Settings is for admin users only. Non-admin users can manage profile settings in the Profile tab.');
+    alert('Settings is for admin users only. Non-admin users can manage profile settings in the Profile tab.');
     return;
   }
   document.getElementById('userForm').classList.add('hidden');
@@ -1091,7 +1090,7 @@ async function loadSettings() {
   html += '</label>';
   html += '</div>';
   html += '<div class="meta" style="font-size:12px;color:var(--text-muted);margin-top:4px;">';
-  html += 'Guest account: <strong>' + escapeHtml(s.guest_email || 'guest@wiskfful.app') + '</strong>';
+  html += 'Guest account: <strong>' + escapeHtml(s.guest_email || 'guest@whiskful.app') + '</strong>';
   html += '</div></div>';
   document.getElementById('settingsContent').innerHTML = html;
   document.getElementById('settingsStatus').textContent = '';
@@ -1162,7 +1161,7 @@ async function backupDatabase() {
   const blob = await downloadRes.blob();
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
-  const filename = 'wiskfful_backup_' + new Date().toISOString().slice(0, 10) + '.sql.gz';
+  const filename = 'whiskful_backup_' + new Date().toISOString().slice(0, 10) + '.sql.gz';
   link.href = url;
   link.download = filename;
   document.body.appendChild(link);
@@ -1191,41 +1190,41 @@ async function changePassword() {
   const current = document.getElementById('changePasswordCurrent').value;
   const newPass = document.getElementById('changePasswordNew').value;
   const verify = document.getElementById('changePasswordVerify').value;
-  if (!current || !newPass || !verify) return showConfirm('All fields are required');
-  if (newPass !== verify) return showConfirm('New passwords do not match');
-  if (newPass.length < 6) return showConfirm('New password must be at least 6 characters');
+  if (!current || !newPass || !verify) return alert('All fields are required');
+  if (newPass !== verify) return alert('New passwords do not match');
+  if (newPass.length < 6) return alert('New password must be at least 6 characters');
   const res = await fetch(API + '/auth/change-password', { method:'POST', headers: authHeaders(), body: JSON.stringify({current_password: current, new_password: newPass}) });
   const data = await res.json();
-  if (!res.ok) return showConfirm('Failed: ' + (data.detail || 'unknown'));
+  if (!res.ok) return alert('Failed: ' + (data.detail || 'unknown'));
   document.getElementById('changePasswordCurrent').value = '';
   document.getElementById('changePasswordNew').value = '';
   document.getElementById('changePasswordVerify').value = '';
-  showConfirm('Password changed successfully');
+  alert('Password changed successfully');
 }
 async function changeEmail() {
   const current = document.getElementById('changeEmailCurrent').value;
   const newEmail = document.getElementById('changeEmailNew').value;
-  if (!current || !newEmail) return showConfirm('Both fields are required');
+  if (!current || !newEmail) return alert('Both fields are required');
   const res = await fetch(API + '/auth/change-email', { method:'POST', headers: authHeaders(), body: JSON.stringify({current_email: current, new_email: newEmail}) });
   const data = await res.json();
-  if (!res.ok) return showConfirm('Failed: ' + (data.detail || 'unknown'));
+  if (!res.ok) return alert('Failed: ' + (data.detail || 'unknown'));
   document.getElementById('changeEmailCurrent').value = '';
   document.getElementById('changeEmailNew').value = '';
-  showConfirm('Email changed successfully. You may need to log in again.');
+  alert('Email changed successfully. You may need to log in again.');
 }
 async function exportUserData() {
   if (!await showConfirm('Export all your data as JSON?')) return;
   const res = await fetch(API + '/auth/me/export', { headers: authHeaders() });
   const data = await res.json();
-  if (!res.ok) return showConfirm('Failed: ' + (data.detail || 'unknown'));
+  if (!res.ok) return alert('Failed: ' + (data.detail || 'unknown'));
   const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = 'wiskfful-data.json';
+  a.download = 'cookieRue-data.json';
   a.click();
   URL.revokeObjectURL(url);
-  showConfirm('Data exported to wiskfful-data.json');
+  alert('Data exported to cookieRue-data.json');
 }
 async function deleteAccount() {
   // Step 1: Confirm intent with a clear warning
@@ -1294,7 +1293,7 @@ async function login() {
   }
 }
 async function loginAsGuest() {
-  document.getElementById('loginEmail').value = 'guest@wiskfful.app';
+  document.getElementById('loginEmail').value = 'guest@whiskful.app';
   document.getElementById('loginPassword').value = 'guest123!';
   await login();
 }
@@ -1410,8 +1409,8 @@ async function updateProfile() {
   const display_name = document.getElementById('profileName').value.trim();
   const avatar_url = document.getElementById('profileAvatar').value.trim();
   const res = await fetch(API + '/auth/me', { method:'PATCH', headers: authHeaders(), body: JSON.stringify({display_name,avatar_url}) });
-  if (!res.ok) return showConfirm('Update failed');
-  showConfirm('Profile saved');
+  if (!res.ok) return alert('Update failed');
+  alert('Profile saved');
 }
 
 async function ingestUrl() {
@@ -1520,10 +1519,8 @@ async function loadTags() {
 }
 
 const categoryIcons = {
-  Breakfast:'🥞', Entrees:'🍽️', Snacks:'🍏', Appetizers:'🥟', Appetizer:'🥟', Dessert:'🍰', Desserts:'🍰',
-  Soup:'🍲', Soups:'🍲', Salad:'🥗', Salads:'🥗', Bread:'🍞', Pasta:'🍝', Drinks:'☕',
-  American:'🍔', Asian:'🍜', Healthy:'🥗', Indian:'🌶️', Italian:'🍕', Japanese:'🍱',
-  Lunch:'🥪', Main:'🍲', Mexican:'🌮', Seafood:'🦐',
+  Breakfast:'🳑', Entrees:'🍽️', Snacks:'🍏', Appetizers:'🥟', Desserts:'🍰',
+  Soups:'🍲', Salads:'🥗', Bread:'🍞', Pasta:'🍝', Drinks:'☕',
 };
 function categoryIcon(cat) { return (cat && categoryIcons[cat]) || '📝'; }
 
@@ -1756,7 +1753,7 @@ window.toggleFavoriteFromDetail = function() {
 };
 async function exportRecipes() {
   const res = await fetch(API + '/recipes/export', { headers: authHeaders() });
-  if (!res.ok) return showConfirm('Export failed');
+  if (!res.ok) return alert('Export failed');
   const blob = await res.blob();
   const url = window.URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -1776,7 +1773,7 @@ async function deleteRecipe(id) {
       if (currentRecipeId == id) closeRecipeDetail();
       renderRecipes();
     })
-    .catch(() => showConfirm('Delete failed'));
+    .catch(() => alert('Delete failed'));
 }
 async function deleteCurrentRecipe() {
   _recipeCacheTime = 0;
@@ -1789,7 +1786,7 @@ async function deleteCurrentRecipe() {
       renderRecipes();
       loadRecentRecipes();
     })
-    .catch(() => showConfirm('Delete failed'));
+    .catch(() => alert('Delete failed'));
 }
 async function deletePlanWithConfirm(id) {
   _plansCacheTime = 0;
@@ -1800,7 +1797,7 @@ async function deletePlanWithConfirm(id) {
       if (currentPlanId == id) closePlanDetail();
       renderPlans();
     })
-    .catch(() => showConfirm('Delete failed'));
+    .catch(() => alert('Delete failed'));
 }
 async function deleteCurrentPlan() {
   _plansCacheTime = 0;
@@ -1812,7 +1809,7 @@ async function deleteCurrentPlan() {
       closePlanDetail();
       renderPlans();
     })
-    .catch(() => showConfirm('Delete failed'));
+    .catch(() => alert('Delete failed'));
 }
 window.recipeSelectionMode = false;
 function toggleSelectMode() {
@@ -1837,10 +1834,10 @@ function toggleSelection(id) {
   }
 }
 async function exportSelectedRecipes() {
-  if (!window.selectedRecipes.size) return showConfirm('No recipes selected');
+  if (!window.selectedRecipes.size) return alert('No recipes selected');
   const ids = [...window.selectedRecipes];
   const res = await fetch(API + '/recipes/export-selected', { method:'POST', headers: authHeaders(), body: JSON.stringify({ids: ids}) });
-  if (!res.ok) return showConfirm('Export failed');
+  if (!res.ok) return alert('Export failed');
   const blob = await res.blob();
   const url = window.URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -1930,9 +1927,9 @@ async function saveRecipe() {
   const data = await res.json();
   if (!res.ok) {
     if (res.status === 409) {
-      return showConfirm('A recipe with this title and description already exists. It was not duplicated.');
+      return alert('A recipe with this title and description already exists. It was not duplicated.');
     }
-    return showConfirm('Save failed: ' + (data.detail || 'unknown'));
+    return alert('Save failed: ' + (data.detail || 'unknown'));
   }
   closeRecipeForm();
   switchTab('tabRecipes');
@@ -1941,7 +1938,7 @@ async function saveRecipe() {
 async function openRecipeDetail(id) {
   currentRecipeId = id;
   const res = await fetch(API + '/recipes/' + id, { headers: authHeaders() });
-  if (!res.ok) return showConfirm('Recipe not found');
+  if (!res.ok) return alert('Recipe not found');
   const r = await res.json();
   document.getElementById('detailTitle').innerHTML = (r.category ? categoryIcon(r.category) + ' ' : '') + escapeHtml(r.title || 'Untitled');
   // Show household share button if user is a household owner
@@ -2053,10 +2050,10 @@ async function rateCurrentRecipe() {
   const choice = prompt('Rate this recipe (1-5):\n1. ★ Poor\n2. ★★ Fair\n3. ★★★ Good\n4. ★★★★ Very Good\n5. ★★★★★ Excellent\n0. Unrate', '5');
   if (!choice && choice !== '0') return;
   const score = parseInt(choice);
-  if (isNaN(score) || score < 0 || score > 5) return showConfirm('Please enter a number 0-5');
+  if (isNaN(score) || score < 0 || score > 5) return alert('Please enter a number 0-5');
   const res = await fetch(API + '/recipes/' + currentRecipeId + '/rate', { method: 'POST', headers: authHeaders(), body: JSON.stringify({score}) });
   const data = await res.json();
-  if (!res.ok) return showConfirm('Failed: ' + (data.detail || 'unknown'));
+  if (!res.ok) return alert('Failed: ' + (data.detail || 'unknown'));
   // Re-render rating
   const starSpan = document.getElementById('detailStarRating');
   const countSpan = document.getElementById('detailRatingCount');
@@ -2099,7 +2096,7 @@ async function uploadRecipeMedia() {
   });
   if (!res.ok) {
     const err = await res.json();
-    return showConfirm('Upload failed: ' + (err.detail || 'unknown error'));
+    return alert('Upload failed: ' + (err.detail || 'unknown error'));
   }
   const result = await res.json();
   setShareStatus('Media uploaded successfully');
@@ -2117,7 +2114,7 @@ async function deleteRecipeMedia(mediaId) {
     method: 'DELETE',
     headers: authHeaders(),
   });
-  if (!res.ok) return showConfirm('Delete failed');
+  if (!res.ok) return alert('Delete failed');
   // Re-fetch recipe to refresh media gallery
   const fullRes = await fetch(API + '/recipes/' + currentRecipeId, { headers: authHeaders() });
   if (fullRes.ok) {
@@ -2137,7 +2134,7 @@ async function uploadStepPhoto() {
   form.append('step_index', stepIndex);
   const res = await fetch(API + '/recipes/' + currentRecipeId + '/step-photos', { method:'POST', headers: authHeaders(), body: form });
   const data = await res.json();
-  if (!res.ok) return showConfirm('Step photo upload failed');
+  if (!res.ok) return alert('Step photo upload failed');
   input.value = '';
   openRecipeDetail(currentRecipeId);
 }
@@ -2149,7 +2146,7 @@ async function uploadRecipePhoto() {
   form.append('file', file);
   const res = await fetch(API + '/recipes/' + currentRecipeId + '/photos', { method:'POST', headers: authHeaders(), body: form });
   const data = await res.json();
-  if (!res.ok) return showConfirm('Photo upload failed');
+  if (!res.ok) return alert('Photo upload failed');
   input.value = '';
   openRecipeDetail(currentRecipeId);
 }
@@ -2186,15 +2183,15 @@ async function addIngredientToGrocery(name) {
     listRes = { ok: true, json: () => Promise.resolve({id: list.id}) };
   }
   const listData = await listRes.json();
-  if (!listRes.ok) return showConfirm('Failed: ' + (listData.detail || 'unknown'));
+  if (!listRes.ok) return alert('Failed: ' + (listData.detail || 'unknown'));
   await fetch(API + '/grocery-lists/' + listData.id + '/items', { method:'POST', headers: authHeaders(), body: JSON.stringify({name, list_id: listData.id, recipe_id: currentRecipeId}) });
-  showConfirm('Added to grocery list');
+  alert('Added to grocery list');
 }
 async function addAllIngredientsToGrocery() {
   if (!currentRecipeId) return;
   const r = await (await fetch(API + '/recipes/' + currentRecipeId, { headers: authHeaders() })).json();
   const lines = (r.ingredients || '').split('\n').filter(Boolean).slice(0, 30);
-  if (!lines.length) return showConfirm('No ingredients to add');
+  if (!lines.length) return alert('No ingredients to add');
   const list = await promptGroceryListChoice((document.getElementById('detailTitle').textContent || '').trim() + ' groceries');
   if (!list) return;
   let listRes;
@@ -2204,11 +2201,11 @@ async function addAllIngredientsToGrocery() {
     listRes = { ok: true, json: () => Promise.resolve({id: list.id}) };
   }
   const listData = await listRes.json();
-  if (!listRes.ok) return showConfirm('Failed: ' + (listData.detail || 'unknown'));
+  if (!listRes.ok) return alert('Failed: ' + (listData.detail || 'unknown'));
   for (const line of lines) {
     await fetch(API + '/grocery-lists/' + listData.id + '/items', { method:'POST', headers: authHeaders(), body: JSON.stringify({name: line, list_id: listData.id, recipe_id: currentRecipeId}) });
   }
-  showConfirm('Added ingredients to grocery list');
+  alert('Added ingredients to grocery list');
   openGroceryDetail(listData.id);
 }
 function closeRecipeDetail() {
@@ -2221,7 +2218,7 @@ function closeRecipeDetail() {
 }
 async function shareCurrentRecipe() {
   if (!currentRecipeId) return;
-  const title = document.getElementById('detailTitle')?.textContent || 'WiskfFul Recipe';
+  const title = document.getElementById('detailTitle')?.textContent || 'WhiskFul Recipe';
   try {
     const res = await fetch(API + '/recipes/' + currentRecipeId + '/share', {
       method: 'POST',
@@ -2264,12 +2261,12 @@ function editCurrentRecipe() {
 async function duplicateCurrentRecipe() {
   if (!currentRecipeId) return;
   const res = await fetch(API + '/recipes/' + currentRecipeId, { headers: authHeaders() });
-  if (!res.ok) return showConfirm('Failed to load recipe');
+  if (!res.ok) return alert('Failed to load recipe');
   const r = await res.json();
   const dupRes = await fetch(API + '/recipes', { method:'POST', headers: authHeaders(), body: JSON.stringify({title: r.title + ' (copy)', description: r.description, ingredients: r.ingredients, instructions: r.instructions, source_url: r.source_url, rating: r.rating, flavor_rating: r.flavor_rating, effort_rating: r.effort_rating, prep_time_minutes: r.prep_time_minutes, cook_time_minutes: r.cook_time_minutes, servings: r.servings, difficulty: r.difficulty, category: r.category, subcategory: r.subcategory, tag_ids: (r.tag_ids || [])}) });
   const data = await dupRes.json();
-  if (!dupRes.ok) return showConfirm('Duplicate failed: ' + (data.detail || 'unknown'));
-  showConfirm('Recipe duplicated as "' + (r.title + ' (copy)') + '"');
+  if (!dupRes.ok) return alert('Duplicate failed: ' + (data.detail || 'unknown'));
+  alert('Recipe duplicated as "' + (r.title + ' (copy)') + '"');
   closeRecipeDetail();
   renderRecipes();
 }
@@ -2334,7 +2331,7 @@ async function addNoteFromDetail() {
   if (!body) return;
   const res = await fetch(API + '/notes', { method:'POST', headers: authHeaders(), body: JSON.stringify({body, recipe_id: currentRecipeId}) });
   const data = await res.json();
-  if (!res.ok) return showConfirm('Failed: ' + (data.detail || 'unknown'));
+  if (!res.ok) return alert('Failed: ' + (data.detail || 'unknown'));
   renderNotes(currentRecipeId);
 }
 async function editNote(id) {
@@ -2358,7 +2355,7 @@ async function editNote(id) {
     cleanup();
     if (newBody === currentBody || !newBody) return renderNotes(currentRecipeId);
     const res = await fetch(API + '/notes/' + id, { method:'PATCH', headers: authHeaders(), body: JSON.stringify({body: newBody, recipe_id: currentRecipeId}) });
-    if (!res.ok) showConfirm('Update failed');
+    if (!res.ok) alert('Update failed');
     renderNotes(currentRecipeId);
   }
   function onKeyDown(e) {
@@ -2378,7 +2375,7 @@ async function editNote(id) {
 async function deleteNote(id) {
   if (!await showConfirm('Delete this note?')) return;
   const res = await fetch(API + '/notes/' + id, { method:'DELETE', headers: authHeaders() });
-  if (!res.ok) return showConfirm('Failed');
+  if (!res.ok) return alert('Failed');
   if (currentRecipeId) renderNotes(currentRecipeId);
 }
 
@@ -2414,13 +2411,13 @@ async function savePlan() {
   const period = document.getElementById('planPeriod').value;
   const res = await fetch(API + '/meal-plans', { method:'POST', headers: authHeaders(), body: JSON.stringify({name,period}) });
   const data = await res.json();
-  if (!res.ok) return showConfirm('Failed: ' + (data.detail || 'unknown'));
+  if (!res.ok) return alert('Failed: ' + (data.detail || 'unknown'));
   closePlanForm(); renderPlans();
 }
 async function openPlanDetail(id) {
   currentPlanId = id;
   const planRes = await fetch(API + '/meal-plans/' + id, { headers: authHeaders() });
-  if (!planRes.ok) return showConfirm('Plan not found');
+  if (!planRes.ok) return alert('Plan not found');
   const plan = await planRes.json();
   document.getElementById('planDetailTitle').textContent = plan.name + ' (' + plan.period + ')';
   const recipeRes = await fetch(API + '/recipes', { headers: authHeaders() });
@@ -2436,7 +2433,7 @@ function closePlanDetail() {
 async function renderPlanner(plan) {
   const view = window._plannerView || plan.period || 'weekly';
   const entriesRes = await fetch(API + '/meal-plans/' + plan.id + '/entries', { headers: authHeaders() });
-  if (!entriesRes.ok) return showConfirm('Failed to load plan entries');
+  if (!entriesRes.ok) return alert('Failed to load plan entries');
   const entries = await entriesRes.json();
   const recipes = window._plannerRecipes || [];
   const recipeMap = {};
@@ -2554,7 +2551,7 @@ function updatePlannerSummary(dayKey, byDay) {
 }
 function addMealEntry(date, meal) {
   const recipes = window._plannerRecipes || [];
-  if (!recipes.length) return showConfirm('No recipes available');
+  if (!recipes.length) return alert('No recipes available');
   window._pickerContext = { date: date, meal: meal, entryId: null };
   document.getElementById('recipePickerTitle').textContent = 'Add recipe for ' + meal;
   renderPickerRecipes();
@@ -2601,13 +2598,13 @@ async function pickRecipe(recipeId) {
     // Change existing entry
     const payload = { meal_plan_id: currentPlanId, recipe_id: recipeId, meal: ctx.meal, date: ctx.date };
     const res = await fetch(API + '/meal-plans/entries', { method:'POST', headers: authHeaders(), body: JSON.stringify(payload) });
-    if (!res.ok) return showConfirm('Failed');
+    if (!res.ok) return alert('Failed');
   } else {
     // Add new entry
     const payload = { meal_plan_id: currentPlanId, recipe_id: recipeId, meal: ctx.meal, date: ctx.date };
     const res = await fetch(API + '/meal-plans/entries', { method:'POST', headers: authHeaders(), body: JSON.stringify(payload) });
     const data = await res.json();
-    if (!res.ok) return showConfirm('Failed: ' + (data.detail || 'unknown'));
+    if (!res.ok) return alert('Failed: ' + (data.detail || 'unknown'));
   }
   const planRes = await fetch(API + '/meal-plans/' + currentPlanId, { headers: authHeaders() });
   const p = await planRes.json();
@@ -2619,7 +2616,7 @@ function closeRecipePicker() {
 }
 async function selectPlannerRecipe(entryId) {
   const recipes = window._plannerRecipes || [];
-  if (!recipes.length) return showConfirm('No recipes available');
+  if (!recipes.length) return alert('No recipes available');
   const plan = window._plannerPlan;
   const byDay = window._plannerEntriesByDay;
   let old = null;
@@ -2629,7 +2626,7 @@ async function selectPlannerRecipe(entryId) {
     }
     if (old) break;
   }
-  if (!old) return showConfirm('Entry not found');
+  if (!old) return alert('Entry not found');
   window._pickerContext = { date: old.date || window._plannerSelectedDay, meal: old.meal, entryId: entryId };
   document.getElementById('recipePickerTitle').textContent = 'Change recipe for ' + old.meal;
   renderPickerRecipes();
@@ -2637,7 +2634,7 @@ async function selectPlannerRecipe(entryId) {
 }
 async function deleteMealEntry(id) {
   const res = await fetch(API + '/meal-plans/entries/' + id, { method:'DELETE', headers: authHeaders() });
-  if (!res.ok) return showConfirm('Failed');
+  if (!res.ok) return alert('Failed');
   const planRes = await fetch(API + '/meal-plans/' + currentPlanId, { headers: authHeaders() });
   const plan = await planRes.json();
   await renderPlanner(plan);
@@ -2663,7 +2660,7 @@ async function editGroceryList(id) {
   const newName = prompt('List name:');
   if (!newName) return;
   const res = await fetch(API + '/grocery-lists/' + id, { method:'PATCH', headers: authHeaders(), body: JSON.stringify({name: newName}) });
-  if (!res.ok) return showConfirm('Update failed');
+  if (!res.ok) return alert('Update failed');
   renderGroceryLists();
 }
 function openGroceryForm() { document.getElementById('groceryForm').classList.remove('hidden'); }
@@ -2672,13 +2669,13 @@ async function saveGrocery() {
   const name = document.getElementById('groceryName').value.trim();
   const res = await fetch(API + '/grocery-lists', { method:'POST', headers: authHeaders(), body: JSON.stringify({name}) });
   const data = await res.json();
-  if (!res.ok) return showConfirm('Failed: ' + (data.detail || 'unknown'));
+  if (!res.ok) return alert('Failed: ' + (data.detail || 'unknown'));
   closeGroceryForm(); renderGroceryLists();
 }
 async function openGroceryDetail(id) {
   currentGroceryId = id;
   const res = await fetch(API + '/grocery-lists/' + id, { headers: authHeaders() });
-  if (!res.ok) return showConfirm('List not found');
+  if (!res.ok) return alert('List not found');
   const data = await res.json();
   document.getElementById('groceryDetailTitle').textContent = data.name;
   document.getElementById('grocerySharePanel').classList.add('hidden');
@@ -2695,7 +2692,7 @@ async function openGroceryShare() {
   if (!currentGroceryId) return;
   const res = await fetch(API + '/grocery-lists/' + currentGroceryId + '/share', { method:'POST', headers: authHeaders() });
   const data = await res.json();
-  if (!res.ok) return showConfirm('Share failed');
+  if (!res.ok) return alert('Share failed');
   groceryShareData = data;
   document.getElementById('grocerySharePanel').classList.remove('hidden');
   document.getElementById('groceryShareStatus').textContent = 'Share ready. Use one of the options below.';
@@ -2744,7 +2741,7 @@ async function exportGrocery(fmt) {
   if (!currentGroceryId) return;
   const url = API + '/grocery-lists/' + currentGroceryId + '/export?fmt=' + (fmt === 'html' ? 'html' : 'text');
   const res = await fetch(url, { headers: authHeaders() });
-  if (!res.ok) return showConfirm('Export failed');
+  if (!res.ok) return alert('Export failed');
   const blob = await res.blob();
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
@@ -2812,14 +2809,14 @@ async function editGroceryItem(id) {
   const newName = prompt('Item name:', currentName);
   if (!newName) return;
   const res = await fetch(API + '/grocery-lists/items/' + id, { method:'PATCH', headers: authHeaders(), body: JSON.stringify({name: newName}) });
-  if (!res.ok) return showConfirm('Update failed');
+  if (!res.ok) return alert('Update failed');
   nameEl.textContent = newName;
 }
 async function saveGroceryItem(id, field, value) {
   const payload = {};
   payload[field] = value;
   const res = await fetch(API + '/grocery-lists/items/' + id, { method:'PATCH', headers: authHeaders(), body: JSON.stringify(payload) });
-  if (!res.ok) return showConfirm('Update failed');
+  if (!res.ok) return alert('Update failed');
 }
 async function addGroceryItem() {
   const name = document.getElementById('groceryItemName').value.trim();
@@ -2827,7 +2824,7 @@ async function addGroceryItem() {
   if (!name) return;
   const res = await fetch(API + '/grocery-lists/' + currentGroceryId + '/items', { method:'POST', headers: authHeaders(), body: JSON.stringify({name, quantity, list_id: currentGroceryId, recipe_id: null}) });
   const data = await res.json();
-  if (!res.ok) return showConfirm('Failed: ' + (data.detail || 'unknown'));
+  if (!res.ok) return alert('Failed: ' + (data.detail || 'unknown'));
   document.getElementById('groceryItemName').value='';
   document.getElementById('groceryItemQty').value='';
   loadGroceryItems(currentGroceryId);
@@ -2854,18 +2851,18 @@ async function createGroceryFromRecipe() {
   for (const line of lines) {
     await fetch(API + '/grocery-lists/' + list.id + '/items', { method:'POST', headers: authHeaders(), body: JSON.stringify({name: line, list_id: list.id, recipe_id: recipe.id}) });
   }
-  showConfirm('Created list from recipe');
+  alert('Created list from recipe');
   openGroceryDetail(list.id);
   switchTab('tabGroceries');
 }
 async function toggleGrocery(id, checked) {
   const res = await fetch(API + '/grocery-lists/items/' + id, { method:'PATCH', headers: authHeaders(), body: JSON.stringify({checked}) });
-  if (!res.ok) showConfirm('Update failed');
+  if (!res.ok) alert('Update failed');
 }
 async function deleteGroceryItem(id) {
   if (!await showConfirm('Remove this item?')) return;
   const res = await fetch(API + '/grocery-lists/items/' + id, { method:'DELETE', headers: authHeaders() });
-  if (!res.ok) return showConfirm('Failed');
+  if (!res.ok) return alert('Failed');
   if (currentGroceryId) loadGroceryItems(currentGroceryId);
 }
 
@@ -2892,7 +2889,7 @@ async function addToMealPlan() {
     if (!planName) return;
     const res = await fetch(API + '/meal-plans', { method:'POST', headers: authHeaders(), body: JSON.stringify({name: planName, period: 'weekly'}) });
     const plan = await res.json();
-    if (!res.ok) return showConfirm('Failed: ' + (plan.detail || 'unknown'));
+    if (!res.ok) return alert('Failed: ' + (plan.detail || 'unknown'));
     planId = plan.id;
   } else {
     return;
@@ -2913,7 +2910,7 @@ async function addToMealPlan() {
   else if (timeIdx === 4) meal = 'Snack';
   else meal = timeChoice;
   await fetch(API + '/meal-plans/entries', { method:'POST', headers: authHeaders(), body: JSON.stringify({meal_plan_id: planId, recipe_id: currentRecipeId, meal: meal, date: dateInput}) });
-  showConfirm('Added to meal plan');
+  alert('Added to meal plan');
 }
 
 async function loadPending() {
@@ -2946,7 +2943,7 @@ async function loadUsers() {
 async function approveUser(id, active) {
   const res = await fetch(API + '/auth/users/approve', { method:'POST', headers: authHeaders(), body: JSON.stringify({user_id: id, is_active: active}) });
   const data = await res.json();
-  if (!res.ok) return showConfirm('Action failed: ' + (data.detail || 'unknown'));
+  if (!res.ok) return alert('Action failed: ' + (data.detail || 'unknown'));
   loadPending(); loadUsers();
 }
 
@@ -2954,7 +2951,7 @@ let editingUserId = null;
 function openUserForm() {
   editingUserId = null;
   document.getElementById('userFormTitle').textContent = 'New user';
-  document.getElementById('regEmail').value = '';
+  document.getElementById('userEmail').value = '';
   document.getElementById('userPassword').value = '';
   document.getElementById('userDisplayName').value = '';
   document.getElementById('userRole').value = 'user';
@@ -2969,11 +2966,11 @@ function closeUserForm() {
 }
 async function editUser(id) {
   const res = await fetch(API + '/auth/users/' + id, { headers: authHeaders() });
-  if (!res.ok) return showConfirm('Failed to load user');
+  if (!res.ok) return alert('Failed to load user');
   const user = await res.json();
   editingUserId = id;
   document.getElementById('userFormTitle').textContent = 'Edit user';
-  document.getElementById('regEmail').value = user.email || '';
+  document.getElementById('userEmail').value = user.email || '';
   document.getElementById('userPassword').value = '';
   document.getElementById('userDisplayName').value = user.display_name || '';
   document.getElementById('userRole').value = user.role || 'user';
@@ -2984,7 +2981,7 @@ async function editUser(id) {
 }
 async function saveUser() {
   const payload = {
-    email: document.getElementById('regEmail').value.trim(),
+    email: document.getElementById('userEmail').value.trim(),
     display_name: document.getElementById('userDisplayName').value.trim(),
     role: document.getElementById('userRole').value,
     is_active: document.getElementById('userActive').checked,
@@ -2993,8 +2990,8 @@ async function saveUser() {
   };
   const pw = document.getElementById('userPassword').value;
   if (pw) payload.password = pw;
-  if (!payload.email) return showConfirm('Email is required');
-  if (!editingUserId && !pw) return showConfirm('Password is required for new users');
+  if (!payload.email) return alert('Email is required');
+  if (!editingUserId && !pw) return alert('Password is required for new users');
 
   let url = API + '/auth/users';
   let method = 'POST';
@@ -3012,7 +3009,7 @@ async function saveUser() {
     } else {
       msg = data.detail || 'unknown';
     }
-    return showConfirm('Failed: ' + msg);
+    return alert('Failed: ' + msg);
   }
   closeUserForm();
   loadUsers();
@@ -3023,13 +3020,13 @@ async function deleteUser(id) {
   const res = await fetch(API + '/auth/users/' + id, { method: 'DELETE', headers: authHeaders() });
   if (!res.ok) {
     const data = await res.json();
-    return showConfirm('Failed: ' + (data.detail || 'unknown'));
+    return alert('Failed: ' + (data.detail || 'unknown'));
   }
   loadUsers();
 }
 async function resetUserPassword(id) {
   const pw = prompt('Enter new password for this user:\n(Must be 6-12 chars, with 1 uppercase letter and 1 symbol)');
-  if (!pw || pw.length < 6) return showConfirm('Password must be at least 6 characters');
+  if (!pw || pw.length < 6) return alert('Password must be at least 6 characters');
   const res = await fetch(API + '/auth/users/' + id + '/password', { method: 'PATCH', headers: authHeaders(), body: JSON.stringify({new_password: pw}) });
   const data = await res.json();
   if (!res.ok) {
@@ -3039,9 +3036,9 @@ async function resetUserPassword(id) {
         ? data.detail.map(d => d.msg || d.detail || JSON.stringify(d)).join('; ')
         : data.detail;
     }
-    return showConfirm('Failed: ' + msg);
+    return alert('Failed: ' + msg);
   }
-  showConfirm('Password reset successfully');
+  alert('Password reset successfully');
 }
 let timerInterval = null;
 function startStepTimer() {
@@ -3057,7 +3054,7 @@ function startStepTimer() {
     if (remaining <= 0) {
       clearInterval(timerInterval);
       box.textContent = 'Timer done';
-      showConfirm('Timer done');
+      alert('Timer done');
       return;
     }
     const m = Math.floor(remaining / 60);
@@ -3102,7 +3099,7 @@ async function startCooking() {
   if (!currentRecipeId) return;
   const res = await fetch(API + '/recipes/' + currentRecipeId + '/cook', { method:'POST', headers: authHeaders() });
   const data = await res.json();
-  if (!res.ok) return showConfirm('Failed: ' + (data.detail || 'unknown'));
+  if (!res.ok) return alert('Failed: ' + (data.detail || 'unknown'));
   cookingRecipe = data;
   document.getElementById('cookingTitle').textContent = data.title || 'Cooking Mode';
   document.getElementById('cookingMeta').innerHTML = '<div class="meta">' + [data.servings ? 'Serves ' + data.servings : '', data.difficulty ? data.difficulty : '', data.prep_time_minutes ? 'Prep ' + data.prep_time_minutes + ' min' : '', data.cook_time_minutes ? 'Cook ' + data.cook_time_minutes + ' min' : ''].filter(Boolean).join(' • ') + '</div>';
@@ -3163,7 +3160,7 @@ function nextCookingStep() {
   if (!steps.length) return;
   let idx = -1;
   steps.forEach((cb, i) => { if (!cb.checked) { if (idx === -1) idx = i; } });
-  if (idx === -1) { showConfirm('All steps complete!'); return; }
+  if (idx === -1) { alert('All steps complete!'); return; }
   steps[idx].checked = true;
   steps[idx].dispatchEvent(new Event('change'));
   const next = idx + 1;
@@ -3171,7 +3168,7 @@ function nextCookingStep() {
     steps[next].scrollIntoView({behavior:'smooth', block:'center'});
     steps[next].focus();
   } else {
-    showConfirm('Last step! All done!');
+    alert('Last step! All done!');
   }
 }
 function completeStep(cb) {
@@ -3233,12 +3230,12 @@ function updateThemeButton() {
 async function uploadAvatar(event) {
   const file = event.target.files[0];
   if (!file) return;
-  if (file.size > 1024 * 1024) return showConfirm('Image must be under 1MB');
+  if (file.size > 1024 * 1024) return alert('Image must be under 1MB');
   const form = new FormData();
   form.append('file', file);
   const res = await fetch(API + '/auth/upload-avatar', { method: 'POST', headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('token') || '') }, body: form });
   const data = await res.json();
-  if (!res.ok) return showConfirm('Upload failed: ' + (data.detail || 'unknown'));
+  if (!res.ok) return alert('Upload failed: ' + (data.detail || 'unknown'));
   document.getElementById('profileAvatar').value = data.avatar_url;
   document.getElementById('avatarPreview').innerHTML = '<img src="' + data.avatar_url + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" />';
 }

@@ -26,7 +26,7 @@ curl -s http://localhost:3000/settings/guest-login-enabled
 echo ""
 
 echo "=== Recipe count ==="
-TOKEN=$(curl -s http://localhost:3000/auth/login -X POST -H "Content-Type: application/json" -d '{"email":"guest@wiskfful.app","password":"guest123!"}' | python3 -c 'import sys,json; print(json.load(sys.stdin)["access_token"])')
+TOKEN=$(curl -s http://localhost:3000/auth/login -X POST -H "Content-Type: application/json" -d '{"email":"guest@whiskful.app","password":"guest123!"}' | python3 -c 'import sys,json; print(json.load(sys.stdin)["access_token"])')
 curl -s "http://localhost:3000/recipes" -H "Authorization: Bearer $TOKEN" | python3 -c 'import sys,json; d=json.load(sys.stdin); print(f"Recipes: {len(d)}")'
 
 echo "=== Done ==="
