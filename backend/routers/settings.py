@@ -173,11 +173,11 @@ def backup_database(_: User = Depends(require_role(Role.admin))):
             "size_mb": round(file_size / (1024**2), 2),
         }
     except RuntimeError:
-        raise HTTPException(status_code=500, detail="Database backup failed")
+        raise HTTPException(status_code=500, detail="Database backup failed") from None
     except FileNotFoundError:
-        raise HTTPException(status_code=500, detail="Database file not found")
+        raise HTTPException(status_code=500, detail="Database file not found") from None
     except Exception:
-        raise HTTPException(status_code=500, detail="Unexpected error during backup")
+        raise HTTPException(status_code=500, detail="Unexpected error during backup") from None
 
 
 @router.get("/backup/download", response_class=Response)
