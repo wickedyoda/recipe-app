@@ -36,20 +36,21 @@
 <div class="container" style="position:relative;">
 <!-- Top bar with username at top-left (inside container) -->
 <div id="topBar" class="hidden" style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border-light);margin-bottom:8px;">
-  <span id="userEmailRow" style="font-size:12px;color:#555;margin:0;display:flex;flex-direction:column;align-items:flex-start;gap:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px;">
-    <span id="userEmail" style="font-size:12px;font-weight:500;color:#3a2e23;"></span>
-    <span id="userEmailBadge" class="hidden" style="font-size:9px;color:#996600;background:#fff3cd;padding:0 4px;border-radius:4px;">READ-ONLY</span>
+  <span id="userEmailRow" style="font-size:11px;color:#555;margin:0;display:flex;flex-direction:column;align-items:flex-start;gap:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px;">
+    <span id="userEmail" style="font-size:11px;font-weight:500;color:#3a2e23;"></span>
+    <span id="userEmailBadge" class="hidden" style="font-size:8px;color:#996600;background:#fff3cd;padding:0 3px;border-radius:4px;">READ-ONLY</span>
   </span>
+  <button class="secondary small" onclick="logout()" style="padding:2px 6px;font-size:10px;line-height:1;">Logout</button>
 </div>
 <!-- Theme toggle fixed at top-right corner of window -->
-<button class="secondary small" id="themeToggle" onclick="toggleTheme()" style="position:fixed;top:12px;right:12px;z-index:1000;padding:4px 6px;font-size:16px;line-height:1;border-radius:6px;background:rgba(255,255,255,0.9);box-shadow:0 2px 8px rgba(0,0,0,0.1);">🌙</button>
+<button class="secondary small" id="themeToggle" onclick="toggleTheme()" style="position:fixed;top:10px;right:10px;z-index:1000;padding:3px 5px;font-size:14px;line-height:1;border-radius:5px;background:rgba(255,255,255,0.9);box-shadow:0 2px 8px rgba(0,0,0,0.1);">🌙</button>
 <div class="card">
   <div class="top" style="text-align:center;padding-top:12px;">
-    <h1 style="margin:0;font-size:20px;display:flex;flex-direction:column;align-items:center;gap:4px;"><a href="#" onclick="switchTab('tabMenu');return false" style="color:inherit;text-decoration:none;display:flex;flex-direction:column;align-items:center;gap:2px;"><img src="/src/icons/logo-lg.png" alt="WhiskFul" style="width:69px;height:69px;object-fit:contain;" />WhiskFul</a></h1>
-    <div style="font-size:11px;color:var(--text-muted);font-weight:400;">Plan it. Cook it. Love it.</div>
+    <h1 style="margin:0;font-size:18px;display:flex;flex-direction:column;align-items:center;gap:4px;"><a href="#" onclick="switchTab('tabMenu');return false" style="color:inherit;text-decoration:none;display:flex;flex-direction:column;align-items:center;gap:2px;"><img src="/src/icons/logo-lg.png" alt="WhiskFul" style="width:56px;height:56px;object-fit:contain;" />WhiskFul</a></h1>
+    <div style="font-size:10px;color:var(--text-muted);font-weight:400;">Plan it. Cook it. Love it.</div>
   </div>
   <!-- Compact single-row navigation with 3-line menu, centered under logo -->
-  <div id="headerNavWrapper" style="display:flex;align-items:center;gap:2px;margin-top:8px;position:relative;">
+  <div id="headerNavWrapper" style="display:flex;align-items:center;justify-content:center;gap:4px;margin-top:8px;position:relative;">
   <div id="topNavRow" class="hidden" style="display:flex;align-items:center;gap:1px;">
     <button data-tab="tabMenu" onclick="switchTab('tabMenu')" class="nav-btn-small active" title="Menu">🏠</button>
     <button data-tab="tabRecipes" onclick="switchTab(\'tabRecipes\')" class="nav-btn-small" title="Recipes">📋</button>
@@ -1041,7 +1042,7 @@ async function loadRecentRecipes() {
     return;
   }
   container.innerHTML = recipes.slice(0, 3).map(r => {
-    const img = (r.images && r.images[0]) ? r.images[0] : (r.thumbnail_url || '');
+    const img = (r.photos && r.photos.length > 0) ? r.photos[0] : (r.source_path ? r.source_path : '');
     const rating = r.rating ? '★'.repeat(Math.round(r.rating)) : '';
     const imgHtml = img ? '<img src="/media/static/' + escapeHtml(img) + '" style="width:32px;height:32px;border-radius:4px;object-fit:cover;flex-shrink:0;" />' : '<span style="width:32px;height:32px;border-radius:4px;background:#eee;display:inline-block;flex-shrink:0;"></span>';
     return `<div style="display:flex;align-items:center;gap:8px;padding:4px 0;cursor:pointer;" onclick="switchTab('tabRecipes');setTimeout(()=>openRecipeDetail('${r.id}',100);">` +
