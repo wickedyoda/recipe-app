@@ -574,7 +574,7 @@
       <button class="secondary" onclick="showRegister()">Create account</button>
       <div class="section" style="margin-top:12px;">
         <button class="secondary" onclick="loginAsGuest()" style="width:100%;font-size:14px;padding:12px;">🍪 Sign in as Demo (Guest)</button>
-        <p style="font-size:11px;color:var(--text-muted);margin-top:6px;text-align:center;">Read-only demo account — 30 sample recipes</p>
+        <p style="font-size:11px;color:var(--text-muted);margin-top:6px;text-align:center;">Read-only demo account — 36 sample recipes</p>
       </div>
     </div>
 
@@ -677,6 +677,7 @@
           <label class="filter-option"><input type="checkbox" onchange="toggleSubFilter('Entrees')" id="chkEntrees"> Entrees</label>
           <label class="filter-option"><input type="checkbox" onchange="toggleSubFilter('Snacks')" id="chkSnacks"> Snacks</label>
         </div>
+        <div id="recipeCategoryFilters" class="hidden" data-active="" data-meal="" data-sub="" data-favs=""></div>
         <div style="padding:8px;border-top:1px solid var(--border);margin-top:4px;">
           <button class="secondary" onclick="applyFilters()" style="width:100%;padding:10px;font-weight:600;">Apply Filters</button>
         </div>
