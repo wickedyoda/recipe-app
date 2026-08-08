@@ -34,6 +34,14 @@
 </head>
 <body>
 <div class="container" style="position:relative;">
+<!-- Top bar with username at top-left, theme toggle at top-right -->
+<div id="topBar" class="hidden" style="display:flex;align-items:center;justify-content:space-between;padding:8px 16px;border-bottom:1px solid var(--border-light);position:sticky;top:0;z-index:10;background:rgba(255,255,255,0.95);backdrop-filter:blur(4px);">
+  <span id="userEmailRow" style="font-size:12px;color:#555;margin:0;display:flex;flex-direction:column;align-items:flex-start;gap:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px;">
+    <span id="userEmail" style="font-size:12px;font-weight:500;color:#3a2e23;"></span>
+    <span id="userEmailBadge" class="hidden" style="font-size:9px;color:#996600;background:#fff3cd;padding:0 4px;border-radius:4px;">READ-ONLY</span>
+  </span>
+  <button class="secondary small" id="themeToggle" onclick="toggleTheme()" style="padding:2px 4px;font-size:14px;line-height:1;">🌙</button>
+</div>
 <div class="card">
   <div class="top" style="text-align:center;padding-top:12px;">
     <h1 style="margin:0;font-size:20px;display:flex;flex-direction:column;align-items:center;gap:4px;"><a href="#" onclick="switchTab('tabMenu');return false" style="color:inherit;text-decoration:none;display:flex;flex-direction:column;align-items:center;gap:2px;"><img src="/src/icons/logo-lg.png" alt="WhiskFul" style="width:69px;height:69px;object-fit:contain;" />WhiskFul</a></h1>
@@ -41,10 +49,6 @@
   </div>
   <!-- Compact single-row navigation with 3-line menu, centered under logo -->
   <div id="headerNavWrapper" style="display:flex;align-items:center;gap:2px;margin-top:8px;position:relative;">
-  <span id="userEmailRow" style="font-size:10px;color:#555;margin:0 4px;display:flex;flex-direction:column;align-items:center;gap:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px;">
-    <span id="userEmail" style="font-size:10px;font-weight:500;"></span>
-    <span id="userEmailBadge" class="hidden" style="font-size:8px;color:#996600;background:#fff3cd;padding:0 4px;border-radius:4px;">READ-ONLY</span>
-  </span>
   <div id="topNavRow" class="hidden" style="display:flex;align-items:center;gap:1px;">
     <button data-tab="tabMenu" onclick="switchTab('tabMenu')" class="nav-btn-small active" title="Menu">🏠</button>
     <button data-tab="tabRecipes" onclick="switchTab(\'tabRecipes\')" class="nav-btn-small" title="Recipes">📋</button>
@@ -55,9 +59,6 @@
     <button data-tab="tabHouseholds" onclick="switchTab('tabHouseholds')" class="nav-btn-small" title="Households">👨‍👩‍👧‍👨</button>
     <button id="adminTabBtnTop" data-tab="tabAdmin" onclick="switchTab('tabAdmin')" class="nav-btn-small hidden" title="Admin">👤</button>
     <button class="secondary small" id="menuBtn" onclick="toggleDropdown()" style="display:none;padding:2px 6px;font-size:11px;">☰</button>
-  </div>
-  <!-- Smaller theme toggle icon at top-right -->
-  <button class="secondary small" id="themeToggle" onclick="toggleTheme()" style="margin-left:auto;padding:2px 4px;font-size:14px;line-height:1;">🌙</button>
   </div>
   <!-- Dropdown menu positioned at top-right -->
   <div id="dropdownMenu" class="hidden dropdown-menu" style="position:absolute;top:56px;right:12px;border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,0.12);z-index:1000;min-width:160px;">
@@ -1377,7 +1378,7 @@ function showLogin() {
   document.getElementById('registerSection').classList.add('hidden');
   document.getElementById('loginSection').classList.remove('hidden');
   document.getElementById('topNavRow').classList.add('hidden');
-  document.getElementById('userEmailRow').classList.add('hidden');
+  document.getElementById('topBar').classList.add('hidden');
 }
 
 async function initApp() {
@@ -1400,7 +1401,7 @@ async function initApp() {
   document.getElementById('registerSection').classList.add('hidden');
   document.getElementById('appSection').classList.remove('hidden');
   document.getElementById('topNavRow').classList.remove('hidden');
-  document.getElementById('userEmailRow').classList.remove('hidden');
+  document.getElementById('topBar').classList.remove('hidden');
   localStorage.setItem('isReadonly', user.is_readonly ? '1' : '0');
   localStorage.setItem('userRole', user.role || 'user');
   document.getElementById('userEmail').innerHTML = escapeHtml(user.display_name || user.email);
