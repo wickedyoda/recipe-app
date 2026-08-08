@@ -1,10 +1,10 @@
-# WiskfFul
-
-> **Plan it. Cook it. Love it.**
-
 <div align="center">
   <img src="frontend/src/icons/logo-lg.png" alt="WiskfFul logo" width="120" height="120" />
 </div>
+
+# WiskfFul
+
+> **Plan it. Cook it. Love it.**
 
 ![Security Status](https://github.com/wickedyoda/recipe-app/actions/workflows/verify.yml/badge.svg?branch=master)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
