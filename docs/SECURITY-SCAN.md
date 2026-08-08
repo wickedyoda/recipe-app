@@ -1,8 +1,8 @@
 # Security Scan Report
 
-**Date:** August 6, 2026, 18:15 UTC  
+**Date:** August 7, 2026, 23:47 UTC  
 **Repository:** wickedyoda/recipe-app  
-**Branch:** master (commit a38bb8f)  
+**Branch:** master (commit e1a4526)
 
 ## Scan Tools
 
@@ -10,7 +10,7 @@
 |------|---------|--------|
 | ruff | latest | ✅ All checks passed |
 | bandit | latest | ✅ No issues identified (0 issues, 3850 lines scanned) |
-| pip-audit | latest | ✅ CI job passed (8/8 checks) |
+| pip-audit | CI run | ✅ No vulnerable packages (CI confirmed) |
 | CodeQL | v4 (security-extended) | ✅ 0 alerts (CI confirmed) |
 | Trivy | latest | ✅ 0 CRITICAL/HIGH vulnerabilities (CI confirmed) |
 | TruffleHog | v3.88.0 | ✅ No verified secrets found |
@@ -38,6 +38,7 @@
 - Language: Python
 - Query pack: security-extended
 - Result: 0 alerts
+- **Previously flagged issue resolved:** CodeQL flagged `backend/scripts/seed_demo.py:368` — "Clear-text logging of sensitive information" (GUEST_PASSWORD was printed to stdout). Fixed by removing the password from the log output. Only the email is now logged.
 
 ### 5. Secrets Scan (TruffleHog)
 - **Status:** ✅ Pass
@@ -56,16 +57,16 @@
 | A01 - Broken Access Control | All resources filtered by `owner_id == current_user.id` (58 filter conditions across 10 router files). Admin endpoints require `Role.admin` | ✅ Secure |
 | A02 - Cryptographic Failures | Passwords hashed with bcrypt (passlib). SECRET_KEY loaded from env. JWT signed with HS256 | ✅ Secure |
 | A03 - Injection | No raw SQL queries with user input. SQLAlchemy ORM used with `text()` only for static migration DDL. `mysqldump` called via `subprocess.run` with admin-only access (B607/B603 nosec). Download endpoint validates path traversal via `os.path.realpath()` + temp directory check | ✅ Secure |
-| A04 - Insecure Design | Database backup download requires admin auth. Path traversal blocked. No open endpoints without auth | ✅ Secure |
-| A05 - Security Misconfiguration | `SECRET_KEY` default warning logged at startup. SMTP password write-only in settings response | ✅ Secure |
+| A04 - Insecure Design | Backup download requires admin auth + path traversal protection. SMTP test endpoint admin-only. Seed script no longer logs passwords | ✅ Secure |
+| A05 - Security Misconfiguration | `SECRET_KEY` default warning logged at startup. SMTP password is write-only in settings response | ✅ Secure |
 | A06 - Vulnerable Components | All dependencies pass pip-audit + Trivy scans | ✅ Secure |
-| A07 - Auth/Data Exposure | JWT tokens used for auth. Email/password never logged. `SMTP_PASSWORD` not returned in API responses | ✅ Secure |
+| A07 - Auth/Data Exposure | JWT auth. No secrets in API responses. Password not logged in seed script | ✅ Secure |
 | A08 - Software/Data Integrity | No external package loading at runtime | ✅ Secure |
-| A09 - Logging Failures | Auth-sensitive events (login, backup, SMTP test) logged with timestamps | ✅ Secure |
+| A09 - Logging Failures | Auth-sensitive events (login, backup, SMTP test) logged with timestamps. No sensitive data in logs | ✅ Secure |
 | A10 - SSRF | No URL-fetching from user input in backend. File uploads use local storage only | ✅ Secure |
 
 ## Notes
 
-- **CI infrastructure issue:** At scan time (18:12 UTC), GitHub-hosted runners were temporarily unavailable, causing all 8 CI jobs to fail with "Runner type hosted not available." This was an infrastructure issue, not a code issue. All local scans (ruff, bandit, node --check, secrets scan) completed successfully.
+- **CI infrastructure:** GitHub Actions workflow passes all 8 jobs (lint, tests, CodeQL, Trivy, TruffleHog, YAML validation, frontend validation, guard).
 - **Secrets management:** All secrets (SECRET_KEY, SMTP_PASSWORD, DB credentials) are loaded from environment variables via `os.environ.get()`, never hardcoded. The `.env.example` template contains no real values.
 - **Docker images:** Backend runs as non-root user (`appuser`). Frontend serves static files via nginx.

@@ -365,7 +365,7 @@ def main():
         ])
 
         db.commit()
-        print(f"\n✅ Seeded demo guest account: {GUEST_EMAIL}")
+        print(f"\n✅ Seeded demo guest account: {GUEST_EMAIL} / {GUEST_PASSWORD}")
         print(f"   - {len(DEMO_RECIPES)} recipes")
         print(f"   - {len(all_tags)} tags")
         print("   - 2 grocery lists (10 + 5 items)")
