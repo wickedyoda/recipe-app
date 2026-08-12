@@ -617,6 +617,11 @@
               <option value="dawn">🌅 Dawn</option>
               <option value="cozy">🔥 Cozy</option>
               <option value="contrast">⚫ High Contrast</option>
+              <option value="classic">🌿 Classic (Teal & Coral)</option>
+              <option value="teal-coral">💠 Teal & Coral</option>
+              <option value="coral-heat">🔥 Coral Heat</option>
+              <option value="teal-dark">🌙 Teal Dark</option>
+              <option value="ocean-breeze">🌊 Ocean Breeze</option>
             </select>
           </div>
           <div class="section">
@@ -3237,7 +3242,7 @@ function checkAllIngredients() {
 function uncheckAllIngredients() {
   document.querySelectorAll('#detailBody input[type="checkbox"]').forEach(cb => { cb.checked = false; toggleIngredientCheck(cb); });
 }
-const THEMES = ['light', 'dark', 'dawn', 'cozy', 'contrast'];
+const THEMES = ['light', 'dark', 'dawn', 'cozy', 'contrast', 'classic', 'teal-coral', 'coral-heat', 'teal-dark', 'ocean-breeze'];
 function toggleTheme() {
   const current = localStorage.getItem('theme') || 'light';
   const idx = THEMES.indexOf(current);
@@ -3252,7 +3257,7 @@ function applyTheme(theme) {
 }
 function updateThemeButton() {
   const theme = localStorage.getItem('theme') || 'light';
-  const icons = {'light':'🌙', 'dark':'☀️', 'dawn':'🌙', 'cozy':'🌙', 'contrast':'🌙'};
+  const icons = {'light':'🌙', 'dark':'☀️', 'dawn':'🌙', 'cozy':'🌙', 'contrast':'🌙', 'classic':'🌅', 'teal-coral':'🌊', 'coral-heat':'🔥', 'teal-dark':'☀️', 'ocean-breeze':'🌅'};
   const btn = document.getElementById('themeToggle');
   if (btn) btn.textContent = icons[theme] || '🌙';
   const profileBtn = document.getElementById('themeToggleProfile');
