@@ -275,3 +275,233 @@ def test_smtp_settings(
     if not sent:
         raise HTTPException(status_code=502, detail="Failed to send test email — check SMTP settings and credentials")
     return {"status": "ok", "message": "Test email sent to " + payload.email}
+
+
+@router.get("/db-health", response_model=dict)
+def db_health(_: User = Depends(require_role(Role.admin))):
+    """Check database connectivity and basic health."""
+    from backend.database import engine, SessionLocal
+    from sqlalchemy import inspect, text
+
+    db = SessionLocal()
+    try:
+        # Basic connectivity check
+        db.execute(text("SELECT 1"))
+        connected = True
+    except Exception as exc:
+        connected = False
+        return {
+            "status": "unhealthy",
+            "connected": False,
+            "error": str(exc),
+        }
+    finally:
+        db.close()
+
+    # Get table info
+    inspector = inspect(engine)
+    tables = inspector.get_table_names()
+    db_url = settings.DATABASE_URL
+    db_type = "mysql" if "mysql" in db_url else ("sqlite" if db_url.startswith("sqlite") else "unknown")
+
+    return {
+        "status": "healthy",
+        "connected": connected,
+        "database_type": db_type,
+        "database_url": db_url,
+        "table_count": len(tables),
+        "tables": sorted(tables),
+    }
+
+
+@router.get("/db-diag", response_model=dict)
+def db_diagnose(_: User = Depends(require_role(Role.admin))):
+    """Run detailed database diagnostics: row counts, schema issues, orphaned records."""
+    from backend.database import SessionLocal
+    from backend.models import Recipe, RecipeMedia, Cookbook, Household, User, Tag, MealPlan, GroceryList, Note
+    from sqlalchemy import text, inspect, select, func, Table, MetaData
+
+    db = SessionLocal()
+    results: dict = {"tables": {}}
+
+    # Define models to check with their relationship fields
+    model_checks = [
+        ("recipes", Recipe, {"cooking_steps": "cookbook_id", "notes": "owner_id"}),
+        ("recipe_media", RecipeMedia, {}),
+        ("cookbooks", Cookbook, {}),
+        ("households", Household, {}),
+        ("users", User, {}),
+        ("tags", Tag, {}),
+        ("meal_plans", MealPlan, {}),
+        ("grocery_lists", GroceryList, {}),
+        ("notes", Note, {}),
+    ]
+
+    try:
+        inspector = inspect(db.get_bind())
+
+        for table_name, model, _ in model_checks:
+            info: dict = {}
+            try:
+                # Row count - use SQLAlchemy table reflection to avoid SQL injection
+                table_obj = Table(table_name, MetaData(), autoload_with=db.get_bind())
+                count_result = db.execute(select(func.count()).select_from(table_obj)).scalar()
+                info["row_count"] = count_result
+
+                # Check for nullable columns that shouldn't be null
+                columns = inspector.get_columns(table_name)
+                info["columns"] = [
+                    {"name": col["name"], "nullable": col["nullable"], "type": str(col["type"])}
+                    for col in columns
+                ]
+            except Exception as exc:
+                info["error"] = str(exc)
+            results["tables"][table_name] = info
+
+        # Check for orphaned recipes (cookbook_id pointing to non-existent cookbook)
+        try:
+            orphaned = db.execute(text(
+                "SELECT r.id, r.title, r.cookbook_id FROM recipes r "
+                "LEFT JOIN cookbooks c ON r.cookbook_id = c.id "
+                "WHERE c.id IS NULL"
+            )).fetchall()
+            results["orphaned_recipes"] = [{"id": row[0], "title": row[1], "cookbook_id": row[2]} for row in orphaned]
+        except Exception:
+            results["orphaned_recipes"] = "Check failed (table may not exist)"
+
+        # Check for duplicate recipe URLs
+        try:
+            dupes = db.execute(text(
+                "SELECT source_url, COUNT(*) as cnt FROM recipes "
+                "WHERE source_url IS NOT NULL GROUP BY source_url HAVING cnt > 1"
+            )).fetchall()
+            results["duplicate_recipes"] = [{"source_url": row[0], "count": row[1]} for row in dupes]
+        except Exception:
+            results["duplicate_recipes"] = "Check failed"
+
+        # Check for recipes with null ingredients/instructions
+        try:
+            null_ingredients = db.execute(text(
+                "SELECT id, title FROM recipes WHERE ingredients IS NULL ORDER BY id DESC LIMIT 20"
+            )).fetchall()
+            results["recipes_missing_ingredients"] = [
+                {"id": row[0], "title": row[1]} for row in null_ingredients
+            ]
+        except Exception:
+            results["recipes_missing_ingredients"] = "Check failed"
+
+        # Check for recipes with null instructions
+        try:
+            null_instructions = db.execute(text(
+                "SELECT id, title FROM recipes WHERE instructions IS NULL ORDER BY id DESC LIMIT 20"
+            )).fetchall()
+            results["recipes_missing_instructions"] = [
+                {"id": row[0], "title": row[1]} for row in null_instructions
+            ]
+        except Exception:
+            results["recipes_missing_instructions"] = "Check failed"
+
+        results["status"] = "completed"
+    except Exception as exc:
+        results["status"] = "error"
+        results["error"] = str(exc)
+    finally:
+        db.close()
+
+    return results
+
+
+@router.post("/db-repair", response_model=dict)
+def db_repair(_: User = Depends(require_role(Role.admin))):
+    """Attempt to repair common database issues.
+
+    - Reassigns orphaned recipes to a local cookbook
+    - Cleans up null titles
+    - Returns a summary of repairs made.
+    """
+    from backend.database import SessionLocal, engine
+    from backend.models import Recipe, Cookbook, Store
+    from sqlalchemy import text, inspect
+
+    db = SessionLocal()
+    repairs: list[str] = []
+    try:
+        from backend.models import User as UserModel
+        # Find or create local cookbook
+        local_cb = db.query(Cookbook).filter(Cookbook.name == "Local Recipes").first()
+        if local_cb:
+            repairs.append("Local 'Local Recipes' cookbook found: id=" + str(local_cb.id))
+        else:
+            # Find the first admin user to assign as owner
+            admin_user = db.query(UserModel).filter(UserModel.role == "admin").first()
+            if not admin_user:
+                admin_user = db.query(UserModel).first()
+            if admin_user:
+                local_cb = Cookbook(name="Local Recipes", store=Store.local, owner_id=admin_user.id)
+                db.add(local_cb)
+                db.commit()
+                db.refresh(local_cb)
+                repairs.append("Created 'Local Recipes' cookbook (owner: " + str(admin_user.id) + ")")
+            else:
+                # Can't create cookbook — no users exist
+                local_cb = None
+
+        # Fix orphaned recipes (cookbook_id pointing to non-existent cookbook)
+        orphaned = db.execute(text(
+            "SELECT r.id FROM recipes r "
+            "LEFT JOIN cookbooks c ON r.cookbook_id = c.id "
+            "WHERE c.id IS NULL"
+        )).fetchall()
+        if orphaned and local_cb:
+            db.execute(text(
+                "UPDATE recipes SET cookbook_id = :cb_id "
+                "WHERE cookbook_id IS NULL OR cookbook_id NOT IN (SELECT id FROM cookbooks)"
+            ), {"cb_id": local_cb.id})
+            db.commit()
+            repairs.append(f"Fixed {len(orphaned)} orphaned recipes -> Local Recipes (id={local_cb.id})")
+        elif orphaned:
+            repairs.append(f"WARNING: {len(orphaned)} orphaned recipes found but no valid cookbook to reassign them to")
+
+        # Fix null titles (use source_url or filename as fallback)
+        null_titles = db.execute(text("SELECT id, source_url FROM recipes WHERE title IS NULL OR title = ''")).fetchall()
+        if null_titles:
+            for row in null_titles:
+                new_title = f"Recipe #{row[0]}"
+                if row[1]:
+                    new_title = row[1].split("/")[-1][:80]
+                db.execute(text("UPDATE recipes SET title = :title WHERE id = :rid"), {"title": new_title, "rid": row[0]})
+            db.commit()
+            repairs.append(f"Fixed {len(null_titles)} recipes with null titles")
+
+        # Check for schema issues (sqlite-specific table_info)
+        db_type = "sqlite" if str(engine.url).startswith("sqlite") else "mysql"
+        if db_type == "sqlite":
+            # Check for column existence issues
+            inspector = inspect(db.get_bind())
+            for table_name in ["recipes", "cookbooks", "users", "notes", "tags"]:
+                try:
+                    columns = inspector.get_columns(table_name)
+                    col_names = [c["name"] for c in columns]
+                    # Check for expected columns
+                    expected = {
+                        "recipes": ["id", "title", "ingredients", "instructions", "source_url", "cookbook_id"],
+                        "users": ["id", "email", "hashed_password", "role"],
+                        "cookbooks": ["id", "name"],
+                    }
+                    if table_name in expected:
+                        missing = [c for c in expected[table_name] if c not in col_names]
+                        if missing:
+                            repairs.append(f"WARNING: Table '{table_name}' missing columns: {missing}")
+                except Exception as exc:
+                    repairs.append(f"Could not inspect table {table_name}: {exc}")
+
+        results = {
+            "status": "ok",
+            "repairs_performed": repairs if repairs else ["No issues found — database is healthy"],
+        }
+    except Exception as exc:
+        results = {"status": "error", "error": str(exc), "repairs_performed": repairs}
+    finally:
+        db.close()
+
+    return results

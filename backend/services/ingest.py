@@ -1,14 +1,16 @@
+import json
 import logging
 import os
 import re
 import shutil
-import subprocess  # noqa: S404  # nosec B404 - required for ffmpeg, whisper, yt-dlp on admin/user-uploaded media
+import subprocess  # noqa: S404  # nosec B603 - required for ffmpeg, whisper, pytesseract on admin/user-uploaded media
 import uuid
 from datetime import datetime
 from ipaddress import ip_address, ip_network
 from pathlib import Path
 from urllib.parse import urlparse
 
+import requests
 import yt_dlp
 from backend.database import SessionLocal
 from backend.models import Cookbook, Recipe, Store
@@ -75,7 +77,7 @@ def _sanitize_media_url(url: str) -> str:
 
 
 def _run(cmd: list[str]) -> None:
-    proc = subprocess.run(cmd, capture_output=True, text=True, check=False)  # nosec B603 - subprocess on trusted internal commands
+    proc = subprocess.run(cmd, capture_output=True, text=True, check=False)  # nosec B603,B607 - subprocess on trusted internal commands from PATH
     if proc.returncode != 0:
         raise RuntimeError(proc.stderr[-1000:] if proc.stderr else "external command failed")
 
@@ -88,6 +90,56 @@ def ensure_local_cookbook(db: Session, user_id: int) -> Cookbook:
         db.commit()
         db.refresh(cb)
     return cb
+
+
+def _extract_metadata(url: str, workdir: Path) -> dict:
+    """Extract metadata from the source URL using yt-dlp (without downloading).
+
+    Returns title, description, uploader, and thumbnail list.
+    """
+    sanitized_url = _sanitize_media_url(url)
+    opts = {
+        "quiet": True,
+        "noplaylist": True,
+        "skip_download": True,
+    }
+    try:
+        with yt_dlp.YoutubeDL(opts) as ydl:  # type: ignore[arg-type]
+            info = ydl.extract_info(sanitized_url, download=False)
+        return {
+            "title": info.get("fulltitle") or info.get("title"),
+            "description": info.get("description"),
+            "uploader": info.get("uploader") or info.get("creator"),
+            "thumbnails": info.get("thumbnails", []),
+            "duration": info.get("duration"),
+        }
+    except Exception as exc:
+        logging.warning("Metadata extraction failed for %s: %s", url, exc)
+        return {"title": None, "description": None, "uploader": None, "thumbnails": [], "duration": None}
+
+
+def _download_thumbnail(meta: dict, workdir: Path) -> Path | None:
+    """Download the best thumbnail image for OCR from yt-dlp metadata."""
+    thumbnails = meta.get("thumbnails", [])
+    if not thumbnails:
+        return None
+
+    # Try thumbnails in order of preference (prefer higher resolution)
+    thumbs = sorted(thumbnails, key=lambda t: t.get("width", 0), reverse=True)
+    for thumb in thumbs:
+        thumb_url = thumb.get("url")
+        if not thumb_url:
+            continue
+        try:
+            resp = requests.get(thumb_url, headers={"User-Agent": "Mozilla/5.0"}, timeout=15)
+            if resp.status_code == 200:
+                thumb_path = workdir / "thumbnail.jpg"
+                thumb_path.write_bytes(resp.content)
+                return thumb_path
+        except Exception as exc:
+            logging.debug("Thumbnail download failed: %s", exc)
+            continue
+    return None
 
 
 def _download_media(url: str, workdir: Path) -> dict:
@@ -104,9 +156,9 @@ def _download_media(url: str, workdir: Path) -> dict:
     }
     try:
         with yt_dlp.YoutubeDL(opts) as ydl:  # type: ignore[arg-type]
-            ydl.download([sanitized_url])
-    except Exception:
-        raise RuntimeError("media download failed")
+            info = ydl.extract_info(sanitized_url, download=True)
+    except Exception as exc:
+        raise RuntimeError("media download failed") from exc
 
     files = list(workdir.iterdir())
     video = next((p for p in files if p.suffix.lower() in {".mp4", ".mkv", ".webm", ".mov"}), None)
@@ -126,7 +178,7 @@ def _download_media(url: str, workdir: Path) -> dict:
             try:
                 _run([
                     whisper_available, str(audio),
-                    "--model", os.getenv("WHISPER_MODEL", "tiny"),
+                    "--model", os.getenv("WHISPER_MODEL", "base"),
                     "--language", "en",
                     "--output_format", "srt",
                     "--output_dir", str(workdir)
@@ -136,7 +188,19 @@ def _download_media(url: str, workdir: Path) -> dict:
                 logging.warning("whisper subtitle extraction failed: %s", exc)
 
     subtitle_path = subs[0] if subs else None
-    return {"video": video, "audio": audio, "subtitle": subtitle_path, "workdir": workdir}
+    return {
+        "video": video,
+        "audio": audio,
+        "subtitle": subtitle_path,
+        "workdir": workdir,
+        "metadata": {
+            "title": info.get("fulltitle") or info.get("title"),
+            "description": info.get("description"),
+            "uploader": info.get("uploader") or info.get("creator"),
+            "thumbnails": info.get("thumbnails", []),
+            "duration": info.get("duration"),
+        },
+    }
 
 
 def _clean_srt_text(text: str) -> str:
@@ -160,7 +224,321 @@ def _is_ingredient_like(line: str) -> bool:
     lower = line.lower()
     if any(lower.startswith(k) for k in ["step ", "instruction", "first", "next", "then", "now", "after"]):
         return False
-    return bool(re.search(r'\b\d+(\.\d+)?\b', line) or any(u in lower for u in ['cup', 'tbsp', 'tsp', 'oz', 'gram', 'kg', 'ml', 'l', 'pound', 'lb', 'pinch', 'dash', 'clove', 'slice', 'piece', 'can', 'bunch', 'sprig', 'tablespoon', 'teaspoon', 'gallon', 'quart', 'pint', 'package', 'bottle', 'jar', 'stick', 'sheet', 'scoop']))
+    # Must contain at least some alphabetic characters (not just numbers/symbols)
+    if not re.search(r'[a-z]', lower):
+        return False
+    # Check for numbers (quantities like "1", "1/2", "2.5")
+    if re.search(r'\b\d+(\.\d+)?\b', line):
+        # An ingredient line with a number should also have recognizable cooking words
+        # to avoid matching OCR noise like "ial 4" or "3 lay So"
+        words = set(re.findall(r'[a-zA-Z]+', line.lower()))
+        if words & _INGREDIENT_WORD_BANK:
+            return True
+        # Or at least have multiple alphabetic words (likely real text with a quantity)
+        alpha_words = [w for w in re.findall(r'[a-zA-Z]{3,}', lower)]
+        if len(alpha_words) >= 2:
+            return True
+        return False
+    # Check for unit keywords with word boundaries (prevents 'l' matching 'all')
+    units = ['cup', 'tbsp', 'tsp', 'oz', 'gram', 'kg', 'ml', 'pound', 'lb',
+             'pinch', 'dash', 'clove', 'slice', 'piece', 'can', 'bunch',
+             'sprig', 'tablespoon', 'teaspoon', 'gallon', 'quart', 'pint',
+             'package', 'bottle', 'jar', 'stick', 'sheet', 'scoop']
+    for unit in units:
+        if re.search(r'\b' + re.escape(unit) + r'\b', lower):
+            return True
+    # Also check for cooking ingredient words without explicit units
+    words = set(re.findall(r'[a-zA-Z]+', lower))
+    if words & _INGREDIENT_WORD_BANK:
+        # Has at least one recognizable cooking word
+        return True
+    return False
+
+
+_INGREDIENT_WORD_BANK = {
+    "cup", "cups", "tbsp", "tablespoon", "tablespoons", "tsp", "teaspoon",
+    "teaspoons", "oz", "ounce", "ounces", "lb", "pound", "pounds", "gram",
+    "grams", "kg", "mg", "g", "ml", "l", "liter", "liters", "quart",
+    "pint", "gallon", "pinch", "dash", "clove", "cloves", "slice", "slices",
+    "piece", "pieces", "can", "cans", "bunch", "bunches", "sprig", "sprigs",
+    "package", "bottle", "jar", "stick", "sticks", "sheet", "scoop",
+    "salt", "pepper", "garlic", "onion", "butter", "oil", "water", "milk",
+    "egg", "eggs", "flour", "sugar", "brown", "baking", "soda", "powder",
+    "vanilla", "mix", "corn", "cheese", "cheddar", "mozzarella",
+    "casserole", "muffin", "bread", "bun", "buns", "sauce", "ketchup",
+    "mustard", "mayo", "mayonnaise", "honey", "syrup", "melted", "shredded",
+    "grated", "diced", "chopped", "minced", "sliced", "crushed", "ground",
+    "whole", "large", "small", "medium", "fresh", "frozen", "canned",
+    "sweet", "hot", "spicy", "mild", "seasoned", "salted", "unsalted",
+    "heavy", "whipping", "half", "half-and-half", "buttermilk", "yogurt",
+    "sour", "cream", "ricotta", "parmesan", "feta", "swiss", "provolone",
+    "jalapeno", "jalapeño", "serrano", "habanero", "cilantro", "parsley",
+    "basil", "oregano", "thyme", "rosemary", "paprika", "cumin", "chili",
+    "cinnamon", "nutmeg", "ginger", "cardamom",
+}
+
+CookING_VERBS = {
+    "add", "mix", "stir", "chop", "dice", "slice", "heat", "cook", "boil",
+    "simmer", "fry", "bake", "roast", "grill", "whisk", "pour", "spread",
+    "layer", "top", "sprinkle", "season", "salt", "pepper", "serve", "let",
+    "cool", "wait", "press", "knead", "roll", "fold", "beat", "melt",
+    "warm", "combine", "dip", "coat", "drizzle", "garnish", "remove",
+    "transfer", "place", "into", "over", "until", "then", "next",
+    "first", "step", "in", "a", "the", "and", "with", "to", "for",
+    "pan", "skillet", "saucepan", "bowl", "oven", "microwave", "air",
+    "fryer", "dish", "plate", "tray", "rack", "pot",
+    "minutes", "minute", "hours", "hour",
+    "golden", "brown", "bubbling", "soft", "firm", "crispy",
+}
+
+_UI_NOISE_FILTERS = [
+    "for you", "foryou", "fyp", "tiktok",
+    "likes", "comments", "share", "save", "follow", "following", "followers", "views",
+    "subscribe", "hit the bell", "bell icon",
+    "swipe up", "link in bio", "check the description",
+    "comment below", "let me know", "enjoy", "happy cooking",
+    "full recipe", "recipe card",
+    "cook with me", "no bake", "cooking tips", "kitchen hack",
+    "step by step",
+    "creator", "post", "report", "not interested",
+    "show this thread", "embed", "copy link",
+    "duet", "stitch", "react",
+    "verified", "pro", "badge",
+]
+
+
+def _is_ui_noise(line: str) -> bool:
+    """Filter out common TikTok UI overlay text and OCR artifacts."""
+    lower = line.lower().strip()
+    if not lower or len(lower) < 3:
+        return True
+    # Filter out single characters and very short fragments
+    if len(lower.replace(" ", "")) < 3:
+        return True
+    # Filter out common TikTok UI noise
+    if any(noise in lower for noise in _UI_NOISE_FILTERS):
+        return True
+    # Filter out strings that are mostly symbols/special chars
+    alphanumeric_ratio = sum(c.isalnum() for c in lower) / max(len(lower), 1)
+    if alphanumeric_ratio < 0.5:
+        return True
+    # Filter out lines that are just numbers or very short fragments
+    if re.match(r'^[\d\s\-\.\,\']+$', lower) and len(lower.replace(" ", "")) < 5:
+        return True
+    # Filter out common OCR artifacts (strings with weird capitalization patterns)
+    # e.g., "ial 4", "3 lay So", "nA," — lines that are mostly lowercase with
+    # random uppercase letters scattered in, or very short non-dictionary words
+    words = lower.split()
+    real_words = 0
+    for word in words:
+        word = re.sub(r'[^a-z]', '', word)
+        if len(word) >= 3 and word in _INGREDIENT_WORD_BANK:
+            real_words += 1
+    # If no recognizable cooking words and the line looks like garbage, filter it
+    if real_words == 0 and len(words) <= 3 and any(len(w) <= 2 for w in words if re.sub(r'[^a-z]', '', w)):
+        return True
+    return False
+
+
+def _preprocess_image_for_ocr(img, upscale: int = 2) -> object:
+    """Apply preprocessing to improve OCR accuracy on video frames/thumbnails.
+
+    - Upscales the image 2-3x for better OCR on small text
+    - Converts to grayscale
+    - Increases contrast
+    - Applies sharpening
+    """
+    from PIL import Image, ImageOps, ImageFilter, ImageEnhance
+    # Upscale for better OCR on small text
+    if upscale > 1:
+        img = img.resize((img.width * upscale, img.height * upscale), Image.Resampling.LANCZOS)
+    # Convert to grayscale
+    img = img.convert('L')
+    # Increase contrast
+    img = ImageOps.autocontrast(img)
+    # Boost contrast further
+    enhancer = ImageEnhance.Contrast(img)
+    img = enhancer.enhance(1.5)
+    # Apply sharpening
+    img = img.filter(ImageFilter.UnsharpMask(radius=1, percent=150, threshold=3))
+    return img
+
+
+def _extract_text_from_video_frames(video_path: Path, workdir: Path, max_frames: int = 30) -> str:
+    """Extract text from video frames using ffmpeg + pytesseract OCR.
+
+    Samples up to ``max_frames`` evenly-spaced frames from the video and
+    runs OCR on each.  Best combined with ``_extract_recipe_from_text``
+    since OCR output is noisy for structured parsing.
+    """
+    frame_dir = workdir / "frames"
+    frame_dir.mkdir(exist_ok=True)
+
+    # Get video duration
+    try:
+        dur_proc = subprocess.run(  # nosec B603,B607 - ffprobe from PATH, trusted command on admin-only endpoint
+            ["ffprobe", "-v", "quiet", "-show_entries", "format=duration",
+             "-of", "csv=p=0", str(video_path)],
+            capture_output=True, text=True, timeout=30,
+        )
+        duration = float(dur_proc.stdout.strip()) if dur_proc.returncode == 0 else 0
+    except Exception:
+        duration = 0
+
+    if duration <= 0:
+        # Single frame fallback
+        frame_times = [0]
+    else:
+        # For short videos (<=60s), sample densely in the first ~20s
+        # where ingredients/instructions text is typically shown
+        if duration <= 30:
+            max_frames = min(max_frames, 12)
+            frame_times = [duration * i / max_frames for i in range(max_frames)]
+        elif duration <= 60:
+            # Dense sampling in first 15s, sparse after
+            first_chunk = 8
+            second_chunk = max(max_frames - first_chunk, 4)
+            frame_times = [15 * i / first_chunk for i in range(first_chunk)]
+            frame_times += [15 + (duration - 15) * i / second_chunk for i in range(second_chunk)]
+        else:
+            # For long videos (>60s), focus on first 20 seconds (ingredient lists)
+            max_frames = min(max_frames, 15)
+            frame_times = [20 * i / max_frames for i in range(max_frames)]
+
+    extracted_lines: list[str] = []
+    seen_lines: set[str] = set()
+    try:
+        import pytesseract  # noqa: PLC0415
+        from PIL import Image  # noqa: PLC0415
+    except ImportError:
+        return ""
+
+    for i, t in enumerate(frame_times):
+        frame_path = frame_dir / f"frame_{i:03d}.png"
+        try:
+            _run([
+                "ffmpeg", "-y", "-ss", str(t), "-i", str(video_path),
+                "-frames:v", "1", "-q:v", "2",
+                "-vf", "scale=iw*2:ih*2:flags=lanczos",
+                str(frame_path),
+            ])
+        except Exception as exc:
+            logging.debug("Frame extraction failed at t=%.1f: %s", t, exc)
+            continue
+        if not frame_path.exists():
+            continue
+        try:
+            img = Image.open(frame_path)
+            # Crop to center area where text is typically overlaid on TikTok
+            w, h = img.size
+            img = img.crop((int(w * 0.05), int(h * 0.1), int(w * 0.95), int(h * 0.9)))
+            # Don't upscale video frames (1080x1920 already has large enough text)
+            # Only upscale thumbnails which are small
+            img = _preprocess_image_for_ocr(img, upscale=1)
+            # Try PSM 11 (sparse text) which works best for scattered overlays
+            text = pytesseract.image_to_string(img, lang="eng", config="--psm 11")
+            all_text = text
+            for line in all_text.splitlines():
+                line = line.strip()
+                if not line:
+                    continue
+                # Deduplicate: skip near-identical lines already seen
+                normalized = re.sub(r'\s+', ' ', line).lower()
+                if normalized in seen_lines:
+                    continue
+                # Filter out UI noise
+                if _is_ui_noise(line):
+                    seen_lines.add(normalized)
+                    continue
+                seen_lines.add(normalized)
+                extracted_lines.append(line)
+        except Exception as exc:
+            logging.warning("OCR failed for frame %d: %s", i, exc)
+
+    return "\n".join(extracted_lines)
+
+
+def _extract_from_web_page(url: str) -> dict:
+    """Attempt to fetch the source webpage and extract recipe text.
+
+    Many TikTok cooking videos link to a blog post with the full recipe.
+    This fetches the page HTML and looks for recipe schema markup
+    (JSON-LD ``application/ld+json``) or structured recipe content.
+    """
+    sanitized_url = _sanitize_media_url(url)
+    try:
+        resp = requests.get(sanitized_url, headers={"User-Agent": "Mozilla/5.0 (compatible; RecipeBot/1.0)"}, timeout=15, allow_redirects=True)
+        html = resp.text[:200000]
+    except Exception as exc:
+        logging.warning("Web page fetch failed for %s: %s", url, exc)
+        return {"title": None, "ingredients": None, "instructions": None}
+
+    # Try JSON-LD recipe schema
+    schema_pattern = re.compile(
+        r'<script[^>]*type=["\']application/ld\+json["\'][^>]*>(.*?)</script>',
+        re.DOTALL | re.IGNORECASE,
+    )
+    for match in schema_pattern.finditer(html):
+        try:
+            data = json.loads(match.group(1))
+            # Handle both single dict and list of dicts
+            items = data if isinstance(data, list) else [data]
+            for item in items:
+                if isinstance(item, dict) and item.get("@type") == "Recipe":
+                    title = item.get("name") or item.get("headline")
+                    ingredients = item.get("recipeIngredient")
+                    instructions_raw = item.get("recipeInstructions")
+                    if isinstance(instructions_raw, list):
+                        instructions = "\n".join(
+                            instr.get("text") or instr.get("instruction", "") or str(instr)
+                            for instr in instructions_raw
+                        )
+                    else:
+                        instructions = instructions_raw
+                    if title or ingredients or instructions:
+                        return {
+                            "title": title,
+                            "ingredients": "\n".join(ingredients) if ingredients else None,
+                            "instructions": instructions if instructions else None,
+                        }
+        except Exception as exc:
+            logging.debug("Web page extraction step failed: %s", exc)
+            continue
+
+    # Fallback: look for meta description and recipe-like text
+    title_match = re.search(r'<title[^>]*>(.*?)</title>', html, re.DOTALL | re.IGNORECASE)
+    title = title_match.group(1).strip() if title_match else None
+
+    return {"title": title, "ingredients": None, "instructions": None}
+
+
+def _clean_ocr_text(text: str) -> str:
+    """Clean up OCR output for better parsing.
+
+    Fixes common OCR errors:
+    - Replaces ' with space (e.g., \"bit'of\" -> \"bit of\")
+    - Replaces ; with , (common OCR misread)
+    - Removes excessive punctuation/spacing
+    - Normalizes whitespace
+    """
+    lines = []
+    for line in text.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        # Fix common OCR artifacts
+        # ' at word boundaries -> space
+        line = re.sub(r"(?<=\w)'(?=\w)", " ", line)
+        # ; -> ,
+        line = line.replace(";", ",")
+        # Fix common OCR letter/number confusions
+        line = re.sub(r'\b0\b', 'o', line)  # 0 -> o (when standalone)
+        # Normalize whitespace
+        line = re.sub(r'\s+', ' ', line)
+        line = line.strip()
+        if line:
+            lines.append(line)
+    return "\n".join(lines)
 
 
 def _extract_recipe_from_text(text: str) -> dict:
@@ -184,13 +562,17 @@ def _extract_recipe_from_text(text: str) -> dict:
                 ingredients.append(line)
             elif len(ingredients) >= 2 and not lower.startswith(("ingredient", "you'll need", "what you need")):
                 section = "instructions"
-                instructions.append(line)
-            elif lower.startswith(("ingredient", "you'll need", "what you need")):
-                continue
-            else:
-                ingredients.append(line)
+                if len(line) > 4:
+                    instructions.append(line)
         elif section == "instructions":
-            instructions.append(line)
+            # Only treat as instruction if it looks like a real cooking instruction
+            # (skip OCR noise fragments that don't contain cooking verbs or recipe terms)
+            lower = line.lower()
+            words = set(re.findall(r'[a-z]+', lower))
+            has_cooking_word = bool(words & CookING_VERBS)
+            has_enough_length = len(line) >= 8 and len(re.findall(r'[a-z]', line)) >= 5
+            if has_cooking_word and has_enough_length:
+                instructions.append(line)
 
     return {
         "title": title,
@@ -199,35 +581,44 @@ def _extract_recipe_from_text(text: str) -> dict:
     }
 
 
-def _extract_from_transcript(transcript_path: Path | None, fallback_audio: Path | None, workdir: Path) -> dict:
+def _extract_from_transcript(transcript_path: Path | None, fallback_audio: Path | None, workdir: Path, video_path: Path | None = None) -> dict:
     if transcript_path and transcript_path.exists():
         raw_text = _clean_srt_text(transcript_path.read_text(errors="ignore") or "")
-        return _extract_recipe_from_text(raw_text)
+        parsed = _extract_recipe_from_text(raw_text)
+        if parsed.get("ingredients") or parsed.get("instructions"):
+            return parsed
 
-    if fallback_audio is None or not fallback_audio.exists():
-        return {"title": None, "ingredients": None, "instructions": None}
+    if fallback_audio is not None and fallback_audio.exists():
+        whisper_available = shutil.which("whisper")
+        if whisper_available:
+            try:
+                _run([
+                    whisper_available, str(fallback_audio),
+                    "--model", os.getenv("WHISPER_MODEL", "base"),
+                    "--language", "en",
+                    "--output_format", "srt",
+                    "--output_dir", str(workdir),
+                ])
+                subs = sorted([p for p in workdir.iterdir() if p.suffix.lower() == ".srt"])
+                if subs:
+                    raw_text = _clean_srt_text(subs[0].read_text(errors="ignore") or "")
+                    parsed = _extract_recipe_from_text(raw_text)
+                    if parsed.get("ingredients") or parsed.get("instructions"):
+                        return parsed
+            except Exception as exc:
+                logging.debug("Subtitle-based extraction failed: %s", exc)
 
-    whisper_available = shutil.which("whisper")
-    if not whisper_available:
-        return {"title": None, "ingredients": None, "instructions": None}
+    # Fallback: OCR on video frames
+    if video_path and video_path.exists():
+        logging.info("Falling back to OCR on video frames for %s", video_path)
+        ocr_text = _extract_text_from_video_frames(video_path, workdir, max_frames=30)
+        if ocr_text:
+            ocr_text = _clean_ocr_text(ocr_text)
+            parsed = _extract_recipe_from_text(ocr_text)
+            if parsed.get("ingredients") or parsed.get("instructions"):
+                return parsed
 
-    try:
-        _run([
-            whisper_available, str(fallback_audio),
-            "--model", os.getenv("WHISPER_MODEL", "tiny"),
-            "--language", "en",
-            "--output_format", "srt",
-            "--output_dir", str(workdir)
-        ])
-    except Exception:
-        return {"title": None, "ingredients": None, "instructions": None}
-
-    subs = sorted([p for p in workdir.iterdir() if p.suffix.lower() == ".srt"])
-    if not subs:
-        return {"title": None, "ingredients": None, "instructions": None}
-
-    raw_text = _clean_srt_text(subs[0].read_text(errors="ignore") or "")
-    return _extract_recipe_from_text(raw_text)
+    return {"title": None, "ingredients": None, "instructions": None}
 
 
 def download_media(url: str, user_id: int) -> dict:
@@ -239,12 +630,14 @@ def download_media(url: str, user_id: int) -> dict:
 
     subtitle_path = result.get("subtitle")
     description = str(subtitle_path) if subtitle_path else None
+    meta = result.get("metadata", {})
+    title = meta.get("title") or workdir.name
     db = SessionLocal()
     db.expire_on_commit = False
     try:
         cookbook = ensure_local_cookbook(db, user_id)
         recipe = Recipe(
-            title=workdir.name,
+            title=title,
             source_url=url,
             source_path=str(result.get("video") or result.get("audio") or ""),
             store=Store.local,
@@ -267,6 +660,111 @@ def download_media(url: str, user_id: int) -> dict:
     }
 
 
+def _extract_recipe_text_from_metadata(url: str, workdir: Path, result: dict) -> dict:
+    """Multi-stage recipe extraction from a video URL.
+
+    Tries these sources in order:
+    1. Thumbnail OCR (TikTok thumbnails often have recipe text)
+    2. Subtitles (auto-generated or uploaded)
+    3. Whisper speech-to-text on audio track
+    4. OCR on video frames
+    5. Web page JSON-LD recipe schema
+
+    The yt-dlp metadata title is always preferred as the recipe title
+    since it is clean and reliable (unlike OCR which produces garbled text
+    as the first line).
+    """
+    # Extract yt-dlp metadata (title, description, thumbnails)
+    meta = result.get("metadata", {})
+    if not meta:
+        meta = _extract_metadata(url, workdir)
+
+    # Download and OCR the thumbnail image — often has recipe text overlay
+    thumbnail_ocr_text = ""
+    thumbnail_path = _download_thumbnail(meta, workdir)
+    if thumbnail_path and thumbnail_path.exists():
+        try:
+            from PIL import Image  # noqa: PLC0415
+            img = _preprocess_image_for_ocr(Image.open(thumbnail_path))
+            thumbnail_ocr_text = _ocr_image(img)
+            logging.info("Thumbnail OCR: %d chars extracted", len(thumbnail_ocr_text))
+        except Exception as exc:
+            logging.warning("Thumbnail OCR failed: %s", exc)
+
+    if thumbnail_ocr_text:
+        thumbnail_ocr_text = _clean_ocr_text(thumbnail_ocr_text)
+        parsed = _extract_recipe_from_text(thumbnail_ocr_text)
+        if parsed.get("ingredients") or parsed.get("instructions"):
+            title = meta.get("title") or parsed.get("title")
+            return {
+                "title": title,
+                "ingredients": parsed.get("ingredients"),
+                "instructions": parsed.get("instructions"),
+            }
+
+    # Stage 1b: Try extracting from yt-dlp metadata description
+    # (TikTok descriptions often contain the full recipe as text)
+    meta_desc = meta.get("description", "")
+    if meta_desc and meta_desc.strip():
+        logging.info("Trying metadata description for %s (%d chars)", url, len(meta_desc))
+        desc_parsed = _extract_recipe_from_text(meta_desc)
+        if desc_parsed.get("ingredients") or desc_parsed.get("instructions"):
+            title = meta.get("title") or desc_parsed.get("title")
+            return {
+                "title": title,
+                "ingredients": desc_parsed.get("ingredients"),
+                "instructions": desc_parsed.get("instructions"),
+            }
+
+    video_path = result.get("video")
+    # Stage 2-4: subtitles -> Whisper -> video frame OCR
+    parsed = _extract_from_transcript(result.get("subtitle"), result.get("audio"), workdir, video_path)
+    if parsed.get("ingredients") or parsed.get("instructions"):
+        # ALWAYS use the clean yt-dlp title
+        title = meta.get("title") or parsed.get("title")
+        return {
+            "title": title,
+            "ingredients": parsed.get("ingredients"),
+            "instructions": parsed.get("instructions"),
+        }
+
+    # Stage 5: Web page JSON-LD schema
+    logging.info("Video extraction yielded no recipe data, trying web page for %s", url)
+    web_parsed = _extract_from_web_page(url)
+    if web_parsed.get("ingredients") or web_parsed.get("instructions"):
+        title = meta.get("title") or web_parsed.get("title")
+        return {
+            "title": title,
+            "ingredients": web_parsed.get("ingredients"),
+            "instructions": web_parsed.get("instructions"),
+        }
+
+    # Last resort: use metadata title only
+    if meta.get("title"):
+        return {
+            "title": meta.get("title"),
+            "ingredients": None,
+            "instructions": None,
+        }
+
+    return {"title": None, "ingredients": None, "instructions": None}
+
+
+def _ocr_image(img) -> str:
+    """Run pytesseract OCR on a preprocessed PIL image."""
+    import pytesseract  # noqa: PLC0415  # nosec B410 - pytesseract is safe, no eval
+    text = pytesseract.image_to_string(img, lang="eng")
+    lines = []
+    for line in text.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        if _is_ui_noise(line):
+            continue
+        lines.append(line)
+    return "\n".join(lines)
+
+
 def extract_recipe_from_url(url: str, user_id: int) -> dict:
     workdir = MEDIA_ROOT / "raw" / f"{datetime.utcnow().strftime('%Y%m%d')}-{uuid.uuid4().hex}"
     workdir.mkdir(parents=True, exist_ok=True)
@@ -274,14 +772,15 @@ def extract_recipe_from_url(url: str, user_id: int) -> dict:
     if not result.get("ok") and "error" in result:
         return result
 
-    parsed = _extract_from_transcript(result.get("subtitle"), result.get("audio"), workdir)
+    parsed = _extract_recipe_text_from_metadata(url, workdir, result)
+
     db = SessionLocal()
     db.expire_on_commit = False
     try:
         cookbook = ensure_local_cookbook(db, user_id)
         recipe = Recipe(
             title=parsed.get("title") or workdir.name,
-            description=parsed.get("instructions") or workdir.name,
+            description=None,
             ingredients=parsed.get("ingredients"),
             instructions=parsed.get("instructions"),
             source_url=url,
@@ -423,13 +922,13 @@ def extract_recipe_from_upload(file, user_id: int) -> dict:
     if not video and not audio:
         return {"ok": False, "error": "Unsupported file type"}
 
-    parsed = _extract_from_transcript(None, audio, workdir)
+    parsed = _extract_from_transcript(None, audio, workdir, video)
     db = SessionLocal()
     try:
         cookbook = ensure_local_cookbook(db, user_id)
         recipe = Recipe(
             title=parsed.get("title") or workdir.name,
-            description=parsed.get("instructions") or workdir.name,
+            description=None,
             ingredients=parsed.get("ingredients"),
             instructions=parsed.get("instructions"),
             source_path=str(video or audio),

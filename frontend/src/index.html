@@ -59,7 +59,7 @@
   <div id="headerNavWrapper" style="display:flex;align-items:center;justify-content:center;gap:4px;margin-top:8px;position:relative;">
   <div id="topNavRow" class="hidden" style="display:flex;align-items:center;gap:1px;">
     <button data-tab="tabMenu" onclick="switchTab('tabMenu')" class="nav-btn-small active" title="Menu">🏠</button>
-    <button data-tab="tabRecipes" onclick="switchTab(\'tabRecipes\')" class="nav-btn-small" title="Recipes">📋</button>
+    <button data-tab="tabRecipes" onclick="switchTab('tabRecipes')" class="nav-btn-small" title="Recipes">📋</button>
     <button data-tab="tabImport" onclick="switchTab('tabImport')" class="nav-btn-small" title="Add recipe">📥</button>
     <button data-tab="tabMeals" onclick="switchTab('tabMeals')" class="nav-btn-small" title="Meal plans">📅</button>
     <button data-tab="tabGroceries" onclick="switchTab('tabGroceries')" class="nav-btn-small" title="Grocery lists">🛒</button>
@@ -183,6 +183,7 @@
           <button class="secondary" onclick="applyFilters()" style="width:100%;padding:10px;font-weight:600;">Apply Filters</button>
         </div>
         <div id="tagFilterRow" class="filter-row scrollable-x small-pills"></div>
+        <div id="recipeCategoryFilters" data-active="" data-meal="" data-sub="" data-favs="" style="display:none;"></div>
         <div class="card">
           <div class="top">
             <h2 style="margin-top:0;">Recipes</h2>
@@ -467,13 +468,29 @@
             <div style="display:flex;gap:8px;">
               <button class="secondary" onclick="openUserForm()" style="width:auto;padding:8px 10px;font-size:13px;">New user</button>
               <button class="secondary" onclick="openSettingsCard()" style="width:auto;padding:8px 10px;font-size:13px;">Settings</button>
+              <button class="secondary" onclick="toggleDbDiag()" style="width:auto;padding:8px 10px;font-size:13px;">Database</button>
             </div>
           </div>
           <h3 style="margin-top:0;font-size:16px;">Pending approvals</h3>
           <div id="pendingList"></div>
-          <h3 style="margin-top:16px;font-size:16px;">All users</h3>
+          <h3 style="margin-top:0;font-size:16px;">All users</h3>
           <div id="userList"></div>
         </div>
+
+        <div class="card" id="dbDiagCard" style="display:none;">
+          <div class="top">
+            <h2 style="margin:0;font-size:18px;">Database Diagnostics</h2>
+            <div style="display:flex;gap:8px;">
+              <button class="secondary small" onclick="loadDbHealth()" style="padding:4px 8px;font-size:12px;">♻️ Refresh Health</button>
+              <button class="secondary small" onclick="runDbDiag()" style="padding:4px 8px;font-size:12px;">🔍 Diagnose</button>
+              <button class="secondary small" onclick="runDbRepair()" style="padding:4px 8px;font-size:12px;">🔧 Repair</button>
+            </div>
+          </div>
+          <div id="dbHealthContent" style="margin-top:12px;"></div>
+          <div id="dbDiagContent" style="margin-top:12px;"></div>
+          <p id="dbDiagStatus" style="font-size:12px;color:#555;margin-top:8px;"></p>
+        </div>
+      </div>
 
         <div id="userForm" class="card hidden">
           <h2 style="margin-top:0;" id="userFormTitle">New user</h2>
@@ -811,7 +828,7 @@ function switchTab(name) {
   if (name === 'tabRecipes') renderRecipes();
   if (name === 'tabMeals') { renderPlans(); }
   if (name === 'tabGroceries') renderGroceryLists();
-  if (name === 'tabAdmin') { loadPending(); loadUsers(); }
+  if (name === 'tabAdmin') { loadPending(); loadUsers(); loadDbHealth(); }
   if (name === 'tabProfile') { loadProfile(); }
   if (name === 'tabMenu') { loadRecentRecipes(); }
   if (name === 'tabCookbooks') { renderCookbooks(); }
@@ -1190,6 +1207,101 @@ async function backupDatabase() {
   setTimeout(() => {
     statusEl.textContent = 'Backup ready — check your downloads.';
   }, 2000);
+}
+function toggleDbDiag() {
+  const card = document.getElementById('dbDiagCard');
+  const isHidden = card.style.display === 'none' || card.style.display === '';
+  card.style.display = isHidden ? 'block' : 'none';
+  if (isHidden) {
+    loadDbHealth();
+  }
+}
+async function loadDbHealth() {
+  const contentEl = document.getElementById('dbHealthContent');
+  const statusEl = document.getElementById('dbDiagStatus');
+  statusEl.textContent = '';
+  contentEl.innerHTML = '<span style=\"color:#555;\">Loading database health...</span>';
+  try {
+    const res = await fetch(API + '/settings/db-health', { headers: authHeaders() });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    let html = '<h4 style=\"margin:0 0 8px;font-size:14px;\">Database Health</h4>';
+    html += '<div style=\"font-size:13px;line-height:1.6;\">';
+    html += '<strong>Status:</strong> <span style=\"color:' + (data.connected ? '#166534' : '#dc2626') + ';\">' + (data.connected ? 'Connected' : 'Disconnected') + '</span><br/>';
+    html += '<strong>Type:</strong> ' + (data.database_type || 'unknown') + '<br/>';
+    html += '<strong>Tables:</strong> ' + (data.table_count || 0) + '<br/>';
+    if (data.tables && data.tables.length) {
+      html += '<strong>Table list:</strong><br/><div style=\"display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;\">';
+      for (const t of data.tables) {
+        html += '<span style=\"background:#f1f5f9;border:1px solid #cbd5e1;border-radius:4px;padding:2px 6px;font-size:11px;\">' + t + '</span>';
+      }
+      html += '</div>';
+    }
+    html += '</div>';
+    contentEl.innerHTML = html;
+    statusEl.innerHTML = '<span style=\"color:#166534;\">✅ Database is healthy</span>';
+  } catch (err) {
+    contentEl.innerHTML = '<span style=\"color:#dc2626;\">Failed to load: ' + err.message + '</span>';
+    statusEl.textContent = '';
+  }
+}
+async function runDbDiag() {
+  const contentEl = document.getElementById('dbDiagContent');
+  const healthEl = document.getElementById('dbHealthContent');
+  const statusEl = document.getElementById('dbDiagStatus');
+  statusEl.textContent = '';
+  healthEl.innerHTML = '<span style=\"color:#555;\">Running diagnostics...</span>';
+  contentEl.innerHTML = '';
+  try {
+    const res = await fetch(API + '/settings/db-diag', { headers: authHeaders() });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    let html = '<h4 style=\"margin:0 0 8px;font-size:14px;\">Detailed Diagnostics</h4>';
+    html += '<div style=\"font-size:12px;line-height:1.6;font-family:monospace;background:#f8fafc;padding:8px;border-radius:4px;max-height:300px;overflow:auto;\">';
+    html += 'Tables:<br/>';
+    for (const [name, info] of Object.entries(data.tables || {})) {
+      html += '&nbsp;&nbsp;' + name + ': ' + (info.row_count !== undefined ? info.row_count + ' rows' : 'error') + '<br/>';
+    }
+    html += '<br/>Issues found:<br/>';
+    let issues = 0;
+    for (const [key, val] of Object.entries(data)) {
+      if (key.startsWith('tables')) continue;
+      if (Array.isArray(val) && val.length > 0) {
+        html += '&nbsp;&nbsp;' + key + ': ' + val.length + ' <span style=\"color:#dc2626;\">⚠️</span><br/>';
+        issues++;
+      }
+    }
+    if (issues === 0) {
+      html += '&nbsp;&nbsp;No issues found ⭐';
+    }
+    html += '</div>';
+    contentEl.innerHTML = html;
+    statusEl.innerHTML = issues > 0 ? '<span style=\"color:#d97706;\">⚠️ ' + issues + ' issue(s) found — click Repair to fix</span>' : '<span style=\"color:#166534;\">✅ No issues found</span>';
+  } catch (err) {
+    contentEl.innerHTML = '<span style=\"color:#dc2626;\">Failed: ' + err.message + '</span>';
+    statusEl.textContent = '';
+  }
+}
+async function runDbRepair() {
+  const statusEl = document.getElementById('dbDiagStatus');
+  statusEl.innerHTML = '<span style=\"color:#555;\">Running repairs...</span>';
+  try {
+    const res = await fetch(API + '/settings/db-repair', { method: 'POST', headers: authHeaders() });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    let html = '<h4 style=\"margin:0 0 8px;font-size:14px;\">Repair Results</h4>';
+    html += '<div style=\"font-size:12px;line-height:1.6;\">';
+    for (const repair of data.repairs_performed || []) {
+      html += '✅ ' + repair + '<br/>';
+    }
+    html += '</div>';
+    document.getElementById('dbDiagContent').innerHTML = html;
+    statusEl.innerHTML = '<span style=\"color:' + (data.status === 'ok' ? '#166534' : '#dc2626') + ';\">' + data.status + '</span>';
+    // Refresh health after repair
+    setTimeout(() => loadDbHealth(), 1000);
+  } catch (err) {
+    statusEl.innerHTML = '<span style=\"color:#dc2626;\">Repair failed: ' + err.message + '</span>';
+  }
 }
 function setTheme(mode) {
   document.body.classList.remove('dark','warm','dawn','cozy','contrast');
