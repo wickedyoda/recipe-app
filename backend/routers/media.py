@@ -38,8 +38,8 @@ def upload_media(file: UploadFile = File(...), db: Session = Depends(get_db), cu
 def extract_recipe(payload: IngestRequest, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     try:
         result = extract_recipe_from_url(payload.url, current_user.id)
-    except Exception:
-        raise HTTPException(status_code=502, detail="Media download failed")
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"Recipe extraction failed: {exc}")
     if not result.get("ok"):
         raise HTTPException(status_code=400, detail=result.get("error", "recipe extraction failed"))
     return result
