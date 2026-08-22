@@ -167,10 +167,14 @@ def _download_media(url: str, workdir: Path) -> dict:
 
     if audio is None and video is not None:
         audio = workdir / "audio.wav"
-        _run([
-            "ffmpeg", "-y", "-i", str(video),
-            "-vn", "-acodec", "pcm_s16le", "-ar", "16000", "-ac", "1", str(audio)
-        ])
+        try:
+            _run([
+                "ffmpeg", "-y", "-i", str(video),
+                "-vn", "-acodec", "pcm_s16le", "-ar", "16000", "-ac", "1", str(audio)
+            ])
+        except Exception as exc:
+            logging.debug("Audio extraction failed (video may have no audio): %s", exc)
+            audio = None
 
     if not subs and audio is not None:
         whisper_available = shutil.which("whisper")
@@ -660,6 +664,36 @@ def download_media(url: str, user_id: int) -> dict:
     }
 
 
+def _clean_facebook_title(title: str, description: str = "") -> str:
+    """Extract a clean recipe title from a Facebook Reel title/description.
+
+    Facebook titles look like:
+    "124K views · 80K reactions | Onion Crunch Chicken 🧅🤎🍯 My new favorite..."
+    We strip view/reaction prefixes and hashtag/emoji suffixes to get just the recipe name.
+    """
+    if not title:
+        return title
+    # Try to find a clean title after the pipe separator
+    if "|" in title:
+        parts = title.split("|", 1)
+        candidate = parts[1].strip()
+        if candidate:
+            title = candidate
+    # Strip view/reaction prefixes like "124K views · 80K reactions · "
+    title = re.sub(r"^\d+[KM]?\s*(views?|reactions?|likes?|shares?)\s*[·|]\s*", "", title, flags=re.IGNORECASE)
+    # Strip trailing hashtags and ellipsis
+    title = re.sub(r"\s*#.*$", "", title)
+    title = re.sub(r"\s*\.{2,}.*$", "", title)
+    # Stop at doubled exclamation/question marks (common in Facebook posts)
+    title = re.split(r"!!|\?\?|!{3,}|\?{3,}", title)[0]
+    # Strip trailing punctuation/whitespace
+    title = title.rstrip("!?. \t")
+    # Truncate at first emoji sequence + text (keep the emoji title part)
+    # Find where the recipe name ends (before description text)
+    # Look for pattern like "Recipe Name!! So much flavor" - cut at double exclamation
+    return title[:200].strip()
+
+
 def _extract_recipe_text_from_metadata(url: str, workdir: Path, result: dict) -> dict:
     """Multi-stage recipe extraction from a video URL.
 
@@ -695,7 +729,7 @@ def _extract_recipe_text_from_metadata(url: str, workdir: Path, result: dict) ->
         thumbnail_ocr_text = _clean_ocr_text(thumbnail_ocr_text)
         parsed = _extract_recipe_from_text(thumbnail_ocr_text)
         if parsed.get("ingredients") or parsed.get("instructions"):
-            title = meta.get("title") or parsed.get("title")
+            title = _clean_facebook_title(meta.get("title", ""), meta.get("description", "")) or parsed.get("title")
             return {
                 "title": title,
                 "ingredients": parsed.get("ingredients"),
@@ -709,7 +743,7 @@ def _extract_recipe_text_from_metadata(url: str, workdir: Path, result: dict) ->
         logging.info("Trying metadata description for %s (%d chars)", url, len(meta_desc))
         desc_parsed = _extract_recipe_from_text(meta_desc)
         if desc_parsed.get("ingredients") or desc_parsed.get("instructions"):
-            title = meta.get("title") or desc_parsed.get("title")
+            title = _clean_facebook_title(meta.get("title", ""), meta_desc) or desc_parsed.get("title")
             return {
                 "title": title,
                 "ingredients": desc_parsed.get("ingredients"),
@@ -721,7 +755,7 @@ def _extract_recipe_text_from_metadata(url: str, workdir: Path, result: dict) ->
     parsed = _extract_from_transcript(result.get("subtitle"), result.get("audio"), workdir, video_path)
     if parsed.get("ingredients") or parsed.get("instructions"):
         # ALWAYS use the clean yt-dlp title
-        title = meta.get("title") or parsed.get("title")
+        title = _clean_facebook_title(meta.get("title", ""), meta.get("description", "")) or parsed.get("title")
         return {
             "title": title,
             "ingredients": parsed.get("ingredients"),
@@ -732,7 +766,7 @@ def _extract_recipe_text_from_metadata(url: str, workdir: Path, result: dict) ->
     logging.info("Video extraction yielded no recipe data, trying web page for %s", url)
     web_parsed = _extract_from_web_page(url)
     if web_parsed.get("ingredients") or web_parsed.get("instructions"):
-        title = meta.get("title") or web_parsed.get("title")
+        title = _clean_facebook_title(meta.get("title", ""), meta.get("description", "")) or web_parsed.get("title")
         return {
             "title": title,
             "ingredients": web_parsed.get("ingredients"),
@@ -742,7 +776,7 @@ def _extract_recipe_text_from_metadata(url: str, workdir: Path, result: dict) ->
     # Last resort: use metadata title only
     if meta.get("title"):
         return {
-            "title": meta.get("title"),
+            "title": _clean_facebook_title(meta.get("title", ""), meta.get("description", "")),
             "ingredients": None,
             "instructions": None,
         }
@@ -779,7 +813,7 @@ def extract_recipe_from_url(url: str, user_id: int) -> dict:
     try:
         cookbook = ensure_local_cookbook(db, user_id)
         recipe = Recipe(
-            title=parsed.get("title") or workdir.name,
+            title=(parsed.get("title") or workdir.name)[:255],
             description=None,
             ingredients=parsed.get("ingredients"),
             instructions=parsed.get("instructions"),
@@ -927,7 +961,7 @@ def extract_recipe_from_upload(file, user_id: int) -> dict:
     try:
         cookbook = ensure_local_cookbook(db, user_id)
         recipe = Recipe(
-            title=parsed.get("title") or workdir.name,
+            title=(parsed.get("title") or workdir.name)[:255],
             description=None,
             ingredients=parsed.get("ingredients"),
             instructions=parsed.get("instructions"),
