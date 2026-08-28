@@ -221,6 +221,117 @@ def update_recipe(recipe_id: int, payload: RecipeCreate, db: Session = Depends(g
     data["photos"] = [p.path for p in db.query(RecipePhoto).filter(RecipePhoto.recipe_id==r.id).order_by(RecipePhoto.id.asc()).all()]
     return data
 
+@router.post("/{recipe_id}/reprocess")
+def reprocess_recipe(recipe_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    """Re-run recipe extraction on an existing recipe's source URL.
+
+    Useful for recipes that were created from a URL but failed to extract
+    ingredients/instructions (e.g. OCR quality was too low at the time).
+    Only works on recipes with a `source_url` and not manually edited.
+    """
+    r = db.query(Recipe).filter(Recipe.id == recipe_id, Recipe.owner_id == current_user.id).first()
+    if not r:
+        raise HTTPException(status_code=404, detail="Recipe not found")
+    if not r.source_url:
+        raise HTTPException(status_code=400, detail="Recipe has no source URL — cannot re-process")
+
+    # Lazy import to avoid circular deps
+    from backend.services.ingest import extract_recipe_from_url
+
+    try:
+        result = extract_recipe_from_url(r.source_url, current_user.id)
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"Re-processing failed: {exc}") from exc
+
+    if not result.get("ok"):
+        raise HTTPException(status_code=400, detail=result.get("error", "re-processing failed"))
+
+    # Only update if new extraction has more data than the existing recipe
+    new_ingredients = result.get("ingredients")
+    new_instructions = result.get("instructions")
+    new_title = result.get("title")
+    updated = []
+    if new_title and (not r.title or r.title.startswith("20") or len(new_title) > len(r.title)):
+        r.title = new_title[:255]
+        updated.append("title")
+    if new_ingredients and (not r.ingredients or len(new_ingredients) > len(r.ingredients or "")):
+        r.ingredients = new_ingredients
+        updated.append("ingredients")
+    if new_instructions and (not r.instructions or len(new_instructions) > len(r.instructions or "")):
+        r.instructions = new_instructions
+        updated.append("instructions")
+    if updated:
+        db.commit()
+        db.refresh(r)
+
+    return {
+        "ok": True,
+        "recipe_id": r.id,
+        "title": r.title,
+        "ingredients": r.ingredients,
+        "instructions": r.instructions,
+        "updated_fields": updated,
+        "source_url": r.source_url,
+    }
+
+@router.post("/dedupe")
+def dedupe_recipes(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    """Find and remove duplicate recipes (same source_url).
+
+    Keeps the recipe with the most complete data (title + ingredients + instructions)
+    and the lowest ID (oldest). Removes the rest.
+    """
+    from sqlalchemy import text as sql_text
+
+    # Find duplicate source URLs (only for recipes with a source_url)
+    dupes_query = db.execute(sql_text("""
+        SELECT source_url, COUNT(*) as cnt, GROUP_CONCAT(id ORDER BY id) as ids
+        FROM recipes
+        WHERE owner_id = :uid AND source_url IS NOT NULL AND source_url != ''
+        GROUP BY source_url
+        HAVING cnt > 1
+    """), {"uid": current_user.id}).fetchall()
+
+    removed = []
+    kept = []
+    for row in dupes_query:
+        url = row[0]
+        ids = [int(x) for x in row[2].split(",")]
+        if len(ids) < 2:
+            continue
+        # Pick the best recipe: most complete fields, then lowest ID
+        recipes = db.query(Recipe).filter(Recipe.id.in_(ids)).all()
+        # Score each: +1 for title, +1 for ingredients, +1 for instructions
+        def score(r):
+            s = 0
+            if r.title and not r.title.startswith("20"):
+                s += 1
+            if r.ingredients and len(r.ingredients) > 5:
+                s += 1
+            if r.instructions and len(r.instructions) > 5:
+                s += 1
+            return (-s, r.id)  # lower score wins; lowest ID as tiebreak
+
+        sorted_recipes = sorted(recipes, key=score)
+        keep = sorted_recipes[0]
+        to_delete = sorted_recipes[1:]
+        for r in to_delete:
+            db.query(RecipeTag).filter(RecipeTag.recipe_id == r.id).delete()
+            db.query(RecipePhoto).filter(RecipePhoto.recipe_id == r.id).delete()
+            db.query(RecipeStepPhoto).filter(RecipeStepPhoto.recipe_id == r.id).delete()
+            db.delete(r)
+            removed.append({"id": r.id, "title": r.title})
+        kept.append({"id": keep.id, "title": keep.title, "source_url": url, "duplicates_removed": len(to_delete)})
+    db.commit()
+
+    return {
+        "ok": True,
+        "groups_processed": len(dupes_query),
+        "recipes_removed": len(removed),
+        "kept": kept,
+        "removed": removed,
+    }
+
 @router.delete("/{recipe_id}")
 def delete_recipe(recipe_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     r = db.query(Recipe).filter(Recipe.id==recipe_id, Recipe.owner_id==current_user.id).first()

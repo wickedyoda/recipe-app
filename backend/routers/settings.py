@@ -382,10 +382,10 @@ def db_diagnose(_: User = Depends(require_role(Role.admin))):
         # Check for recipes with null ingredients/instructions
         try:
             null_ingredients = db.execute(text(
-                "SELECT id, title FROM recipes WHERE ingredients IS NULL ORDER BY id DESC LIMIT 20"
+                "SELECT id, title, source_url FROM recipes WHERE ingredients IS NULL ORDER BY id DESC LIMIT 20"
             )).fetchall()
             results["recipes_missing_ingredients"] = [
-                {"id": row[0], "title": row[1]} for row in null_ingredients
+                {"id": row[0], "title": row[1], "source_url": row[2]} for row in null_ingredients
             ]
         except Exception:
             results["recipes_missing_ingredients"] = "Check failed"
@@ -393,10 +393,10 @@ def db_diagnose(_: User = Depends(require_role(Role.admin))):
         # Check for recipes with null instructions
         try:
             null_instructions = db.execute(text(
-                "SELECT id, title FROM recipes WHERE instructions IS NULL ORDER BY id DESC LIMIT 20"
+                "SELECT id, title, source_url FROM recipes WHERE instructions IS NULL ORDER BY id DESC LIMIT 20"
             )).fetchall()
             results["recipes_missing_instructions"] = [
-                {"id": row[0], "title": row[1]} for row in null_instructions
+                {"id": row[0], "title": row[1], "source_url": row[2]} for row in null_instructions
             ]
         except Exception:
             results["recipes_missing_instructions"] = "Check failed"

@@ -257,6 +257,7 @@
               <button class="secondary small" id="favBtn" onclick="toggleFavoriteFromDetail()" style="padding:4px 8px;font-size:11px;"><img src="/src/icons/favorites-icon.png" alt="fav" style="width:16px;height:16px;vertical-align:middle;" /></button>
               <button class="secondary small" onclick="shareCurrentRecipe()" style="padding:4px 8px;font-size:11px;">Share</button>
               <button class="secondary small" id="shareHouseholdBtn" onclick="shareWithHousehold()" style="padding:4px 8px;font-size:11px;" title="Share with household 👨‍👩‍👧‍👦" hidden>🏠</button>
+              <button class="secondary small" id="reprocessBtn" onclick="reprocessCurrentRecipe()" style="padding:4px 8px;font-size:11px;" title="Re-run extraction from source URL">🔄 Reprocess</button>
               <button class="secondary small" onclick="editCurrentRecipe()" style="padding:4px 8px;font-size:11px;">Edit</button>
               <button class="danger small" onclick="deleteCurrentRecipe()" style="padding:4px 8px;font-size:11px;">Delete</button>
             </div>
@@ -480,10 +481,11 @@
         <div class="card" id="dbDiagCard" style="display:none;">
           <div class="top">
             <h2 style="margin:0;font-size:18px;">Database Diagnostics</h2>
-            <div style="display:flex;gap:8px;">
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
               <button class="secondary small" onclick="loadDbHealth()" style="padding:4px 8px;font-size:12px;">♻️ Refresh Health</button>
               <button class="secondary small" onclick="runDbDiag()" style="padding:4px 8px;font-size:12px;">🔍 Diagnose</button>
               <button class="secondary small" onclick="runDbRepair()" style="padding:4px 8px;font-size:12px;">🔧 Repair</button>
+              <button class="secondary small" onclick="dedupeRecipes()" style="padding:4px 8px;font-size:12px;" title="Find and remove duplicate recipes (same source URL)">🗂️ Dedupe Recipes</button>
             </div>
           </div>
           <div id="dbHealthContent" style="margin-top:12px;"></div>
@@ -1053,7 +1055,7 @@ async function loadRecentRecipes() {
     const img = (r.photos && r.photos.length > 0) ? r.photos[0] : (r.source_path ? r.source_path : '');
     const rating = r.rating ? '★'.repeat(Math.round(r.rating)) : '';
     const imgHtml = img ? '<img src="/media/static/' + escapeHtml(img) + '" style="width:32px;height:32px;border-radius:4px;object-fit:cover;flex-shrink:0;" />' : '<span style="width:32px;height:32px;border-radius:4px;background:#f3f0e8;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">' + categoryIcon(r.category) + '</span>';
-    return `<div style="display:flex;align-items:center;gap:8px;padding:4px 0;cursor:pointer;" onclick="switchTab('tabRecipes');setTimeout(()=>openRecipeDetail('${r.id}',100);">` +
+    return `<div style="display:flex;align-items:center;gap:8px;padding:4px 0;cursor:pointer;" onclick="switchTab('tabRecipes');setTimeout(()=>openRecipeDetail('${r.id}'), 100);">` +
       imgHtml +
       '<div style="flex:1;min-width:0;">' +
       '<div style="font-size:13px;font-weight:500;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escapeHtml(r.title) + '</div>' +
@@ -1918,6 +1920,43 @@ async function deleteRecipe(id) {
     })
     .catch(() => alert('Delete failed'));
 }
+async function reprocessCurrentRecipe() {
+  if (!currentRecipeId) return;
+  if (!await showConfirm('Re-run recipe extraction from the source URL? This may take a minute.')) return;
+  const btn = document.getElementById('reprocessBtn');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Processing...'; }
+  try {
+    const res = await fetch(API + '/recipes/' + currentRecipeId + '/reprocess', { method: 'POST', headers: authHeaders() });
+    const data = await res.json();
+    if (!res.ok) {
+      await showConfirm('Re-processing failed: ' + (data.detail || 'Unknown error'), { type: 'alert' });
+      return;
+    }
+    if (data.updated_fields && data.updated_fields.length > 0) {
+      _recipeCacheTime = 0;
+      await openRecipeDetail(currentRecipeId);
+      await showConfirm('Updated: ' + data.updated_fields.join(', '), { type: 'alert' });
+    } else {
+      await showConfirm('No new data found — the current recipe already has the best available data.', { type: 'alert' });
+    }
+  } catch (e) {
+    await showConfirm('Re-processing failed: ' + e, { type: 'alert' });
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '🔄 Reprocess'; }
+  }
+}
+async function dedupeRecipes() {
+  if (!await showConfirm('Remove duplicate recipes (same source URL)? This will keep the most complete recipe and delete the rest. This cannot be undone.')) return;
+  try {
+    const res = await fetch(API + '/recipes/dedupe', { method: 'POST', headers: authHeaders() });
+    const data = await res.json();
+    _recipeCacheTime = 0;
+    renderRecipes();
+    await showConfirm(`Removed ${data.recipes_removed} duplicate recipes from ${data.groups_processed} groups.`, { type: 'alert' });
+  } catch (e) {
+    await showConfirm('Dedupe failed: ' + e, { type: 'alert' });
+  }
+}
 async function deleteCurrentRecipe() {
   _recipeCacheTime = 0;
   if (!currentRecipeId) return;
@@ -2345,10 +2384,18 @@ async function addAllIngredientsToGrocery() {
   }
   const listData = await listRes.json();
   if (!listRes.ok) return alert('Failed: ' + (listData.detail || 'unknown'));
-  for (const line of lines) {
-    await fetch(API + '/grocery-lists/' + listData.id + '/items', { method:'POST', headers: authHeaders(), body: JSON.stringify({name: line, list_id: listData.id, recipe_id: currentRecipeId}) });
+  const items = lines.map(line => ({ name: line, list_id: listData.id, recipe_id: currentRecipeId }));
+  const bulkRes = await fetch(API + '/grocery-lists/items/bulk', {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify({ items: items })
+  });
+  if (!bulkRes.ok) {
+    const err = await bulkRes.json();
+    return alert('Failed to add ingredients: ' + (err.detail || 'unknown error'));
   }
   alert('Added ingredients to grocery list');
+  refreshGroceryList(listData.id);
   openGroceryDetail(listData.id);
 }
 function closeRecipeDetail() {
