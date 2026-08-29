@@ -280,8 +280,9 @@ def test_smtp_settings(
 @router.get("/db-health", response_model=dict)
 def db_health(_: User = Depends(require_role(Role.admin))):
     """Check database connectivity and basic health."""
-    from backend.database import engine, SessionLocal
     from sqlalchemy import inspect, text
+
+    from backend.database import SessionLocal, engine
 
     db = SessionLocal()
     try:
@@ -317,9 +318,10 @@ def db_health(_: User = Depends(require_role(Role.admin))):
 @router.get("/db-diag", response_model=dict)
 def db_diagnose(_: User = Depends(require_role(Role.admin))):
     """Run detailed database diagnostics: row counts, schema issues, orphaned records."""
+    from sqlalchemy import MetaData, Table, func, inspect, select, text
+
     from backend.database import SessionLocal
-    from backend.models import Recipe, RecipeMedia, Cookbook, Household, User, Tag, MealPlan, GroceryList, Note
-    from sqlalchemy import text, inspect, select, func, Table, MetaData
+    from backend.models import Cookbook, GroceryList, Household, MealPlan, Note, Recipe, RecipeMedia, Tag, User
 
     db = SessionLocal()
     results: dict = {"tables": {}}
@@ -340,7 +342,7 @@ def db_diagnose(_: User = Depends(require_role(Role.admin))):
     try:
         inspector = inspect(db.get_bind())
 
-        for table_name, model, _ in model_checks:
+        for table_name, _, _ in model_checks:
             info: dict = {}
             try:
                 # Row count - use SQLAlchemy table reflection to avoid SQL injection
@@ -419,9 +421,10 @@ def db_repair(_: User = Depends(require_role(Role.admin))):
     - Cleans up null titles
     - Returns a summary of repairs made.
     """
+    from sqlalchemy import inspect, text
+
     from backend.database import SessionLocal, engine
-    from backend.models import Recipe, Cookbook, Store
-    from sqlalchemy import text, inspect
+    from backend.models import Cookbook, Store
 
     db = SessionLocal()
     repairs: list[str] = []

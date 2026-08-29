@@ -236,28 +236,29 @@ def reprocess_recipe(recipe_id: int, db: Session = Depends(get_db), current_user
         raise HTTPException(status_code=400, detail="Recipe has no source URL — cannot re-process")
 
     # Lazy import to avoid circular deps
-    from backend.services.ingest import extract_recipe_from_url
+    from datetime import datetime
 
+    from backend.services.ingest import MEDIA_ROOT, _download_media, _extract_recipe_text_from_metadata
+
+    workdir = MEDIA_ROOT / "reprocess" / f"{datetime.utcnow().strftime('%Y%m%d')}-{r.id}"
+    workdir.mkdir(parents=True, exist_ok=True)
     try:
-        result = extract_recipe_from_url(r.source_url, current_user.id)
+        result = _download_media(r.source_url, workdir)
+        parsed = _extract_recipe_text_from_metadata(r.source_url, workdir, result)
     except Exception as exc:
         raise HTTPException(status_code=502, detail=f"Re-processing failed: {exc}") from exc
 
-    if not result.get("ok"):
-        raise HTTPException(status_code=400, detail=result.get("error", "re-processing failed"))
-
-    # Only update if new extraction has more data than the existing recipe
-    new_ingredients = result.get("ingredients")
-    new_instructions = result.get("instructions")
-    new_title = result.get("title")
+    new_ingredients = parsed.get("ingredients")
+    new_instructions = parsed.get("instructions")
+    new_title = parsed.get("title")
     updated = []
-    if new_title and (not r.title or r.title.startswith("20") or len(new_title) > len(r.title)):
+    if new_title and (not r.title or r.title.startswith("20") or len(new_title) < len(r.title)):
         r.title = new_title[:255]
         updated.append("title")
-    if new_ingredients and (not r.ingredients or len(new_ingredients) > len(r.ingredients or "")):
+    if new_ingredients:
         r.ingredients = new_ingredients
         updated.append("ingredients")
-    if new_instructions and (not r.instructions or len(new_instructions) > len(r.instructions or "")):
+    if new_instructions:
         r.instructions = new_instructions
         updated.append("instructions")
     if updated:
