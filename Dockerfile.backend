@@ -8,6 +8,7 @@ WORKDIR /app
 COPY backend/requirements.txt backend/
 RUN apt-get update && apt-get upgrade -y --no-install-recommends \
     && apt-get install -y --no-install-recommends ffmpeg default-mysql-client tesseract-ocr libtesseract-dev \
+        libffi-dev libcairo2-dev pkg-config \
     && pip install --no-cache-dir --no-input -r backend/requirements.txt \
     && rm -rf /var/lib/apt/lists/*
 
