@@ -618,8 +618,8 @@ def _split_recipe_paragraph(text: str) -> list[str]:
     """Split a long recipe paragraph into logical steps by sentence boundaries."""
     sentences = re.split(r'(?<=[.!?])\s+', text)
     steps = []
-    for s in sentences:
-        s = s.strip()
+    for orig_s in sentences:
+        s = orig_s.strip()
         if len(s) >= 8:
             steps.append(s)
     return steps if steps else [text]
@@ -948,8 +948,8 @@ def _ocr_image(img) -> str:
     import pytesseract  # noqa: PLC0415  # nosec B410 - pytesseract is safe, no eval
     text = pytesseract.image_to_string(img, lang="eng")
     lines = []
-    for line in text.splitlines():
-        line = line.strip()
+    for orig_line in text.splitlines():
+        line = orig_line.strip()
         if not line:
             continue
         if _is_ui_noise(line):
