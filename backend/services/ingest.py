@@ -537,6 +537,68 @@ def _extract_from_web_page(url: str) -> dict:
     return {"title": title, "ingredients": None, "instructions": None}
 
 
+def _fetch_html(url: str) -> str | None:
+    """Fetch HTML content from a URL with proper error handling."""
+    try:
+        sanitized = _sanitize_media_url(url)
+        resp = requests.get(sanitized, headers={"User-Agent": "Mozilla/5.0 (compatible; RecipeBot/1.0)"}, timeout=15)
+        resp.raise_for_status()
+        return resp.text[:200000]
+    except Exception:
+        return None
+
+
+def _find_recipe_in_rss(rss_html: str, blog_url: str, meta: dict) -> str | None:
+    """Parse RSS feed and find the most likely matching recipe link.
+
+    Looks for recipe links in the RSS feed that match the TikTok title keywords.
+    Returns the first matching recipe permalink, or None if no match found.
+    """
+    if not rss_html:
+        return None
+
+    # Extract title keywords from TikTok metadata
+    raw_title = meta.get("title", "") or meta.get("description", "") or ""
+    title_clean = re.sub(r"[^a-z0-9\s]", " ", raw_title).strip().lower()
+    title_words = set(re.findall(r"[a-z]{3,}", title_clean))
+
+    # Parse RSS feed for recipe links
+    link_pattern = re.compile(r'<link[^>]*>(.*?)</link>', re.IGNORECASE | re.DOTALL)
+    title_pattern = re.compile(r'<title[^>]*>(.*?)</title>', re.IGNORECASE | re.DOTALL)
+    item_pattern = re.compile(r'<item>(.*?)</item>', re.IGNORECASE | re.DOTALL)
+
+    best_match = None
+    best_score = 0
+
+    for item in item_pattern.finditer(rss_html):
+        item_html = item.group(1)
+        link_match = link_pattern.search(item_html)
+        title_match = title_pattern.search(item_html)
+
+        if not link_match or not title_match:
+            continue
+
+        link = link_match.group(1).strip()
+        title = title_match.group(1).strip()
+
+        # Must be on the same blog domain
+        if not link.startswith(blog_url):
+            continue
+
+        # Skip non-recipe pages
+        if any(skip in link.lower() for skip in ["feed", "rss", "xml", "author", "tag", "category", "page"]):
+            continue
+
+        # Score this link by title similarity
+        item_words = set(re.findall(r"[a-z]{3,}", title.lower()))
+        overlap = len(title_words & item_words)
+        if overlap > best_score:
+            best_score = overlap
+            best_match = link
+
+    return best_match if best_score >= 2 else None
+
+
 def _find_blog_recipe_link(blog_url: str, search_terms: str, search_page_url: str) -> str | None:
     """Find the actual recipe page URL from a blog search results page.
 
@@ -877,18 +939,32 @@ def _extract_recipe_text_from_metadata(url: str, workdir: Path, result: dict) ->
             f"https://{uploader}.com",
             f"https://www.{uploader}.com",
         ]
-        search_terms = re.sub(r'[^a-z0-9\s]', ' ', (meta.get("title") or "")).strip().lower()
-        if search_terms:
-            # Use the first few words of the title as search terms
-            search_terms = search_terms.split()[:5]
-            search_terms = ' '.join(search_terms)
-            for blog_url in blog_candidates:
-                try:
+        for blog_url in blog_candidates:
+            try:
+                # Try RSS feed first — most reliable way to find recipe posts
+                rss_url = f"{blog_url}/feed/rss2/"
+                logging.info("Checking RSS feed for %s", rss_url)
+                rss_html = _fetch_html(rss_url)
+                if rss_html:
+                    recipe_link = _find_recipe_in_rss(rss_html, blog_url, meta)
+                    if recipe_link:
+                        logging.info("Found matching recipe in RSS: %s", recipe_link)
+                        recipe_parsed = _extract_from_web_page(recipe_link)
+                        if recipe_parsed.get("ingredients") and recipe_parsed.get("instructions"):
+                            title = recipe_parsed.get("title") or _clean_facebook_title(meta.get("title", ""), meta.get("description", ""))
+                            return {
+                                "title": title,
+                                "ingredients": recipe_parsed.get("ingredients"),
+                                "instructions": recipe_parsed.get("instructions"),
+                            }
+                # Fallback: search URL
+                search_terms = re.sub(r'[^a-z0-9\s]', ' ', (meta.get("title") or "")).strip().lower()
+                search_terms = ' '.join(search_terms.split()[:5])
+                if search_terms:
                     search_url = f"{blog_url}/?s={url_quote(search_terms)}"
                     logging.info("Searching blog %s for '%s'", blog_url, search_terms)
                     blog_parsed = _extract_from_web_page(search_url)
                     if blog_parsed.get("ingredients") and blog_parsed.get("instructions"):
-                        # Try to find the actual recipe page from search results
                         recipe_link = _find_blog_recipe_link(blog_url, search_terms, search_url)
                         if recipe_link:
                             logging.info("Found recipe link: %s", recipe_link)
@@ -900,18 +976,18 @@ def _extract_recipe_text_from_metadata(url: str, workdir: Path, result: dict) ->
                                     "ingredients": recipe_parsed.get("ingredients"),
                                     "instructions": recipe_parsed.get("instructions"),
                                 }
-                    # Also try the blog homepage directly
-                    blog_parsed = _extract_from_web_page(blog_url)
-                    if blog_parsed.get("ingredients") and blog_parsed.get("instructions"):
-                        title = _clean_facebook_title(meta.get("title", ""), meta.get("description", "")) or blog_parsed.get("title")
-                        return {
-                            "title": title,
-                            "ingredients": blog_parsed.get("ingredients"),
-                            "instructions": blog_parsed.get("instructions"),
-                        }
-                except Exception as exc:
-                    logging.debug("Blog search failed for %s: %s", blog_url, exc)
-                    continue
+                # Also try the blog homepage directly
+                blog_parsed = _extract_from_web_page(blog_url)
+                if blog_parsed.get("ingredients") and blog_parsed.get("instructions"):
+                    title = _clean_facebook_title(meta.get("title", ""), meta.get("description", "")) or blog_parsed.get("title")
+                    return {
+                        "title": title,
+                        "ingredients": blog_parsed.get("ingredients"),
+                        "instructions": blog_parsed.get("instructions"),
+                    }
+            except Exception as exc:
+                logging.debug("Blog search failed for %s: %s", blog_url, exc)
+                continue
 
     # If OCR produced results, use them (even if imperfect)
     if ocr_ingredients or ocr_instructions:
