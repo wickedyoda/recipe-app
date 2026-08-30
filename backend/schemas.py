@@ -308,6 +308,10 @@ class GroceryItemCreate(BaseModel):
     quantity: str | None = None
 
 
+class GroceryItemBulkCreate(BaseModel):
+    items: list[GroceryItemCreate]
+
+
 class GroceryItemOut(GroceryItemCreate):
     id: int
     checked: bool

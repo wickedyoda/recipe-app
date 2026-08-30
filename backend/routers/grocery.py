@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from backend.database import get_db
 from backend.models import GroceryItem, GroceryList, Recipe, User
 from backend.schemas import (
+    GroceryItemBulkCreate,
     GroceryItemCreate,
     GroceryItemOut,
     GroceryListCreate,
@@ -88,11 +89,11 @@ def get_list(list_id: int, db: Session = Depends(get_db), current_user: User = D
 
 @router.post("/{list_id}/items", response_model=GroceryItemOut)
 def add_item(list_id: int, payload: GroceryItemCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    gl = db.query(GroceryList).filter(GroceryList.id==list_id, GroceryList.owner_id==current_user.id).first()
+    gl = db.query(GroceryList).filter(GroceryList.id == list_id, GroceryList.owner_id == current_user.id).first()
     if not gl:
         raise HTTPException(status_code=404, detail="Grocery list not found")
     if payload.recipe_id:
-        recipe = db.query(Recipe).filter(Recipe.id==payload.recipe_id, Recipe.owner_id==current_user.id).first()
+        recipe = db.query(Recipe).filter(Recipe.id == payload.recipe_id, Recipe.owner_id == current_user.id).first()
         if not recipe:
             raise HTTPException(status_code=404, detail="Recipe not found")
     item = GroceryItem(list_id=gl.id, recipe_id=payload.recipe_id, name=payload.name, quantity=payload.quantity, owner_id=current_user.id)
@@ -100,6 +101,29 @@ def add_item(list_id: int, payload: GroceryItemCreate, db: Session = Depends(get
     db.commit()
     db.refresh(item)
     return GroceryItemOut.model_validate(item)
+
+
+@router.post("/items/bulk", response_model=list[GroceryItemOut])
+def add_items_bulk(payload: GroceryItemBulkCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    """Bulk-insert multiple grocery items in a single request (avoids N+1 round-trips)."""
+    list_id = payload.items[0].list_id if payload.items else None
+    gl = db.query(GroceryList).filter(GroceryList.id == list_id, GroceryList.owner_id == current_user.id).first()
+    if not gl:
+        raise HTTPException(status_code=404, detail="Grocery list not found")
+    created = []
+    for p in payload.items:
+        if p.recipe_id:
+            recipe = db.query(Recipe).filter(Recipe.id == p.recipe_id, Recipe.owner_id == current_user.id).first()
+            if not recipe:
+                raise HTTPException(status_code=404, detail="Recipe not found")
+        item = GroceryItem(list_id=gl.id, recipe_id=p.recipe_id, name=p.name, quantity=p.quantity, owner_id=current_user.id)
+        db.add(item)
+        created.append(item)
+    db.commit()
+    db.refresh(item)  # noqa: F841 - last item
+    for c in created:
+        db.refresh(c)
+    return created
 
 @router.get("/{list_id}/items", response_model=list[GroceryItemOut])
 def list_items(list_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
