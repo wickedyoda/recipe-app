@@ -78,7 +78,7 @@
     <button onclick="switchTab('tabCookbooks');closeDropdown()" class="dropdown-item">📚 Cookbooks</button>
     <button onclick="switchTab('tabHouseholds');closeDropdown()" class="dropdown-item">👨‍👩‍👧‍👦 Households</button>
     <button onclick="switchTab('tabProfile');closeDropdown()" class="dropdown-item">👤 Profile</button>
-    <button id="settingsDropdownBtn" onclick="openSettingsCard();toggleDropdown()" class="dropdown-item hidden">⚙️ Settings</button>
+    <button id="adminDropdownBtn" onclick="openAdminTab();toggleDropdown()" class="dropdown-item admin-only">👤 Admin</button>
     <div class="dropdown-divider"></div>
     <button onclick="logout()" class="dropdown-item logout">Logout</button>
   </div>
@@ -919,6 +919,10 @@ window.addEventListener('keydown', function(e) {
 function toggleDropdown() {
   const menu = document.getElementById('dropdownMenu');
   const btn = document.getElementById('menuBtn');
+  // Show/hide admin link based on role
+  const role = localStorage.getItem('userRole');
+  const adminBtn = document.getElementById('adminDropdownBtn');
+  if (adminBtn) adminBtn.classList.toggle('hidden', role !== 'admin');
   if (menu.classList.contains('hidden')) {
     menu.classList.remove('hidden');
     // Position dropdown relative to the button
@@ -951,6 +955,15 @@ function toggleDropdown() {
   } else {
     menu.classList.add('hidden');
   }
+}
+function openAdminTab() {
+  const role = localStorage.getItem('userRole');
+  if (role !== 'admin') {
+    alert('Admin access is restricted to administrators only.');
+    return;
+  }
+  switchTab('tabAdmin');
+  closeDropdown();
 }
 function closeDropdown() {
   const menu = document.getElementById('dropdownMenu');
