@@ -1,7 +1,7 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html { font-size: 16px; }
   @supports (padding-left: env(safe-area-inset-left)) {
-    body { padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); padding-bottom: env(safe-area-inset-bottom); }
+    body { padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
   }
   -webkit-tap-highlight-color: transparent;
   button { -webkit-tap-highlight-color: transparent; }
