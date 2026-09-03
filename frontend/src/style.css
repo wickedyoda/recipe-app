@@ -579,3 +579,72 @@
     margin: 6px 0;
     font-style: italic;
   }
+  /* Blue-themed skin: primary theme for recipe app */
+  [data-theme="blue"] {
+    --orange: #3b82f6; --orange-light: #bfdbfe; --orange-dark: #1e40af;
+    --terracotta: #60a5fa; --beige: #e0f2fe; --cream: #f0f9ff;
+    --warm-bg: #e0f2fe; --text-primary: #0c4a6e; --text-secondary: #082d4a;
+    --text-muted: #18546f; --border-light: #baf0d3; --border-dark: #08324b;
+    --card-bg: #ffffff; --card-border: var(--border-light); --card-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    --heading-color: #0c4a6e;
+    --pill-bg: #dbeafe; --pill-color: #1d4ed8;
+  }
+  [data-theme="blue"] h1, [data-theme="blue"] h2, [data-theme="blue"] h3 { color: var(--heading-color); }
+  [data-theme="blue"] .recipe-card { background: #fff; border-color: var(--border-light); }
+  [data-theme="blue"] .recipe-card .recipe-title { color: var(--text-primary); }
+  [data-theme="blue"] .nav-square { background: #dbeafe; color: var(--orange-dark); border-color: var(--border-light); }
+  [data-theme="blue"] .nav-square:hover { background: #bfdbfe; }
+  [data-theme="blue"] .nav-btn-small.active { color: var(--orange-dark); background: var(--pill-bg); border-color: var(--orange); }
+  [data-theme="blue"] .nav-top-btn.active { background: var(--pill-bg); color: var(--orange-dark); }
+  [data-theme="blue"] .filter-pill { background: #dbeafe; color: var(--orange-dark); border: 1px solid var(--orange); }
+  [data-theme="blue"] .filter-pill:hover { background: var(--orange); color: #fff; }
+  [data-theme="blue"] .filter-pill.active { background: var(--orange); color: #fff; border-color: var(--orange); }
+  [data-theme="blue"] .filter-trigger.active { background: var(--orange); color: #fff; }
+  [data-theme="blue"] .pill { background: #dbeafe; color: #1d4ed8; }
+  [data-theme="blue"] .pill.warm-bg { background: #dbeafe; color: #1d4ed8; }
+  [data-theme="blue"] button { background: var(--orange); }
+  [data-theme="blue"] button.secondary { background: #e0f2fe; color: var(--orange-dark); }
+  [data-theme="blue"] button.secondary.terracotta { background: var(--orange); color: #fff; }
+  [data-theme="blue"] .cooking-card { background: #1e3a8a; border-color: #37383e; color: #e0f2fe; }
+  [data-theme="blue"] .cooking-card .meta { color: #93c5fd; }
+  [data-theme="blue"] .share-header { background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%); }
+  [data-theme="blue"] .share-btn.copy { background: #1e40af; color: #fff; }
+  [data-theme="blue"] .share-btn.email { background: #e0f2fe; color: #0c4a6e; }
+  [data-theme="blue"] .share-btn.text { background: #fbbf24; color: #451a03; }
+  [data-theme="blue"] .confirm-btn.cancel { background: #1e3a8a; }
+  [data-theme="blue"] .confirm-btn.ok { background: #3b82f6; color: #fff; }
+
+  /* Purple-themed skin: alternative aesthetic */
+  [data-theme="purple"] {
+    --orange: #8b5cf6; --orange-light: #ddd6fe; --orange-dark: #6d28d9;
+    --terracotta: #a855f7; --beige: #f5f3ff; --cream: #fafafa;
+    --warm-bg: #f5f3ff; --text-primary: #4a142c; --text-secondary: #4a142c;
+    --text-muted: #7e22ce; --border-light: #ddd6fe; --border-dark: #6d28d9;
+    --card-bg: #ffffff; --card-border: var(--border-light); --card-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    --heading-color: #6d28d9;
+    --pill-bg: #ede9fe; --pill-color: #7e22ce;
+  }
+  [data-theme="purple"] h1, [data-theme="purple"] h2, [data-theme="purple"] h3 { color: var(--heading-color); }
+  [data-theme="purple"] .recipe-card { background: #fff; border-color: var(--border-light); }
+  [data-theme="purple"] .recipe-card .recipe-title { color: var(--text-primary); }
+  [data-theme="purple"] .nav-square { background: #ede9fe; color: var(--orange-dark); border-color: var(--border-light); }
+  [data-theme="purple"] .nav-square:hover { background: #ddd6fe; }
+  [data-theme="purple"] .nav-btn-small.active { color: var(--orange-dark); background: var(--pill-bg); border-color: var(--orange); }
+  [data-theme="purple"] .nav-top-btn.active { background: var(--orange); color: #fff; }
+  [data-theme="purple"] .filter-pill { background: #ede9fe; color: var(--orange-dark); border: 1px solid var(--orange); }
+  [data-theme="purple"] .filter-pill:hover { background: var(--orange); color: #fff; }
+  [data-theme="purple"] .filter-pill.active { background: var(--orange); color: #fff; border-color: var(--orange); }
+  [data-theme="purple"] .filter-trigger.active { background: var(--orange); color: #fff; }
+  [data-theme="purple"] .pill { background: #ede9fe; color: #7e22ce; }
+  [data-theme="purple"] .pill.warm-bg { background: #ede9fe; color: #7e22ce; }
+  [data-theme="purple"] button { background: var(--orange); }
+  [data-theme="purple"] button.secondary { background: #f5f3ff; color: var(--orange-dark); }
+  [data-theme="purple"] button.secondary.terracotta { background: var(--orange); color: #fff; }
+  [data-theme="purple"] .cooking-card { background: #4a142c; border-color: #37383a; color: #f5f3ff; }
+  [data-theme="purple"] .cooking-card .meta { color: #a5b4fc; }
+  [data-theme="purple"] .share-header { background: linear-gradient(135deg, #a855f7 0%, #8b5cf6 100%); }
+  [data-theme="purple"] .share-btn.copy { background: #37383a; color: #fff; }
+  [data-theme="purple"] .share-btn.email { background: #f5f3ff; color: #4a142c; }
+  [data-theme="purple"] .share-btn.text { background: #fbbf24; color: #451a03; }
+  [data-theme="purple"] .confirm-btn.cancel { background: #5b21b6; color: #fff; }
+  [data-theme="purple"] .confirm-btn.ok { background: var(--orange); color: #fff; }
