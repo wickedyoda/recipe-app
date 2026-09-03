@@ -21,7 +21,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="format-detection" content="telephone=no, email=no, address=no, date=no, month=no, year=no">
   <meta name="mobile-web-app-capable" content="yes">
-  <title>WhiskFul - Plan it. Cook it. Love it.</title>
+<title>WiskFul - Plan it. Cook it. Love it.</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -51,8 +51,8 @@
 <!-- Theme toggle fixed at top-right for login screen (always visible) -->
 <button class="secondary small" id="themeToggleLogin" onclick="toggleTheme()" style="position:fixed;top:12px;right:12px;z-index:1000;padding:4px 6px;font-size:14px;line-height:1;border-radius:5px;background:rgba(255,255,255,0.9);box-shadow:0 2px 8px rgba(0,0,0,0.1);display:none;">🌙</button>
 <div class="card">
-  <div class="top" style="text-align:center;padding-top:12px;">
-    <h1 style="margin:0;font-size:18px;display:flex;flex-direction:column;align-items:center;gap:4px;"><a href="#" onclick="switchTab('tabMenu');return false" style="color:inherit;text-decoration:none;display:flex;flex-direction:column;align-items:center;gap:2px;"><img src="/src/icons/logo-lg.png" alt="WhiskFul" style="width:56px;height:56px;object-fit:contain;" />WhiskFul</a></h1>
+  <div class="top" style="text-align:center;padding-top:calc(12px + env(safe-area-inset-top, 24px));">
+    <h1 style="margin:0;font-size:18px;display:flex;flex-direction:column;align-items:center;gap:4px;"><a href="#" onclick="switchTab('tabMenu');return false" style="color:inherit;text-decoration:none;display:flex;flex-direction:column;align-items:center;gap:2px;"><img src="/src/icons/logo-lg.png" alt="WiskFul" style="width:56px;height:56px;object-fit:contain;" />WiskFul</a></h1>
     <div style="font-size:10px;color:var(--text-muted);font-weight:400;">Plan it. Cook it. Love it.</div>
   </div>
   <!-- Compact single-row navigation with 3-line menu, centered under logo -->
@@ -78,7 +78,7 @@
     <button onclick="switchTab('tabCookbooks');closeDropdown()" class="dropdown-item">📚 Cookbooks</button>
     <button onclick="switchTab('tabHouseholds');closeDropdown()" class="dropdown-item">👨‍👩‍👧‍👦 Households</button>
     <button onclick="switchTab('tabProfile');closeDropdown()" class="dropdown-item">👤 Profile</button>
-    <button id="settingsDropdownBtn" onclick="openSettingsCard();toggleDropdown()" class="dropdown-item hidden">⚙️ Settings</button>
+    <button id="adminDropdownBtn" onclick="openAdminTab();toggleDropdown()" class="dropdown-item admin-only">👤 Admin</button>
     <div class="dropdown-divider"></div>
     <button onclick="logout()" class="dropdown-item logout">Logout</button>
   </div>
@@ -673,12 +673,12 @@
     <div id="tabAbout" class="tab hidden">
       <div class="card">
         <div class="top" style="display:flex;align-items:center;justify-content:space-between;">
-          <h2 style="margin:0;font-size:18px;">About WhiskFul</h2>
+          <h2 style="margin:0;font-size:18px;">About WiskFul</h2>
           <button class="secondary small" onclick="switchTab('tabMenu')" style="padding:2px 8px;font-size:12px;">Back</button>
         </div>
         <div style="padding:16px;text-align:center;">
-          <img src="/src/icons/logo-lg.png" alt="WhiskFul" style="width:96px;height:96px;object-fit:contain;margin-bottom:12px;" />
-          <h3 style="margin:8px 0;font-size:20px;font-family:'Cormorant Garamond',serif;">WhiskFul</h3>
+          <img src="/src/icons/logo-lg.png" alt="WiskFul" style="width:96px;height:96px;object-fit:contain;margin-bottom:12px;" />
+          <h3 style="margin:8px 0;font-size:20px;font-family:'Cormorant Garamond',serif;">WiskFul</h3>
           <p style="font-size:14px;color:var(--text-muted);margin:8px 0 16px;">Plan it. Cook it. Love it.</p>
           <p style="font-size:13px;color:var(--text-secondary);margin-bottom:12px;">
             A self-hosted recipe manager with meal planning, grocery lists, and household sharing.
@@ -919,6 +919,10 @@ window.addEventListener('keydown', function(e) {
 function toggleDropdown() {
   const menu = document.getElementById('dropdownMenu');
   const btn = document.getElementById('menuBtn');
+  // Show/hide admin link based on role
+  const role = localStorage.getItem('userRole');
+  const adminBtn = document.getElementById('adminDropdownBtn');
+  if (adminBtn) adminBtn.classList.toggle('hidden', role !== 'admin');
   if (menu.classList.contains('hidden')) {
     menu.classList.remove('hidden');
     // Position dropdown relative to the button
@@ -951,6 +955,15 @@ function toggleDropdown() {
   } else {
     menu.classList.add('hidden');
   }
+}
+function openAdminTab() {
+  const role = localStorage.getItem('userRole');
+  if (role !== 'admin') {
+    alert('Admin access is restricted to administrators only.');
+    return;
+  }
+  switchTab('tabAdmin');
+  closeDropdown();
 }
 function closeDropdown() {
   const menu = document.getElementById('dropdownMenu');
@@ -1052,9 +1065,9 @@ async function loadRecentRecipes() {
     return;
   }
   container.innerHTML = recipes.slice(0, 5).map(r => {
-    const img = (r.photos && r.photos.length > 0) ? r.photos[0] : (r.source_path ? r.source_path : '');
+    const img = (r.photos && r.photos.length > 0) ? r.photos[0] : (r.source_path && /\.(jpg|jpeg|png|webp|gif|bmp)$/i.test(r.source_path) ? r.source_path : '');
     const rating = r.rating ? '★'.repeat(Math.round(r.rating)) : '';
-    const imgHtml = img ? '<img src="/media/static/' + escapeHtml(img) + '" style="width:32px;height:32px;border-radius:4px;object-fit:cover;flex-shrink:0;" />' : '<span style="width:32px;height:32px;border-radius:4px;background:#f3f0e8;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">' + categoryIcon(r.category) + '</span>';
+    const imgHtml = img ? '<img src="/media/static/' + escapeHtml(img) + '" style="width:32px;height:32px;border-radius:4px;object-fit:cover;flex-shrink:0;" onerror="this.onerror=null;this.src='/src/icons/placeholder.png';" />' : '<span style="width:32px;height:32px;border-radius:4px;background:#f3f0e8;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">' + categoryIcon(r.category) + '</span>';
     return `<div style="display:flex;align-items:center;gap:8px;padding:4px 0;cursor:pointer;" onclick="switchTab('tabRecipes');setTimeout(()=>openRecipeDetail('${r.id}'), 100);">` +
       imgHtml +
       '<div style="flex:1;min-width:0;">' +
@@ -1127,7 +1140,7 @@ async function loadSettings() {
   html += '</label>';
   html += '</div>';
   html += '<div class="meta" style="font-size:12px;color:var(--text-muted);margin-top:4px;">';
-  html += 'Guest account: <strong>' + escapeHtml(s.guest_email || 'guest@whiskful.app') + '</strong>';
+  html += 'Guest account: <strong>' + escapeHtml(s.guest_email || 'guest@wiskful.app') + '</strong>';
   html += '</div></div>';
   document.getElementById('settingsContent').innerHTML = html;
   document.getElementById('settingsStatus').textContent = '';
@@ -1198,7 +1211,7 @@ async function backupDatabase() {
   const blob = await downloadRes.blob();
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
-  const filename = 'whiskful_backup_' + new Date().toISOString().slice(0, 10) + '.sql.gz';
+  const filename = 'wiskful_backup_' + new Date().toISOString().slice(0, 10) + '.sql.gz';
   link.href = url;
   link.download = filename;
   document.body.appendChild(link);
@@ -1425,7 +1438,7 @@ async function login() {
   }
 }
 async function loginAsGuest() {
-  document.getElementById('loginEmail').value = 'guest@whiskful.app';
+  document.getElementById('loginEmail').value = 'guest@wiskful.app';
   document.getElementById('loginPassword').value = 'guest123!';
   await login();
 }
@@ -1728,10 +1741,10 @@ async function renderRecipes() {
     const effortStars = r.effort_rating ? ' Effort:' + '★'.repeat(Math.round(r.effort_rating)) : '';
     const timeMeta = [r.prep_time_minutes ? 'Prep ' + r.prep_time_minutes + ' min' : '', r.cook_time_minutes ? 'Cook ' + r.cook_time_minutes + ' min' : '', r.servings ? 'Serves ' + r.servings : ''].filter(Boolean).join(' • ');
     const meta = [r.difficulty ? r.difficulty : '', r.category ? categoryIcon(r.category) + ' ' + r.category : '', timeMeta, stars + flavorStars + effortStars].filter(Boolean).join(' • ');
-    const photoUrl = (r.photos && r.photos.length > 0) ? '/media/static/' + r.photos[0] : (r.source_path ? '/media/static/' + r.source_path : categoryIcon(r.category));
-    const isImg = (r.photos && r.photos.length > 0) || r.source_path;
+    const photoUrl = (r.photos && r.photos.length > 0) ? '/media/static/' + r.photos[0] : (r.source_path && /\.(jpg|jpeg|png|webp|gif|bmp)$/i.test(r.source_path) ? '/media/static/' + r.source_path : categoryIcon(r.category));
+    const isImg = (r.photos && r.photos.length > 0) || (r.source_path && /\.(jpg|jpeg|png|webp|gif|bmp)$/i.test(r.source_path));
     const cb = window.recipeSelectionMode ? '<input type="checkbox" class="recipe-checkbox" onchange="toggleSelection(' + r.id + ')" style="margin-right:8px;flex-shrink:0;" />' : '';
-    el.innerHTML = cb + '<div style="display:flex;align-items:center;gap:10px;overflow:hidden;flex:1;">' + (isImg ? '<img src="' + photoUrl + '" style="width:56px;height:56px;object-fit:cover;border-radius:8px;cursor:pointer;" onclick="event.stopPropagation();openRecipeDetail(' + r.id + ')" />' : '<span class="recipe-icon" style="font-size:28px;min-width:56px;height:56px;display:flex;align-items:center;justify-content:center;background:#f3f0e8;border-radius:8px;cursor:pointer;" onclick="event.stopPropagation();openRecipeDetail(' + r.id + ')">' + photoUrl + '</span>') + '<div style="flex:1;min-width:0;overflow:hidden;"><div class="rl-title" onclick="event.stopPropagation();openRecipeDetail(' + r.id + ')" style="cursor:pointer;">' + escapeHtml(r.title || 'Untitled') + '</div><div class="rl-meta">' + escapeHtml(meta) + '</div></div></div><div style="display:flex;align-items:center;gap:6px;"><button class="secondary" onclick="event.stopPropagation();toggleFavorite(' + r.id + ')" style="width:auto;padding:6px 8px;font-size:12px;">' + heart + '</button><button class="secondary" onclick="event.stopPropagation();openRecipeDetail(' + r.id + ')" style="width:auto;padding:6px 8px;font-size:12px;">Open</button><button class="danger" onclick="event.stopPropagation();deleteRecipe(' + r.id + ')" style="width:auto;padding:6px 8px;font-size:12px;">Delete</button></div>';
+    el.innerHTML = cb + '<div style="display:flex;align-items:center;gap:10px;overflow:hidden;flex:1;">' + (isImg ? '<img src="' + photoUrl + '" style="width:56px;height:56px;object-fit:cover;border-radius:8px;cursor:pointer;" onclick="event.stopPropagation();openRecipeDetail(' + r.id + ')"  onerror="this.onerror=null;this.src='/src/icons/placeholder.png';" />' : '<span class="recipe-icon" style="font-size:28px;min-width:56px;height:56px;display:flex;align-items:center;justify-content:center;background:#f3f0e8;border-radius:8px;cursor:pointer;" onclick="event.stopPropagation();openRecipeDetail(' + r.id + ')">' + photoUrl + '</span>') + '<div style="flex:1;min-width:0;overflow:hidden;"><div class="rl-title" onclick="event.stopPropagation();openRecipeDetail(' + r.id + ')" style="cursor:pointer;">' + escapeHtml(r.title || 'Untitled') + '</div><div class="rl-meta">' + escapeHtml(meta) + '</div></div></div><div style="display:flex;align-items:center;gap:6px;"><button class="secondary" onclick="event.stopPropagation();toggleFavorite(' + r.id + ')" style="width:auto;padding:6px 8px;font-size:12px;">' + heart + '</button><button class="secondary" onclick="event.stopPropagation();openRecipeDetail(' + r.id + ')" style="width:auto;padding:6px 8px;font-size:12px;">Open</button><button class="danger" onclick="event.stopPropagation();deleteRecipe(' + r.id + ')" style="width:auto;padding:6px 8px;font-size:12px;">Delete</button></div>';
     box.appendChild(el);
   }
 }
@@ -2145,9 +2158,9 @@ async function openRecipeDetail(id) {
   const scaleVal = parseFloat(document.getElementById('recipeScale')?.value || '1') || 1;
   const heroBox = document.getElementById('detailHero');
   if (r.photos && r.photos.length > 0) {
-    heroBox.innerHTML = '<img src="/media/static/' + escapeHtml(r.photos[0]) + '" style="width:100%;height:240px;object-fit:cover;border-radius:10px;" />';
-  } else if (r.source_path) {
-    heroBox.innerHTML = '<img src="/media/static/' + escapeHtml(r.source_path) + '" style="width:100%;height:240px;object-fit:cover;border-radius:10px;" />';
+    heroBox.innerHTML = '<img src="/media/static/' + escapeHtml(r.photos[0]) + '" style="width:100%;height:240px;object-fit:cover;border-radius:10px;" onerror="this.onerror=null;this.src='/src/icons/placeholder.png';" />';
+  } else if (r.source_path && /\.(jpg|jpeg|png|webp|gif|bmp)$/i.test(r.source_path)) {
+    heroBox.innerHTML = '<img src="/media/static/' + escapeHtml(r.source_path) + '" style="width:100%;height:240px;object-fit:cover;border-radius:10px;" onerror="this.onerror=null;this.src='/src/icons/placeholder.png';" />';
   } else {
     heroBox.innerHTML = '';
   }
@@ -2178,7 +2191,7 @@ async function openRecipeDetail(id) {
   const stepPhotos = (r.step_photos || []);
   const steps = (r.instructions || '').split('\n').filter(Boolean);
   stepBox.innerHTML = steps.map((_, i) => {
-    const photos = stepPhotos.filter(sp => sp.step_index === i).map(sp => '<img src="/media/static/' + escapeHtml(sp.path) + '" style="max-height:80px;border-radius:8px;margin-right:8px;" />').join('');
+    const photos = stepPhotos.filter(sp => sp.step_index === i).map(sp => '<img src="/media/static/' + escapeHtml(sp.path) + '" style="max-height:80px;border-radius:8px;margin-right:8px;" onerror="this.onerror=null;this.src='/src/icons/placeholder.png';" />').join('');
     return photos ? '<div style="margin-top:8px;font-size:12px;color:#555;">Step ' + (i + 1) + ' photos</div><div class="carousel-container">' + photos + '</div>' : '';
   }).join('');
   // Recipe media gallery (images, PDFs, documents)
@@ -2191,9 +2204,9 @@ async function openRecipeDetail(id) {
       const isDoc = m.media_type === 'document';
       let preview = '';
       if (isImage && m.thumbnail_path) {
-        preview = '<img src="/media/static/' + escapeHtml(m.thumbnail_path) + '" style="max-width:100px;max-height:100px;object-fit:cover;border-radius:8px;" />';
+        preview = '<img src="/media/static/' + escapeHtml(m.thumbnail_path) + '" style="max-width:100px;max-height:100px;object-fit:cover;border-radius:8px;" onerror="this.onerror=null;this.src='/src/icons/placeholder.png';" />';
       } else if (isImage) {
-        preview = '<img src="/media/static/' + escapeHtml(m.file_path) + '" style="max-width:100px;max-height:100px;object-fit:cover;border-radius:8px;" />';
+        preview = '<img src="/media/static/' + escapeHtml(m.file_path) + '" style="max-width:100px;max-height:100px;object-fit:cover;border-radius:8px;" onerror="this.onerror=null;this.src='/src/icons/placeholder.png';" />';
       } else if (isPdf) {
         preview = '<div style="width:100px;height:100px;display:flex;align-items:center;justify-content:center;background:#f3f4f6;border-radius:8px;font-size:24px;">📄</div>';
       } else if (isDoc) {
@@ -2252,9 +2265,9 @@ function _renderMediaOnDetail(r) {
       const isPdf = m.media_type === 'pdf';
       let preview = '';
       if (isImage && m.thumbnail_path) {
-        preview = '<img src="/media/static/' + escapeHtml(m.thumbnail_path) + '" style="max-width:100px;max-height:100px;object-fit:cover;border-radius:8px;" />';
+        preview = '<img src="/media/static/' + escapeHtml(m.thumbnail_path) + '" style="max-width:100px;max-height:100px;object-fit:cover;border-radius:8px;" onerror="this.onerror=null;this.src='/src/icons/placeholder.png';" />';
       } else if (isImage) {
-        preview = '<img src="/media/static/' + escapeHtml(m.file_path) + '" style="max-width:100px;max-height:100px;object-fit:cover;border-radius:8px;" />';
+        preview = '<img src="/media/static/' + escapeHtml(m.file_path) + '" style="max-width:100px;max-height:100px;object-fit:cover;border-radius:8px;" onerror="this.onerror=null;this.src='/src/icons/placeholder.png';" />';
       } else if (isPdf || m.media_type === 'document' || m.media_type === 'text') {
         preview = '<div style="width:100px;height:100px;display:flex;align-items:center;justify-content:center;background:#f3f4f6;border-radius:8px;font-size:24px;">📄</div>';
       }
@@ -2408,7 +2421,7 @@ function closeRecipeDetail() {
 }
 async function shareCurrentRecipe() {
   if (!currentRecipeId) return;
-  const title = document.getElementById('detailTitle')?.textContent || 'WhiskFul Recipe';
+  const title = document.getElementById('detailTitle')?.textContent || 'WiskFul Recipe';
   try {
     const res = await fetch(API + '/recipes/' + currentRecipeId + '/share', {
       method: 'POST',
@@ -2760,8 +2773,8 @@ function renderPickerRecipes() {
     // Show Recent Recipes section
     const recent5 = recipes.slice(0, 5);
     list.innerHTML = '<h4 style="font-size:12px;color:var(--text-muted);margin:0 4px 8px 4px;">Recent recipes</h4>' + recent5.map(r => {
-      const img = (r.photos && r.photos.length > 0) ? '/media/static/' + r.photos[0] : (r.source_path ? '/media/static/' + r.source_path : '');
-      const imgTag = img ? '<img src="' + img + '" style="width:40px;height:40px;object-fit:cover;border-radius:6px;" />' : '<span style="width:40px;height:40px;border-radius:6px;background:#eee;display:inline-block;flex-shrink:0;"></span>';
+      const img = (r.photos && r.photos.length > 0) ? '/media/static/' + r.photos[0] : (r.source_path && /\.(jpg|jpeg|png|webp|gif|bmp)$/i.test(r.source_path) ? '/media/static/' + r.source_path : '');
+      const imgTag = img ? '<img src="' + img + '" style="width:40px;height:40px;object-fit:cover;border-radius:6px;"  onerror="this.onerror=null;this.src='/src/icons/placeholder.png';" />' : '<span style="width:40px;height:40px;border-radius:6px;background:#eee;display:inline-block;flex-shrink:0;"></span>';
       return '<div onclick="pickRecipe(' + r.id + ')" class="picker-item">' + imgTag + '<div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:500;">' + escapeHtml(r.title) + '</div><div class="meta" style="font-size:11px;color:#999;">' + escapeHtml(r.category || '') + '</div></div></div>';
     }).join('');
     if (recipes.length > 5) {
@@ -2771,8 +2784,8 @@ function renderPickerRecipes() {
     list.innerHTML = '<div style="padding:16px;text-align:center;color:#999;font-size:13px;">No recipes found</div>';
   } else {
     list.innerHTML = filtered.map(r => {
-      const img = (r.photos && r.photos.length > 0) ? '/media/static/' + r.photos[0] : (r.source_path ? '/media/static/' + r.source_path : '');
-      const imgTag = img ? '<img src="' + img + '" style="width:40px;height:40px;object-fit:cover;border-radius:6px;" />' : '<span style="width:40px;height:40px;border-radius:6px;background:#eee;display:inline-block;flex-shrink:0;"></span>';
+      const img = (r.photos && r.photos.length > 0) ? '/media/static/' + r.photos[0] : (r.source_path && /\.(jpg|jpeg|png|webp|gif|bmp)$/i.test(r.source_path) ? '/media/static/' + r.source_path : '');
+      const imgTag = img ? '<img src="' + img + '" style="width:40px;height:40px;object-fit:cover;border-radius:6px;"  onerror="this.onerror=null;this.src='/src/icons/placeholder.png';" />' : '<span style="width:40px;height:40px;border-radius:6px;background:#eee;display:inline-block;flex-shrink:0;"></span>';
       return '<div onclick="pickRecipe(' + r.id + ')" class="picker-item">' + imgTag + '<div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:500;">' + escapeHtml(r.title) + '</div><div class="meta" style="font-size:11px;color:#999;">' + escapeHtml(r.category || '') + '</div></div></div>';
     }).join('');
   }
@@ -3306,7 +3319,7 @@ async function startCooking() {
   const stepPhotos = (data.step_photos || []);
   const stepsBox = document.getElementById('cookingSteps');
   stepsBox.innerHTML = steps.map((s, i) => {
-    const photos = stepPhotos.filter(sp => sp.step_index === i).map(sp => '<img src="/media/static/' + escapeHtml(sp.path) + '" style="max-height:80px;border-radius:8px;margin-right:8px;margin-bottom:6px;" />').join('');
+    const photos = stepPhotos.filter(sp => sp.step_index === i).map(sp => '<img src="/media/static/' + escapeHtml(sp.path) + '" style="max-height:80px;border-radius:8px;margin-right:8px;margin-bottom:6px;" onerror="this.onerror=null;this.src='/src/icons/placeholder.png';" />').join('');
     return '<div style="margin-bottom:12px;"><label style="display:flex;align-items:center;gap:8px;margin:6px 0;font-size:15px;"><input type="checkbox" class="step-checkbox" onchange="completeStep(this)" /> <span>' + escapeHtml(s) + '</span></label>' + (photos ? '<div class="row" style="margin-top:6px;">' + photos + '</div>' : '') + '</div>';
   }).join('');
   renderCookingNotes(data.id);
