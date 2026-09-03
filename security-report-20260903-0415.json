@@ -1,0 +1,107 @@
+{
+  "repo": "github.com/wickedyoda/recipe-app",
+  "timestamp": "2026-09-03T04:15:00Z",
+  "tool_versions": {
+    "bandit": "1.9.4",
+    "pip-audit": "latest",
+    "trivy": "latest"
+  },
+  "findings": {
+    "secrets": [
+      {
+        "file": "backend/scripts/seed_demo.py",
+        "line": 37,
+        "description": "Hardcoded guest password 'guest123!'",
+        "severity": "LOW",
+        "status": "accepted - demo/seed file"
+      }
+    ],
+    "code_vulnerabilities": [
+      {
+        "test_id": "B105",
+        "file": "backend/scripts/seed_demo.py",
+        "line": 37,
+        "severity": "LOW",
+        "confidence": "MEDIUM",
+        "description": "Hardcoded password string in seed script"
+      },
+      {
+        "test_id": "B404",
+        "file": "backend/services/ingest.py",
+        "line": 6,
+        "severity": "LOW",
+        "confidence": "HIGH",
+        "description": "Import of subprocess module"
+      },
+      {
+        "test_id": "B603",
+        "file": "backend/services/ingest.py",
+        "line": 81,
+        "severity": "LOW",
+        "confidence": "HIGH",
+        "description": "subprocess call - check for execution of untrusted input"
+      },
+      {
+        "test_id": "B603",
+        "file": "backend/services/ingest.py",
+        "line": 405,
+        "severity": "LOW",
+        "confidence": "HIGH",
+        "description": "subprocess call (ffprobe)"
+      }
+    ],
+    "dependency_issues": [],
+    "container_images": {
+      "frontend": {
+        "image": "ghcr.io/wickedyoda/recipe-app-frontend:alpha-1.0",
+        "digest": "sha256:3943531a466aacf98722d24f33f58e99b39c7fb1b2b9875e827af65b3fa6b5be",
+        "base": "nginx:1.29-alpine (upgraded from 1.28)",
+        "vulnerabilities_fixed": [
+          "CVE-2026-42533 (nginx RCE)",
+          "CVE-2026-60005 (nginx memory disclosure)",
+          "CVE-2026-9256 (nginx rewrite module RCE)",
+          "CVE-2026-22184 (zlib buffer overflow)"
+        ],
+        "remaining": [
+          "CVE-2026-76641 (expat, LOW)",
+          "CVE-2026-14456 (openssl DoS, LOW)",
+          "CVE-2026-45447 (openssl Use-After-Free, LOW)",
+          "CVE-2026-6732 (libxml2 DoS, LOW)",
+          "CVE-2026-27135 (nghttp2 HTTP/2 DoS, LOW)"
+        ]
+      },
+      "backend": {
+        "image": "ghcr.io/wickedyoda/recipe-app-backend:alpha-1.0",
+        "digest": "sha256:ccb66ff754ffd9e0d3a8685fe246da42c0291a4bd54c9dc1a68c4f83e70f3d82",
+        "base": "python:3.13-slim-bookworm (upgraded from 3.11)",
+        "vulnerabilities_fixed": [
+          "CVE-2023-45853 (zlib CRITICAL - integer overflow)",
+          "CVE-2026-3644 (python Expat incomplete validation)",
+          "CVE-2026-7210 (python Expat DoS)",
+          "CVE-2026-73066 (tesseract out-of-bounds write)",
+          "CVE-2026-53613 (util-linux TOCTOU)"
+        ],
+        "remaining": [
+          "CVE-2025-47273 (setuptools path traversal) - FALSE POSITIVE: runtime setuptools v84.0.0 has fix; image layer shows old version from base"
+        ]
+      }
+    }
+  },
+  "summary": {
+    "critical": 0,
+    "high": 0,
+    "medium": 0,
+    "low": 9,
+    "total": 9,
+    "actionable": {
+      "code_level": "0 — all LOW severity, all accepted (subprocess import/nosec on admin-only endpoints, hardcoded guest password in seed script)",
+      "dependencies": "0 — pip-audit found no known vulnerabilities in requirements.txt",
+      "container": "0 actionable — all CRITICAL/HIGH CVEs from base images FIXED by upgrading nginx 1.28→1.29 and python 3.11→3.13. Remaining 5 LOW items are in base image layers (expat, openssl, libxml2, nghttp2) — all non-critical. 1 Trivy false positive (setuptools).",
+      "files_updated": [
+        "Dockerfile.frontend (nginx 1.29)",
+        "Dockerfile.backend (python 3.13)",
+        "Dockerfile.frontend (COPY style.css)"
+      ]
+    }
+  }
+}
