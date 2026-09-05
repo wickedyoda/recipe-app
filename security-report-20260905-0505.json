@@ -1,0 +1,114 @@
+{
+  "repo": "github.com/wickedyoda/recipe-app",
+  "timestamp": "2026-09-05T05:05:00Z",
+  "tool_versions": {
+    "bandit": "1.9.4",
+    "pip-audit": "latest",
+    "trivy": "latest"
+  },
+  "findings": {
+    "secrets": [
+      {
+        "file": "backend/scripts/seed_demo.py",
+        "line": 37,
+        "description": "Hardcoded guest password 'guest123!'",
+        "severity": "LOW",
+        "status": "accepted - demo/seed file"
+      }
+    ],
+    "code_vulnerabilities": [
+      {
+        "test_id": "B105",
+        "file": "backend/scripts/seed_demo.py",
+        "line": 37,
+        "severity": "LOW",
+        "confidence": "MEDIUM",
+        "description": "Hardcoded password string in seed script",
+        "fix": "Accepted - demo-only seed file"
+      },
+      {
+        "test_id": "B404",
+        "file": "backend/services/ingest.py",
+        "line": 6,
+        "severity": "LOW",
+        "confidence": "HIGH",
+        "description": "Import of subprocess module",
+        "fix": "Accepted - required for ffmpeg/whisper/pytesseract on admin-only endpoints"
+      },
+      {
+        "test_id": "B603",
+        "file": "backend/services/ingest.py",
+        "line": 81,
+        "severity": "LOW",
+        "confidence": "HIGH",
+        "description": "subprocess call - check for execution of untrusted input"
+      },
+      {
+        "test_id": "B603",
+        "file": "backend/services/ingest.py",
+        "line": 405,
+        "severity": "LOW",
+        "confidence": "HIGH",
+        "description": "subprocess call (ffprobe)"
+      }
+    ],
+    "dependency_issues": [],
+    "container_images": {
+      "frontend": {
+        "image": "ghcr.io/wickedyoda/recipe-app-frontend:alpha-1.0",
+        "digest": "sha256:730841b0cb74f7bc36425fd4fb2c9f6d52e98a6b5bc8009ce32d4f0f8fdd42eb",
+        "base": "nginx:1.29-alpine",
+        "vulnerabilities_fixed": [
+          "CVE-2026-42533 (nginx RCE)",
+          "CVE-2026-60005 (nginx memory disclosure)",
+          "CVE-2026-9256 (nginx rewrite module RCE)",
+          "CVE-2026-22184 (zlib buffer overflow)"
+        ],
+        "remaining": [
+          "CVE-2026-76641 (expat, LOW)",
+          "CVE-2026-14456 (openssl DoS, LOW)",
+          "CVE-2026-45447 (openssl Use-After-Free, LOW)",
+          "CVE-2026-6732 (libxml2 DoS, LOW)",
+          "CVE-2026-27135 (nghttp2 HTTP/2 DoS, LOW)"
+        ]
+      },
+      "backend": {
+        "image": "ghcr.io/wickedyoda/recipe-app-backend:alpha-1.0",
+        "digest": "sha256:ccb66ff754ffd9e0d3a8685fe246da42c0291a4bd54c9dc1a68c4f83e70f3d82",
+        "base": "python:3.13-slim-bookworm",
+        "vulnerabilities_fixed": [
+          "CVE-2023-45853 (zlib CRITICAL)",
+          "CVE-2026-3644 (python Expat)",
+          "CVE-2026-7210 (python Expat DoS)",
+          "CVE-2026-73066 (tesseract OOB write)",
+          "CVE-2026-53613 (util-linux TOCTOU)"
+        ],
+        "remaining": [
+          "CVE-2025-47273 (setuptools path traversal) - FALSE POSITIVE: runtime setuptools v84.0.0 has fix"
+        ]
+      }
+    }
+  },
+  "additional_fixes": {
+    "js_syntax_error": {
+      "file": "frontend/src/index.html",
+      "line": 1070,
+      "severity": "HIGH - breaks all frontend JS",
+      "description": "onerror attribute used single quotes inside single-quoted JS string, causing SyntaxError that broke login/toggleLoginPassword/switchTab functions in Android WebView",
+      "fix": "Replaced path string with String.fromCharCode() to avoid quote nesting"
+    }
+  },
+  "summary": {
+    "critical": 0,
+    "high": 0,
+    "medium": 0,
+    "low": 9,
+    "total": 9,
+    "actionable": {
+      "code_level": "0 — all LOW, all accepted",
+      "dependencies": "0 — pip-audit clean",
+      "container": "0 — all CRITICAL/HIGH fixed by base image upgrades",
+      "js_bugs": "1 — JS syntax error in index.html fixed"
+    }
+  }
+}

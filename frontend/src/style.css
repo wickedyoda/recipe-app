@@ -1,7 +1,7 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html { font-size: 16px; }
   @supports (padding-left: env(safe-area-inset-left)) {
-    body { padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
+    body { padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); padding-bottom: env(safe-area-inset-bottom); }
   }
   -webkit-tap-highlight-color: transparent;
   button { -webkit-tap-highlight-color: transparent; }
@@ -15,11 +15,6 @@
   [data-theme="light"] { background: var(--warm-bg); color: var(--text-primary); }
   [data-theme="dawn"] { background: var(--warm-bg); color: var(--text-primary); }
   [data-theme="cozy"] { background: var(--warm-bg); color: var(--text-primary); }
-  [data-theme="classic"] { background: var(--warm-bg); color: var(--text-primary); }
-  [data-theme="teal-coral"] { background: var(--warm-bg); color: var(--text-primary); }
-  [data-theme="coral-heat"] { background: var(--warm-bg); color: var(--text-primary); }
-  [data-theme="teal-dark"] { background: var(--warm-bg); color: var(--text-primary); }
-  [data-theme="ocean-breeze"] { background: var(--warm-bg); color: var(--text-primary); }
   [data-theme="dark"] { background: #0b0c0f; color: #f3f3f3; }
   [data-theme="dark"] { background: #0b0c0f; color: #f3f3f3; }
   
@@ -69,47 +64,6 @@
     --card-bg: #ffffff; --card-border: #000000; --card-shadow: 0 2px 4px rgba(0,0,0,0.2);
     --heading-color: #000000;
   }
-  /* Logo-themed options (teal #0c6160 + coral #f55b56) */
-  [data-theme="classic"] {
-    --orange: #0c6160; --orange-light: #5fb3b2; --orange-dark: #052e2e;
-    --terracotta: #f55b56; --beige: #fff7f0; --cream: #fff7f0;
-    --warm-bg: #fff7f0; --text-primary: #5c3317; --text-secondary: #8a5a2b;
-    --text-muted: #a87c4f; --border-light: #f0d9b5; --border-dark: #3a1c0a;
-    --card-bg: #fff; --card-border: var(--border-light); --card-shadow: 0 1px 2px rgba(0,0,0,0.04);
-    --heading-color: #5c3317;
-  }
-  [data-theme="teal-coral"] {
-    --orange: #0c6160; --orange-light: #5fb3b2; --orange-dark: #052e2e;
-    --terracotta: #f55b56; --beige: #fff7f0; --cream: #fff7f0;
-    --warm-bg: #fff7f0; --text-primary: #5c3317; --text-secondary: #8a5a2b;
-    --text-muted: #a87c4f; --border-light: #f0d9b5; --border-dark: #3a1c0a;
-    --card-bg: #fff; --card-border: var(--border-light); --card-shadow: 0 1px 2px rgba(0,0,0,0.04);
-    --heading-color: #0c6160;
-  }
-  [data-theme="coral-heat"] {
-    --orange: #0c6160; --orange-light: #5fb3b2; --orange-dark: #052e2e;
-    --terracotta: #f55b56; --beige: #fff7f0; --cream: #fff7f0;
-    --warm-bg: #fff7f0; --text-primary: #5c3317; --text-secondary: #8a5a2b;
-    --text-muted: #a87c4f; --border-light: #f0d9b5; --border-dark: #3a1c0a;
-    --card-bg: #fff; --card-border: var(--border-light); --card-shadow: 0 1px 2px rgba(0,0,0,0.04);
-    --heading-color: #5c3317;
-  }
-  [data-theme="teal-dark"] {
-    --orange: #0c6160; --orange-light: #5fb3b2; --orange-dark: #5fb3b2;
-    --terracotta: #f55b56; --beige: #0a4a4a; --cream: #052e2e;
-    --warm-bg: #052e2e; --text-primary: #e0f2f1; --text-secondary: #b3dfdf;
-    --text-muted: #88b0b0; --border-light: #2a6a6a; --border-dark: #1a3a3a;
-    --card-bg: #0a4a4a; --card-border: #2a6a6a; --card-shadow: 0 1px 2px rgba(0,0,0,0.08);
-    --heading-color: #e0f2f1;
-  }
-  [data-theme="ocean-breeze"] {
-    --orange: #0c6160; --orange-light: #5fb3b2; --orange-dark: #052e2e;
-    --terracotta: #f55b56; --beige: #e0f2f1; --cream: #fff7f0;
-    --warm-bg: #e0f2f1; --text-primary: #5c3317; --text-secondary: #5c3317;
-    --text-muted: #5c3317; --border-light: #b3dfdf; --border-dark: #5fb3b2;
-    --card-bg: #ffffff; --card-border: #b3dfdf; --card-shadow: 0 1px 2px rgba(0,0,0,0.04);
-    --heading-color: #0c6160;
-  }
   .container { max-width: 720px; margin: 0 auto; padding: 16px; }
   .card {
     background: #fff; border-radius: 16px; padding: 16px; margin-bottom: 12px;
@@ -119,11 +73,6 @@
   [data-theme="dawn"] .card { background: var(--card-bg); border-color: var(--card-border); box-shadow: var(--card-shadow); }
   [data-theme="cozy"] .card { background: var(--card-bg); border-color: var(--card-border); }
   [data-theme="contrast"] .card { background: var(--card-bg); border-color: var(--card-border); box-shadow: var(--card-shadow); }
-  [data-theme="classic"] .card { background: var(--card-bg); border-color: var(--card-border); box-shadow: var(--card-shadow); }
-  [data-theme="teal-coral"] .card { background: var(--card-bg); border-color: var(--card-border); box-shadow: var(--card-shadow); }
-  [data-theme="coral-heat"] .card { background: var(--card-bg); border-color: var(--card-border); box-shadow: var(--card-shadow); }
-  [data-theme="teal-dark"] .card { background: var(--card-bg); border-color: var(--card-border); }
-  [data-theme="ocean-breeze"] .card { background: var(--card-bg); border-color: var(--card-border); }
   /* Recipe detail as full-screen overlay on mobile, centered modal on desktop */
   #recipeDetail {
     position: fixed; top: 0; left: 0; width: 100%; height: 100vh;
@@ -147,8 +96,6 @@
   [data-theme="dawn"] #recipeDetail { background: var(--warm-bg); }
   [data-theme="cozy"] #recipeDetail { background: var(--warm-bg); }
   [data-theme="contrast"] #recipeDetail { background: #ffffff; }
-  [data-theme="teal-dark"] #recipeDetail { background: var(--warm-bg); }
-  [data-theme="ocean-breeze"] #recipeDetail { background: var(--warm-bg); }
   #recipeDetailOverlay {
     display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100vh;
     background: rgba(0,0,0,0.5); z-index: 999; cursor: pointer;
@@ -161,8 +108,6 @@
   [data-theme="dark"] input, [data-theme="dark"] select, [data-theme="dark"] textarea { background: #0f1115; color: #f3f3f3; border-color: #3a2a1a; }
   [data-theme="dawn"] input, [data-theme="dawn"] select, [data-theme="dawn"] textarea { background: #fff; color: #433d7d; border-color: #ddd6fe; }
   [data-theme="contrast"] input, [data-theme="contrast"] select, [data-theme="contrast"] textarea { background: #fff; color: #000; border-color: #000; }
-  [data-theme="teal-dark"] input, [data-theme="teal-dark"] select, [data-theme="teal-dark"] textarea { background: #0a4a4a; color: #e0f2f1; border-color: #2a6a6a; }
-  [data-theme="ocean-breeze"] input, [data-theme="ocean-breeze"] select, [data-theme="ocean-breeze"] textarea { background: #ffffff; color: #052e2e; border-color: #88b0b0; }
   button {
     width: 100%; padding: 12px 14px; border-radius: 12px; border: none;
     background: var(--orange); color: #fff; font-size: 16px; cursor: pointer; margin-top: 8px;
@@ -177,9 +122,6 @@
   [data-theme="contrast"] button { background: var(--orange); color: #fff; border: 2px solid #000; }
   [data-theme="contrast"] button.secondary { background: #fff; color: #000; border: 2px solid #000; }
   [data-theme="contrast"] button.danger { background: #ef4444; color: #fff; border: 2px solid #000; }
-  [data-theme="teal-dark"] button { background: var(--orange); color: #052e2e; }
-  [data-theme="teal-dark"] button.secondary { background: #0a4a4a; color: #e0f2f1; }
-  [data-theme="teal-dark"] button.danger { background: #fca5a5; color: #052e2e; }
   button.secondary.terracotta { background: var(--orange); color: #fff; }
   [data-theme="dark"] button.secondary.terracotta { background: var(--orange); color: #0b0c0f; }
   .row { display: flex; gap: 8px; }
@@ -473,14 +415,12 @@
     border-bottom: 1px solid var(--border-light);
   }
   [data-theme="dark"] .search { background: #16171a; border-color: #3a2a1a; }
-  [data-theme="teal-dark"] .search { background: #0a4a4a; border-color: #2a6a6a; }
   .search input {
     width: 100%; padding: 10px 12px; border-radius: 12px;
     border: 1px solid var(--border-light); font-size: 15px;
     background: #fff; font-family: 'Inter', sans-serif;
   }
   [data-theme="dark"] .search input { background: #0f1115; color: #f3f3f3; border-color: #3a2a1a; }
-  [data-theme="teal-dark"] .search input { background: #052e2e; color: #e0f2f1; border-color: #2a6a6a; }
 
   /* Mobile-specific optimizations for iPhone + Android */
   @media (max-width: 600px) {
@@ -579,3 +519,72 @@
     margin: 6px 0;
     font-style: italic;
   }
+  /* Blue-themed skin: primary theme for recipe app */
+  [data-theme="blue"] {
+    --orange: #3b82f6; --orange-light: #bfdbfe; --orange-dark: #1e40af;
+    --terracotta: #60a5fa; --beige: #e0f2fe; --cream: #f0f9ff;
+    --warm-bg: #e0f2fe; --text-primary: #0c4a6e; --text-secondary: #082d4a;
+    --text-muted: #18546f; --border-light: #baf0d3; --border-dark: #08324b;
+    --card-bg: #ffffff; --card-border: var(--border-light); --card-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    --heading-color: #0c4a6e;
+    --pill-bg: #dbeafe; --pill-color: #1d4ed8;
+  }
+  [data-theme="blue"] h1, [data-theme="blue"] h2, [data-theme="blue"] h3 { color: var(--heading-color); }
+  [data-theme="blue"] .recipe-card { background: #fff; border-color: var(--border-light); }
+  [data-theme="blue"] .recipe-card .recipe-title { color: var(--text-primary); }
+  [data-theme="blue"] .nav-square { background: #dbeafe; color: var(--orange-dark); border-color: var(--border-light); }
+  [data-theme="blue"] .nav-square:hover { background: #bfdbfe; }
+  [data-theme="blue"] .nav-btn-small.active { color: var(--orange-dark); background: var(--pill-bg); border-color: var(--orange); }
+  [data-theme="blue"] .nav-top-btn.active { background: var(--pill-bg); color: var(--orange-dark); }
+  [data-theme="blue"] .filter-pill { background: #dbeafe; color: var(--orange-dark); border: 1px solid var(--orange); }
+  [data-theme="blue"] .filter-pill:hover { background: var(--orange); color: #fff; }
+  [data-theme="blue"] .filter-pill.active { background: var(--orange); color: #fff; border-color: var(--orange); }
+  [data-theme="blue"] .filter-trigger.active { background: var(--orange); color: #fff; }
+  [data-theme="blue"] .pill { background: #dbeafe; color: #1d4ed8; }
+  [data-theme="blue"] .pill.warm-bg { background: #dbeafe; color: #1d4ed8; }
+  [data-theme="blue"] button { background: var(--orange); }
+  [data-theme="blue"] button.secondary { background: #e0f2fe; color: var(--orange-dark); }
+  [data-theme="blue"] button.secondary.terracotta { background: var(--orange); color: #fff; }
+  [data-theme="blue"] .cooking-card { background: #1e3a8a; border-color: #37383e; color: #e0f2fe; }
+  [data-theme="blue"] .cooking-card .meta { color: #93c5fd; }
+  [data-theme="blue"] .share-header { background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%); }
+  [data-theme="blue"] .share-btn.copy { background: #1e40af; color: #fff; }
+  [data-theme="blue"] .share-btn.email { background: #e0f2fe; color: #0c4a6e; }
+  [data-theme="blue"] .share-btn.text { background: #fbbf24; color: #451a03; }
+  [data-theme="blue"] .confirm-btn.cancel { background: #1e3a8a; }
+  [data-theme="blue"] .confirm-btn.ok { background: #3b82f6; color: #fff; }
+
+  /* Purple-themed skin: alternative aesthetic */
+  [data-theme="purple"] {
+    --orange: #8b5cf6; --orange-light: #ddd6fe; --orange-dark: #6d28d9;
+    --terracotta: #a855f7; --beige: #f5f3ff; --cream: #fafafa;
+    --warm-bg: #f5f3ff; --text-primary: #4a142c; --text-secondary: #4a142c;
+    --text-muted: #7e22ce; --border-light: #ddd6fe; --border-dark: #6d28d9;
+    --card-bg: #ffffff; --card-border: var(--border-light); --card-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    --heading-color: #6d28d9;
+    --pill-bg: #ede9fe; --pill-color: #7e22ce;
+  }
+  [data-theme="purple"] h1, [data-theme="purple"] h2, [data-theme="purple"] h3 { color: var(--heading-color); }
+  [data-theme="purple"] .recipe-card { background: #fff; border-color: var(--border-light); }
+  [data-theme="purple"] .recipe-card .recipe-title { color: var(--text-primary); }
+  [data-theme="purple"] .nav-square { background: #ede9fe; color: var(--orange-dark); border-color: var(--border-light); }
+  [data-theme="purple"] .nav-square:hover { background: #ddd6fe; }
+  [data-theme="purple"] .nav-btn-small.active { color: var(--orange-dark); background: var(--pill-bg); border-color: var(--orange); }
+  [data-theme="purple"] .nav-top-btn.active { background: var(--orange); color: #fff; }
+  [data-theme="purple"] .filter-pill { background: #ede9fe; color: var(--orange-dark); border: 1px solid var(--orange); }
+  [data-theme="purple"] .filter-pill:hover { background: var(--orange); color: #fff; }
+  [data-theme="purple"] .filter-pill.active { background: var(--orange); color: #fff; border-color: var(--orange); }
+  [data-theme="purple"] .filter-trigger.active { background: var(--orange); color: #fff; }
+  [data-theme="purple"] .pill { background: #ede9fe; color: #7e22ce; }
+  [data-theme="purple"] .pill.warm-bg { background: #ede9fe; color: #7e22ce; }
+  [data-theme="purple"] button { background: var(--orange); }
+  [data-theme="purple"] button.secondary { background: #f5f3ff; color: var(--orange-dark); }
+  [data-theme="purple"] button.secondary.terracotta { background: var(--orange); color: #fff; }
+  [data-theme="purple"] .cooking-card { background: #4a142c; border-color: #37383a; color: #f5f3ff; }
+  [data-theme="purple"] .cooking-card .meta { color: #a5b4fc; }
+  [data-theme="purple"] .share-header { background: linear-gradient(135deg, #a855f7 0%, #8b5cf6 100%); }
+  [data-theme="purple"] .share-btn.copy { background: #37383a; color: #fff; }
+  [data-theme="purple"] .share-btn.email { background: #f5f3ff; color: #4a142c; }
+  [data-theme="purple"] .share-btn.text { background: #fbbf24; color: #451a03; }
+  [data-theme="purple"] .confirm-btn.cancel { background: #5b21b6; color: #fff; }
+  [data-theme="purple"] .confirm-btn.ok { background: var(--orange); color: #fff; }

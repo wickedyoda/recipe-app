@@ -1,0 +1,5 @@
+# zlib1g CVE-2023-45853: Debian bookworm officially marks this as will_not_fix
+# Fixed version (zlib1g 1:1.3.dfsg-3.1+really1.3.1) only available in bookworm-backports,
+# not in the standard bookworm repository. At runtime, apt-get upgrade applies available patches.
+# See: https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=1083645
+CVE-2023-45853

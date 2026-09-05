@@ -64,8 +64,7 @@ Latest commit: fb8e7d2
 
 ## 🔧 Environment Details
 
-- **Codebase**: `/root/.hermes/recipe-app/` (branch: master, synced from first_build)
-- **Android app**: Gradle Kotlin DSL added, `alpha-1.0` base metadata in place, GitHub Actions workflow now builds and publishes `alpha-1.0.xx` release artifacts on merge to master
+- **Codebase**: `/root/.hermes/recipe-app/` (branch: first_build)
 - **Deploy host**: `100.125.168.30` (port 122)
 - **SSH key**: `/root/.ssh/id_ed25519_flint4`
 - **Backend containers**: `recipe-app-backend-1`, `recipe-app-frontend-1`
