@@ -1067,7 +1067,7 @@ async function loadRecentRecipes() {
   container.innerHTML = recipes.slice(0, 5).map(r => {
     const img = (r.photos && r.photos.length > 0) ? r.photos[0] : (r.source_path && /\.(jpg|jpeg|png|webp|gif|bmp)$/i.test(r.source_path) ? r.source_path : '');
     const rating = r.rating ? '★'.repeat(Math.round(r.rating)) : '';
-    const imgHtml = img ? '<img src="/media/static/' + escapeHtml(img) + '" style="width:32px;height:32px;border-radius:4px;object-fit:cover;flex-shrink:0;" onerror="this.onerror=null;this.src='/src/icons/placeholder.png';" />' : '<span style="width:32px;height:32px;border-radius:4px;background:#f3f0e8;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">' + categoryIcon(r.category) + '</span>';
+    const imgHtml = img ? '<img src="/media/static/' + escapeHtml(img) + '" style="width:32px;height:32px;border-radius:4px;object-fit:cover;flex-shrink:0;" onerror="this.onerror=null;this.src=String.fromCharCode(47,115,114,99,47,105,99,111,110,115,47,112,108,97,99,101,104,111,108,100,101,114,46,112,110,103);" />' : '<span style="width:32px;height:32px;border-radius:4px;background:#f3f0e8;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">' + categoryIcon(r.category) + '</span>';
     return `<div style="display:flex;align-items:center;gap:8px;padding:4px 0;cursor:pointer;" onclick="switchTab('tabRecipes');setTimeout(()=>openRecipeDetail('${r.id}'), 100);">` +
       imgHtml +
       '<div style="flex:1;min-width:0;">' +
@@ -1744,7 +1744,7 @@ async function renderRecipes() {
     const photoUrl = (r.photos && r.photos.length > 0) ? '/media/static/' + r.photos[0] : (r.source_path && /\.(jpg|jpeg|png|webp|gif|bmp)$/i.test(r.source_path) ? '/media/static/' + r.source_path : categoryIcon(r.category));
     const isImg = (r.photos && r.photos.length > 0) || (r.source_path && /\.(jpg|jpeg|png|webp|gif|bmp)$/i.test(r.source_path));
     const cb = window.recipeSelectionMode ? '<input type="checkbox" class="recipe-checkbox" onchange="toggleSelection(' + r.id + ')" style="margin-right:8px;flex-shrink:0;" />' : '';
-    el.innerHTML = cb + '<div style="display:flex;align-items:center;gap:10px;overflow:hidden;flex:1;">' + (isImg ? '<img src="' + photoUrl + '" style="width:56px;height:56px;object-fit:cover;border-radius:8px;cursor:pointer;" onclick="event.stopPropagation();openRecipeDetail(' + r.id + ')"  onerror="this.onerror=null;this.src='/src/icons/placeholder.png';" />' : '<span class="recipe-icon" style="font-size:28px;min-width:56px;height:56px;display:flex;align-items:center;justify-content:center;background:#f3f0e8;border-radius:8px;cursor:pointer;" onclick="event.stopPropagation();openRecipeDetail(' + r.id + ')">' + photoUrl + '</span>') + '<div style="flex:1;min-width:0;overflow:hidden;"><div class="rl-title" onclick="event.stopPropagation();openRecipeDetail(' + r.id + ')" style="cursor:pointer;">' + escapeHtml(r.title || 'Untitled') + '</div><div class="rl-meta">' + escapeHtml(meta) + '</div></div></div><div style="display:flex;align-items:center;gap:6px;"><button class="secondary" onclick="event.stopPropagation();toggleFavorite(' + r.id + ')" style="width:auto;padding:6px 8px;font-size:12px;">' + heart + '</button><button class="secondary" onclick="event.stopPropagation();openRecipeDetail(' + r.id + ')" style="width:auto;padding:6px 8px;font-size:12px;">Open</button><button class="danger" onclick="event.stopPropagation();deleteRecipe(' + r.id + ')" style="width:auto;padding:6px 8px;font-size:12px;">Delete</button></div>';
+    el.innerHTML = cb + '<div style="display:flex;align-items:center;gap:10px;overflow:hidden;flex:1;">' + (isImg ? '<img src="' + photoUrl + '" style="width:56px;height:56px;object-fit:cover;border-radius:8px;cursor:pointer;" onclick="event.stopPropagation();openRecipeDetail(' + r.id + ')"  onerror="this.onerror=null;this.src=String.fromCharCode(47,115,114,99,47,105,99,111,110,115,47,112,108,97,99,101,104,111,108,100,101,114,46,112,110,103);" />' : '<span class="recipe-icon" style="font-size:28px;min-width:56px;height:56px;display:flex;align-items:center;justify-content:center;background:#f3f0e8;border-radius:8px;cursor:pointer;" onclick="event.stopPropagation();openRecipeDetail(' + r.id + ')">' + photoUrl + '</span>') + '<div style="flex:1;min-width:0;overflow:hidden;"><div class="rl-title" onclick="event.stopPropagation();openRecipeDetail(' + r.id + ')" style="cursor:pointer;">' + escapeHtml(r.title || 'Untitled') + '</div><div class="rl-meta">' + escapeHtml(meta) + '</div></div></div><div style="display:flex;align-items:center;gap:6px;"><button class="secondary" onclick="event.stopPropagation();toggleFavorite(' + r.id + ')" style="width:auto;padding:6px 8px;font-size:12px;">' + heart + '</button><button class="secondary" onclick="event.stopPropagation();openRecipeDetail(' + r.id + ')" style="width:auto;padding:6px 8px;font-size:12px;">Open</button><button class="danger" onclick="event.stopPropagation();deleteRecipe(' + r.id + ')" style="width:auto;padding:6px 8px;font-size:12px;">Delete</button></div>';
     box.appendChild(el);
   }
 }
@@ -2158,9 +2158,9 @@ async function openRecipeDetail(id) {
   const scaleVal = parseFloat(document.getElementById('recipeScale')?.value || '1') || 1;
   const heroBox = document.getElementById('detailHero');
   if (r.photos && r.photos.length > 0) {
-    heroBox.innerHTML = '<img src="/media/static/' + escapeHtml(r.photos[0]) + '" style="width:100%;height:240px;object-fit:cover;border-radius:10px;" onerror="this.onerror=null;this.src='/src/icons/placeholder.png';" />';
+    heroBox.innerHTML = '<img src="/media/static/' + escapeHtml(r.photos[0]) + '" style="width:100%;height:240px;object-fit:cover;border-radius:10px;" onerror="this.onerror=null;this.src=String.fromCharCode(47,115,114,99,47,105,99,111,110,115,47,112,108,97,99,101,104,111,108,100,101,114,46,112,110,103);" />';
   } else if (r.source_path && /\.(jpg|jpeg|png|webp|gif|bmp)$/i.test(r.source_path)) {
-    heroBox.innerHTML = '<img src="/media/static/' + escapeHtml(r.source_path) + '" style="width:100%;height:240px;object-fit:cover;border-radius:10px;" onerror="this.onerror=null;this.src='/src/icons/placeholder.png';" />';
+    heroBox.innerHTML = '<img src="/media/static/' + escapeHtml(r.source_path) + '" style="width:100%;height:240px;object-fit:cover;border-radius:10px;" onerror="this.onerror=null;this.src=String.fromCharCode(47,115,114,99,47,105,99,111,110,115,47,112,108,97,99,101,104,111,108,100,101,114,46,112,110,103);" />';
   } else {
     heroBox.innerHTML = '';
   }
@@ -2191,7 +2191,7 @@ async function openRecipeDetail(id) {
   const stepPhotos = (r.step_photos || []);
   const steps = (r.instructions || '').split('\n').filter(Boolean);
   stepBox.innerHTML = steps.map((_, i) => {
-    const photos = stepPhotos.filter(sp => sp.step_index === i).map(sp => '<img src="/media/static/' + escapeHtml(sp.path) + '" style="max-height:80px;border-radius:8px;margin-right:8px;" onerror="this.onerror=null;this.src='/src/icons/placeholder.png';" />').join('');
+    const photos = stepPhotos.filter(sp => sp.step_index === i).map(sp => '<img src="/media/static/' + escapeHtml(sp.path) + '" style="max-height:80px;border-radius:8px;margin-right:8px;" onerror="this.onerror=null;this.src=String.fromCharCode(47,115,114,99,47,105,99,111,110,115,47,112,108,97,99,101,104,111,108,100,101,114,46,112,110,103);" />').join('');
     return photos ? '<div style="margin-top:8px;font-size:12px;color:#555;">Step ' + (i + 1) + ' photos</div><div class="carousel-container">' + photos + '</div>' : '';
   }).join('');
   // Recipe media gallery (images, PDFs, documents)
@@ -2204,9 +2204,9 @@ async function openRecipeDetail(id) {
       const isDoc = m.media_type === 'document';
       let preview = '';
       if (isImage && m.thumbnail_path) {
-        preview = '<img src="/media/static/' + escapeHtml(m.thumbnail_path) + '" style="max-width:100px;max-height:100px;object-fit:cover;border-radius:8px;" onerror="this.onerror=null;this.src='/src/icons/placeholder.png';" />';
+        preview = '<img src="/media/static/' + escapeHtml(m.thumbnail_path) + '" style="max-width:100px;max-height:100px;object-fit:cover;border-radius:8px;" onerror="this.onerror=null;this.src=String.fromCharCode(47,115,114,99,47,105,99,111,110,115,47,112,108,97,99,101,104,111,108,100,101,114,46,112,110,103);" />';
       } else if (isImage) {
-        preview = '<img src="/media/static/' + escapeHtml(m.file_path) + '" style="max-width:100px;max-height:100px;object-fit:cover;border-radius:8px;" onerror="this.onerror=null;this.src='/src/icons/placeholder.png';" />';
+        preview = '<img src="/media/static/' + escapeHtml(m.file_path) + '" style="max-width:100px;max-height:100px;object-fit:cover;border-radius:8px;" onerror="this.onerror=null;this.src=String.fromCharCode(47,115,114,99,47,105,99,111,110,115,47,112,108,97,99,101,104,111,108,100,101,114,46,112,110,103);" />';
       } else if (isPdf) {
         preview = '<div style="width:100px;height:100px;display:flex;align-items:center;justify-content:center;background:#f3f4f6;border-radius:8px;font-size:24px;">📄</div>';
       } else if (isDoc) {
@@ -2265,9 +2265,9 @@ function _renderMediaOnDetail(r) {
       const isPdf = m.media_type === 'pdf';
       let preview = '';
       if (isImage && m.thumbnail_path) {
-        preview = '<img src="/media/static/' + escapeHtml(m.thumbnail_path) + '" style="max-width:100px;max-height:100px;object-fit:cover;border-radius:8px;" onerror="this.onerror=null;this.src='/src/icons/placeholder.png';" />';
+        preview = '<img src="/media/static/' + escapeHtml(m.thumbnail_path) + '" style="max-width:100px;max-height:100px;object-fit:cover;border-radius:8px;" onerror="this.onerror=null;this.src=String.fromCharCode(47,115,114,99,47,105,99,111,110,115,47,112,108,97,99,101,104,111,108,100,101,114,46,112,110,103);" />';
       } else if (isImage) {
-        preview = '<img src="/media/static/' + escapeHtml(m.file_path) + '" style="max-width:100px;max-height:100px;object-fit:cover;border-radius:8px;" onerror="this.onerror=null;this.src='/src/icons/placeholder.png';" />';
+        preview = '<img src="/media/static/' + escapeHtml(m.file_path) + '" style="max-width:100px;max-height:100px;object-fit:cover;border-radius:8px;" onerror="this.onerror=null;this.src=String.fromCharCode(47,115,114,99,47,105,99,111,110,115,47,112,108,97,99,101,104,111,108,100,101,114,46,112,110,103);" />';
       } else if (isPdf || m.media_type === 'document' || m.media_type === 'text') {
         preview = '<div style="width:100px;height:100px;display:flex;align-items:center;justify-content:center;background:#f3f4f6;border-radius:8px;font-size:24px;">📄</div>';
       }
@@ -2774,7 +2774,7 @@ function renderPickerRecipes() {
     const recent5 = recipes.slice(0, 5);
     list.innerHTML = '<h4 style="font-size:12px;color:var(--text-muted);margin:0 4px 8px 4px;">Recent recipes</h4>' + recent5.map(r => {
       const img = (r.photos && r.photos.length > 0) ? '/media/static/' + r.photos[0] : (r.source_path && /\.(jpg|jpeg|png|webp|gif|bmp)$/i.test(r.source_path) ? '/media/static/' + r.source_path : '');
-      const imgTag = img ? '<img src="' + img + '" style="width:40px;height:40px;object-fit:cover;border-radius:6px;"  onerror="this.onerror=null;this.src='/src/icons/placeholder.png';" />' : '<span style="width:40px;height:40px;border-radius:6px;background:#eee;display:inline-block;flex-shrink:0;"></span>';
+      const imgTag = img ? '<img src="' + img + '" style="width:40px;height:40px;object-fit:cover;border-radius:6px;"  onerror="this.onerror=null;this.src=String.fromCharCode(47,115,114,99,47,105,99,111,110,115,47,112,108,97,99,101,104,111,108,100,101,114,46,112,110,103);" />' : '<span style="width:40px;height:40px;border-radius:6px;background:#eee;display:inline-block;flex-shrink:0;"></span>';
       return '<div onclick="pickRecipe(' + r.id + ')" class="picker-item">' + imgTag + '<div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:500;">' + escapeHtml(r.title) + '</div><div class="meta" style="font-size:11px;color:#999;">' + escapeHtml(r.category || '') + '</div></div></div>';
     }).join('');
     if (recipes.length > 5) {
@@ -2785,7 +2785,7 @@ function renderPickerRecipes() {
   } else {
     list.innerHTML = filtered.map(r => {
       const img = (r.photos && r.photos.length > 0) ? '/media/static/' + r.photos[0] : (r.source_path && /\.(jpg|jpeg|png|webp|gif|bmp)$/i.test(r.source_path) ? '/media/static/' + r.source_path : '');
-      const imgTag = img ? '<img src="' + img + '" style="width:40px;height:40px;object-fit:cover;border-radius:6px;"  onerror="this.onerror=null;this.src='/src/icons/placeholder.png';" />' : '<span style="width:40px;height:40px;border-radius:6px;background:#eee;display:inline-block;flex-shrink:0;"></span>';
+      const imgTag = img ? '<img src="' + img + '" style="width:40px;height:40px;object-fit:cover;border-radius:6px;"  onerror="this.onerror=null;this.src=String.fromCharCode(47,115,114,99,47,105,99,111,110,115,47,112,108,97,99,101,104,111,108,100,101,114,46,112,110,103);" />' : '<span style="width:40px;height:40px;border-radius:6px;background:#eee;display:inline-block;flex-shrink:0;"></span>';
       return '<div onclick="pickRecipe(' + r.id + ')" class="picker-item">' + imgTag + '<div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:500;">' + escapeHtml(r.title) + '</div><div class="meta" style="font-size:11px;color:#999;">' + escapeHtml(r.category || '') + '</div></div></div>';
     }).join('');
   }
@@ -3319,7 +3319,7 @@ async function startCooking() {
   const stepPhotos = (data.step_photos || []);
   const stepsBox = document.getElementById('cookingSteps');
   stepsBox.innerHTML = steps.map((s, i) => {
-    const photos = stepPhotos.filter(sp => sp.step_index === i).map(sp => '<img src="/media/static/' + escapeHtml(sp.path) + '" style="max-height:80px;border-radius:8px;margin-right:8px;margin-bottom:6px;" onerror="this.onerror=null;this.src='/src/icons/placeholder.png';" />').join('');
+    const photos = stepPhotos.filter(sp => sp.step_index === i).map(sp => '<img src="/media/static/' + escapeHtml(sp.path) + '" style="max-height:80px;border-radius:8px;margin-right:8px;margin-bottom:6px;" onerror="this.onerror=null;this.src=String.fromCharCode(47,115,114,99,47,105,99,111,110,115,47,112,108,97,99,101,104,111,108,100,101,114,46,112,110,103);" />').join('');
     return '<div style="margin-bottom:12px;"><label style="display:flex;align-items:center;gap:8px;margin:6px 0;font-size:15px;"><input type="checkbox" class="step-checkbox" onchange="completeStep(this)" /> <span>' + escapeHtml(s) + '</span></label>' + (photos ? '<div class="row" style="margin-top:6px;">' + photos + '</div>' : '') + '</div>';
   }).join('');
   renderCookingNotes(data.id);
