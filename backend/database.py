@@ -6,7 +6,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./recipes.db")
-engine = create_engine(DATABASE_URL, pool_pre_ping=True, future=True)
+engine = create_engine(DATABASE_URL, pool_pre_ping=True, pool_size=10, max_overflow=20, pool_recycle=3600, future=True)
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False, future=True)
 Base = declarative_base()
 
@@ -141,11 +141,21 @@ def _ensure_indexes(conn, insp):
             existing.add(t["name"])
         for t in insp.get_indexes("users"):
             existing.add(t["name"])
+        # MySQL: also collect indexes from rating/household tables
+        for tname in ("recipe_ratings", "household_members", "household_recipes"):
+            if tname in insp.get_table_names():
+                for t in insp.get_indexes(tname):
+                    existing.add(t["name"])
     except Exception as exc:
         logging.getLogger(__name__).warning("index migration skipped: %s", exc)
     for idx_name, (table, col) in idx_map.items():
         if idx_name not in existing and table in insp.get_table_names():
-            conn.execute(text(f"CREATE INDEX IF NOT EXISTS {idx_name} ON {table}({col})"))
+            # MySQL doesn't support "CREATE INDEX IF NOT EXISTS"
+            # Check per-table indexes at execution time, then create
+            try:
+                conn.execute(text(f'ALTER TABLE {table} ADD INDEX {idx_name} ({col})'))
+            except Exception as exc:
+                logging.getLogger(__name__).warning("Index %s already exists: %s", idx_name, exc)
 
 def _migrate_mysql(conn):
     insp = inspect(engine)
