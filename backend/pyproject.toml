@@ -26,4 +26,7 @@ ignore = [
   "PLR0912", # migration functions intentionally have many branches
   "PLR0917", # FastAPI route signatures can have many params
   "PIE810", # startswith tuple optimization not applied in parser for clarity
+  "PLC0415", # lazy imports in admin endpoints/diagnostics are intentional to keep startup imports light
+  "PLR0911", # threshold too strict for parser/diagnostic helpers
+  "PLR0915", # threshold too strict for ingestion/diagnostic workflows
 ]

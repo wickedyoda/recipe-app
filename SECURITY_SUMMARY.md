@@ -1,53 +1,29 @@
-# Security Scan & Deployment Summary
+# Security Scan Summary
 
-## Completed Actions
+**Date:** 2026-09-06 02:54 UTC  
+**Branch:** master
 
-### 1. Security Scan
-- **Bandit**: 0 CRITICAL, 0 HIGH, 5 LOW (all accepted)
-- **pip-audit**: No known vulnerabilities
-- **Trivy**: Fixed all CRITICAL/HIGH container CVEs
+## Backend
+- **Base image:** `python:3.13-slim-bookworm`
+- **Bandit:** 0 HIGH / 0 MEDIUM / 4 LOW
+  - 4 LOW findings are intentional: demo seed password (`seed_demo.py`) and subprocess usage with `# nosec` for ffmpeg/whisper/pytesseract/ffprobe.
+- **pip-audit:** No known vulnerabilities
+- **Ruff:** All checks passing
+- **Trivy image:** 0 CRITICAL / 0 HIGH
+  - zlib1g CVE-2023-45853 documented in `.trivyignore` as Debian `will_not_fix`
 
-### 2. Vulnerabilities Fixed
-| File | Before | After | CVEs Fixed |
-|------|--------|-------|------------|
-| Dockerfile.frontend | nginx:1.28-alpine | nginx:1.29-alpine | CVE-2026-42533, CVE-2026-60005, CVE-2026-9256, CVE-2026-22184 |
-| Dockerfile.backend | python:3.11-slim-bookworm | python:3.13-slim-bookworm | CVE-2023-45853, CVE-2026-3644, CVE-2026-7210, CVE-2026-73066, CVE-2026-53613 |
+## Frontend
+- **Base image:** `nginx:stable-alpine`
+- **Trivy image:** 0 CRITICAL / 0 HIGH
+- **Ruff:** All checks passing
 
-### 3. Images Pushed to GHCR
-- `ghcr.io/wickedyoda/recipe-app-frontend:alpha-1.0` (digest: sha256:3943531a...)
-- `ghcr.io/wickedyoda/recipe-app-backend:alpha-1.0` (digest: sha256:ccb66ff7...)
+## Tests
+- **pytest:** 3 passed, 0 failed, 2 warnings (SQLAlchemy deprecation + test JWT key length)
 
-### 4. Deployment Verified
-- Frontend: https://recipe.tyates.one → HTTP 200
-- CSS endpoint: http://src/style.css → HTTP 200
-- Blue/Purple themes: Present in dropdown
-- Backend: HTTP 200 /health
-- MySQL: 36 recipes intact
+## Optimizations Applied
+- **Backend:** uvicorn `workers=2`, DB `pool_pre_ping=True`, GZipMiddleware, batch queries, model indexes
+- **Frontend:** nginx static cache headers, security headers, 50MB upload limit, extended proxy timeouts
 
-### 5. Docker Image Prune Cronjob
-- Schedule: `0 3 */2 * *` (every 2 days at 03:00 UTC)
-- Host: super-hermes
-- Targets: 5 docker hosts via SSH (port 122)
-- Email reports to: alerts@tyates.one
-
-### 6. PR Status
-- **BLOCKED**: GITHUB_TOKEN lacks `pull_requests: write` scope
-- **Action Required**: Create PR via GitHub web UI
-  - Head: `first_build`
-  - Base: `master`
-  - Title: "[SECURITY] Fix: upgrade base images and add style.css to patch CRITICAL/HIGH CVEs"
-  - Body: See security-report-20260903-0415.json
-
-### 7. Files Updated
-- Dockerfile.frontend (nginx upgrade, style.css COPY)
-- Dockerfile.backend (python upgrade)
-- frontend/src/style.css (blue/purple themes)
-- frontend/src/index.html (theme options)
-
-### 8. Reports Saved
-- security-report-20260903-0403.json
-- security-report-20260903-0415.json
-
-## Next Steps
-1. Create PR via GitHub web UI to merge first_build → master
-2. Request CI verification
+## Reports
+- `security-report-20260906-0254.json` (latest)
+- `security-report-20260905-0558.json` (previous)
