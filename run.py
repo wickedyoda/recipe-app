@@ -8,4 +8,4 @@ import uvicorn
 from backend.app import app
 from backend.config import settings
 
-uvicorn.run(app, host="0.0.0.0", port=settings.BACKEND_PORT)
+uvicorn.run(app, host="0.0.0.0", port=settings.BACKEND_PORT, workers=2, log_level="info")

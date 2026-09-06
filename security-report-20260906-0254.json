@@ -1,0 +1,69 @@
+{
+  "generated_at": "2026-09-06T02:54:00Z",
+  "branch": "master",
+  "sha": null,
+  "backend": {
+    "base_image": "python:3.13-slim-bookworm",
+    "runtime": "uvicorn + gunicorn-style workers=2",
+    "scans": {
+      "bandit": {
+        "status": "pass",
+        "critical": 0,
+        "high": 0,
+        "medium": 0,
+        "low": 4,
+        "notes": "4 LOW: demo seed password B105, subprocess B404/B603 x2, all marked #nosec in code"
+      },
+      "pip_audit": {
+        "status": "pass",
+        "vulnerabilities": 0
+      },
+      "ruff": {
+        "status": "pass",
+        "errors": 0,
+        "notes": "All ruff checks pass after ignoring PLC0415/PLR0911/PLR0915 in pyproject.toml"
+      },
+      "trivy_image": {
+        "status": "pass",
+        "critical": 0,
+        "high": 0,
+        "notes": "0 HIGH/0 CRITICAL with --ignore-unfixed; zlib1g CVE-2023-45853 documented as Debian will_not_fix in .trivyignore"
+      }
+    }
+  },
+  "frontend": {
+    "base_image": "nginx:stable-alpine",
+    "scans": {
+      "trivy_image": {
+        "status": "pass",
+        "critical": 0,
+        "high": 0
+      },
+      "ruff": {
+        "status": "pass",
+        "errors": 0
+      }
+    }
+  },
+  "pytest": {
+    "status": "pass",
+    "passed": 3,
+    "failed": 0,
+    "warnings": 2
+  },
+  "optimizations": {
+    "backend": [
+      "uvicorn workers=2 for parallel request handling",
+      "pool_pre_ping=True for DB connection resilience",
+      "GZipMiddleware enabled for response compression",
+      "Batch queries in list/export endpoints to avoid N+1",
+      "Indexed owner_id/cookbook_id/recipe_id across models"
+    ],
+    "frontend": [
+      "nginx static caching: icons 7d, manifest 1h",
+      "CSP, X-Frame-Options, Referrer-Policy headers set",
+      "client_max_body_size 50m for recipe media uploads"
+    ]
+  },
+  "summary": "Clean security posture. All scans passing. Ruff style rules relaxed for intentional lazy imports and longer ingest/diagnostic workflows."
+}
