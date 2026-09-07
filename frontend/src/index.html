@@ -4148,5 +4148,26 @@ async function loadPrivacy() {
   } catch(e) { el.textContent = 'Failed to load privacy policy.'; }
 }
 </script>
+
+<!-- Submit logs footer -->
+<div id="submitLogsFooter" style="position:fixed;bottom:0;left:0;right:0;background:var(--card-bg);border-top:1px solid var(--border-light);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;z-index:900;">
+  <span style="font-size:12px;color:var(--text-muted);">Need help? Submit app logs for support.</span>
+  <button class="secondary small" onclick="submitAppLogs()" style="padding:4px 10px;font-size:12px;">📤 Submit Logs</button>
+</div>
+
+<script>
+async function submitAppLogs() {
+  if (!confirm('Send the last 2 hours of app logs to support (alerts@tyates.one)?')) return;
+  const btn = event.target;
+  btn.textContent = 'Sending...'; btn.disabled = true;
+  try {
+    const res = await fetch(API + '/logs/submit', { method: 'POST', headers: authHeaders() });
+    const data = await res.json();
+    if (res.ok) { alert('Logs submitted successfully.'); }
+    else { alert('Failed: ' + (data.detail || 'unknown')); }
+  } catch(err) { alert('Error: ' + err.message); }
+  btn.textContent = '📤 Submit Logs'; btn.disabled = false;
+}
+</script>
 </body>
 </html>
