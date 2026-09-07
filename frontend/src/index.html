@@ -1343,7 +1343,7 @@ async function runDbRepair() {
   }
 }
 function setTheme(mode) {
-  document.body.classList.remove('dark','warm','dawn','cozy','contrast');
+  document.body.setAttribute("data-theme", mode);
   applyTheme(mode);
   localStorage.setItem('theme', mode);
   updateThemeButton();
