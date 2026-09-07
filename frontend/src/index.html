@@ -594,29 +594,24 @@
             <h3>Profile</h3>
             <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:8px;">
               <div style="display:flex;align-items:center;gap:6px;">
-                <span style="font-size:13px;width:100px;">Username:</span>
-                <span id="profileUsername" style="flex:1;font-size:13px;"></span>
-                <button class="secondary small" onclick="editProfileField('username')" style="padding:2px 8px;font-size:11px;">✏️</button>
+                <label style="font-size:13px;width:100px;">Username:</label>
+                <input id="profileUsername" type="text" style="flex:1;font-size:13px;padding:6px 8px;border:1px solid var(--border-light);border-radius:8px;background:var(--warm-bg);color:var(--text-primary);" />
               </div>
               <div style="display:flex;align-items:center;gap:6px;">
-                <span style="font-size:13px;width:100px;">Email:</span>
-                <span id="profileEmail" style="flex:1;font-size:13px;"></span>
-                <button class="secondary small" onclick="editProfileField('email')" style="padding:2px 8px;font-size:11px;">✏️</button>
+                <label style="font-size:13px;width:100px;">Email:</label>
+                <input id="profileEmail" type="email" style="flex:1;font-size:13px;padding:6px 8px;border:1px solid var(--border-light);border-radius:8px;background:var(--warm-bg);color:var(--text-primary);" />
               </div>
               <div style="display:flex;align-items:center;gap:6px;">
-                <span style="font-size:13px;width:100px;">First name:</span>
-                <span id="profileFirstName" style="flex:1;font-size:13px;"></span>
-                <button class="secondary small" onclick="editProfileField('first_name')" style="padding:2px 8px;font-size:11px;">✏️</button>
+                <label style="font-size:13px;width:100px;">First name:</label>
+                <input id="profileFirstName" type="text" style="flex:1;font-size:13px;padding:6px 8px;border:1px solid var(--border-light);border-radius:8px;background:var(--warm-bg);color:var(--text-primary);" />
               </div>
               <div style="display:flex;align-items:center;gap:6px;">
-                <span style="font-size:13px;width:100px;">Last name:</span>
-                <span id="profileLastName" style="flex:1;font-size:13px;"></span>
-                <button class="secondary small" onclick="editProfileField('last_name')" style="padding:2px 8px;font-size:11px;">✏️</button>
+                <label style="font-size:13px;width:100px;">Last name:</label>
+                <input id="profileLastName" type="text" style="flex:1;font-size:13px;padding:6px 8px;border:1px solid var(--border-light);border-radius:8px;background:var(--warm-bg);color:var(--text-primary);" />
               </div>
               <div style="display:flex;align-items:center;gap:6px;">
-                <span style="font-size:13px;width:100px;">Display name:</span>
-                <span id="profileName" style="flex:1;font-size:13px;"></span>
-                <button class="secondary small" onclick="editProfileField('display_name')" style="padding:2px 8px;font-size:11px;">✏️</button>
+                <label style="font-size:13px;width:100px;">Display name:</label>
+                <input id="profileName" type="text" style="flex:1;font-size:13px;padding:6px 8px;border:1px solid var(--border-light);border-radius:8px;background:var(--warm-bg);color:var(--text-primary);" />
               </div>
             </div>
             <div class="section">
@@ -1031,10 +1026,10 @@ async function loadProfile() {
   document.getElementById('profileInfo').innerHTML = '<div class="profile-avatar" style="background:' + (user.avatar_url ? 'transparent' : 'var(--beige)') + '">' + (user.avatar_url ? '<img src="' + escapeHtml(user.avatar_url) + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" />' : '👤') + '</div><div><div class="profile-name">' + escapeHtml(user.display_name || user.email) + '</div><div class="meta">' + escapeHtml(user.email) + ' • ' + escapeHtml(user.role || '') + '</div>' + (user.must_change_password ? '<div class="meta" style="color:#b91c1c;margin-top:4px;">⚠ Password must be changed</div>' : '') + '</div>';
   const saved = JSON.parse(localStorage.getItem('settings') || '{}');
   document.getElementById('profileName').value = user.display_name || '';
-  document.getElementById('profileUsername').textContent = user.username || 'Not set';
-  document.getElementById('profileEmail').textContent = user.email || '';
-  document.getElementById('profileFirstName').textContent = user.first_name || 'Not set';
-  document.getElementById('profileLastName').textContent = user.last_name || 'Not set';
+  document.getElementById('profileUsername').value = user.username || '';
+  document.getElementById('profileEmail').value = user.email || '';
+  document.getElementById('profileFirstName').value = user.first_name || '';
+  document.getElementById('profileLastName').value = user.last_name || '';
   document.getElementById('profileAvatar').value = user.avatar_url || '';
   document.getElementById('defaultServings').value = (saved.defaultServings || 4);
   // Update avatar preview
@@ -1586,9 +1581,15 @@ async function initApp() {
 }
 
 async function updateProfile() {
-  const display_name = document.getElementById('profileName').value.trim();
-  const avatar_url = document.getElementById('profileAvatar').value.trim();
-  const res = await fetch(API + '/auth/me', { method:'PATCH', headers: authHeaders(), body: JSON.stringify({display_name,avatar_url}) });
+  const payload = {
+    username: document.getElementById('profileUsername').value.trim() || null,
+    email: document.getElementById('profileEmail').value.trim() || null,
+    first_name: document.getElementById('profileFirstName').value.trim() || null,
+    last_name: document.getElementById('profileLastName').value.trim() || null,
+    display_name: document.getElementById('profileName').value.trim() || null,
+    avatar_url: document.getElementById('profileAvatar').value.trim() || null
+  };
+  const res = await fetch(API + '/auth/me', { method:'PATCH', headers: authHeaders(), body: JSON.stringify(payload) });
   if (!res.ok) return alert('Update failed');
   alert('Profile saved');
 }
