@@ -52,7 +52,7 @@
 <button class="secondary small" id="themeToggleLogin" onclick="toggleTheme()" style="position:fixed;top:12px;right:12px;z-index:1000;padding:4px 6px;font-size:14px;line-height:1;border-radius:5px;background:rgba(255,255,255,0.9);box-shadow:0 2px 8px rgba(0,0,0,0.1);display:none;">🌙</button>
 <div class="card">
   <div class="top" style="text-align:center;padding-top:calc(12px + env(safe-area-inset-top, 24px));">
-    <h1 style="margin:0;font-size:18px;display:flex;flex-direction:column;align-items:center;gap:4px;"><a href="#" onclick="switchTab('tabMenu');return false" style="color:inherit;text-decoration:none;display:flex;flex-direction:column;align-items:center;gap:2px;"><img src="/src/icons/logo-lg.png" alt="WiskFul" style="width:56px;height:56px;object-fit:contain;" />WiskFul</a></h1>
+    <h1 style="margin:0;font-size:18px;display:flex;flex-direction:column;align-items:center;gap:4px;"><a href="#" onclick="switchTab('tabMenu');return false" style="color:inherit;text-decoration:none;display:flex;flex-direction:column;align-items:center;gap:2px;"><img src="/src/icons/logo-lg.png" alt="WhiskFul" style="width:56px;height:56px;object-fit:contain;" />WhiskFul</a></h1>
     <div style="font-size:10px;color:var(--text-muted);font-weight:400;">Plan it. Cook it. Love it.</div>
   </div>
   <!-- Compact single-row navigation with 3-line menu, centered under logo -->
@@ -675,12 +675,12 @@
     <div id="tabAbout" class="tab hidden">
       <div class="card">
         <div class="top" style="display:flex;align-items:center;justify-content:space-between;">
-          <h2 style="margin:0;font-size:18px;">About WiskFul</h2>
+          <h2 style="margin:0;font-size:18px;">About WhiskFul</h2>
           <button class="secondary small" onclick="switchTab('tabMenu')" style="padding:2px 8px;font-size:12px;">Back</button>
         </div>
         <div style="padding:16px;text-align:center;">
-          <img src="/src/icons/logo-lg.png" alt="WiskFul" style="width:96px;height:96px;object-fit:contain;margin-bottom:12px;" />
-          <h3 style="margin:8px 0;font-size:20px;font-family:'Cormorant Garamond',serif;">WiskFul</h3>
+          <img src="/src/icons/logo-lg.png" alt="WhiskFul" style="width:96px;height:96px;object-fit:contain;margin-bottom:12px;" />
+          <h3 style="margin:8px 0;font-size:20px;font-family:'Cormorant Garamond',serif;">WhiskFul</h3>
           <p style="font-size:14px;color:var(--text-muted);margin:8px 0 16px;">Plan it. Cook it. Love it.</p>
           <p style="font-size:13px;color:var(--text-secondary);margin-bottom:12px;">
             A self-hosted recipe manager with meal planning, grocery lists, and household sharing.
@@ -1142,7 +1142,7 @@ async function loadSettings() {
   html += '</label>';
   html += '</div>';
   html += '<div class="meta" style="font-size:12px;color:var(--text-muted);margin-top:4px;">';
-  html += 'Guest account: <strong>' + escapeHtml(s.guest_email || 'guest@wiskful.app') + '</strong>';
+  html += 'Guest account: <strong>' + escapeHtml(s.guest_email || 'guest@whiskful.app') + '</strong>';
   html += '</div></div>';
   document.getElementById('settingsContent').innerHTML = html;
   document.getElementById('settingsStatus').textContent = '';
@@ -1213,7 +1213,7 @@ async function backupDatabase() {
   const blob = await downloadRes.blob();
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
-  const filename = 'wiskful_backup_' + new Date().toISOString().slice(0, 10) + '.sql.gz';
+  const filename = 'whiskful_backup_' + new Date().toISOString().slice(0, 10) + '.sql.gz';
   link.href = url;
   link.download = filename;
   document.body.appendChild(link);
@@ -1440,7 +1440,7 @@ async function login() {
   }
 }
 async function loginAsGuest() {
-  document.getElementById('loginEmail').value = 'guest@wiskful.app';
+  document.getElementById('loginEmail').value = 'guest@whiskful.app';
   document.getElementById('loginPassword').value = 'guest123!';
   await login();
 }
@@ -2423,7 +2423,7 @@ function closeRecipeDetail() {
 }
 async function shareCurrentRecipe() {
   if (!currentRecipeId) return;
-  const title = document.getElementById('detailTitle')?.textContent || 'WiskFul Recipe';
+  const title = document.getElementById('detailTitle')?.textContent || 'WhiskFul Recipe';
   try {
     const res = await fetch(API + '/recipes/' + currentRecipeId + '/share', {
       method: 'POST',
