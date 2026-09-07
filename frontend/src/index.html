@@ -465,18 +465,43 @@
       <div id="tabAdmin" class="tab hidden">
         <div class="card">
           <div class="top">
-            <h2 style="margin-top:0;">Admin</h2>
-            <div style="display:flex;gap:8px;">
-              <button class="secondary" onclick="openUserForm()" style="width:auto;padding:8px 10px;font-size:13px;">New user</button>
+            <h2 style="margin-top:0;">Admin Dashboard</h2>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <button class="secondary" onclick="openUserForm()" style="width:auto;padding:8px 10px;font-size:13px;">+ New User</button>
               <button class="secondary" onclick="openSettingsCard()" style="width:auto;padding:8px 10px;font-size:13px;">Settings</button>
               <button class="secondary" onclick="toggleDbDiag()" style="width:auto;padding:8px 10px;font-size:13px;">Database</button>
+              <button class="secondary" onclick="loadAdminStats()" style="width:auto;padding:8px 10px;font-size:13px;">Refresh</button>
             </div>
           </div>
-          <h3 style="margin-top:0;font-size:16px;">Pending approvals</h3>
+
+          <div id="adminStats" class="admin-stats">
+            <div class="stat-card"><div class="stat-value" id="statTotal">-</div><div class="stat-label">Total Users</div></div>
+            <div class="stat-card stat-warn"><div class="stat-value" id="statPending">-</div><div class="stat-label">Pending</div></div>
+            <div class="stat-card stat-ok"><div class="stat-value" id="statActive">-</div><div class="stat-label">Active</div></div>
+            <div class="stat-card stat-bad"><div class="stat-value" id="statInactive">-</div><div class="stat-label">Inactive</div></div>
+          </div>
+
+          <div class="admin-search">
+            <input id="adminUserSearch" type="search" placeholder="Search users by email or name..." oninput="filterUsers()" />
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="top" style="flex-direction:row;justify-content:space-between;align-items:center;">
+            <h3 style="margin:0;font-size:16px;">Pending Approvals</h3>
+            <span id="pendingBadge" class="pill hidden">0</span>
+          </div>
           <div id="pendingList"></div>
-          <h3 style="margin-top:0;font-size:16px;">All users</h3>
+        </div>
+
+        <div class="card">
+          <div class="top" style="flex-direction:row;justify-content:space-between;align-items:center;">
+            <h3 style="margin:0;font-size:16px;">All Users</h3>
+            <span id="userCount" class="meta">0</span>
+          </div>
           <div id="userList"></div>
         </div>
+      </div>
 
         <div class="card" id="dbDiagCard" style="display:none;">
           <div class="top">
@@ -496,22 +521,22 @@
 
         <div id="userForm" class="card hidden">
           <h2 style="margin-top:0;" id="userFormTitle">New user</h2>
-          <input id="userEmail" type="email" placeholder="Email" />
-          <input id="userPassword" type="password" placeholder="Password (min 6 chars, uppercase, symbol)" />
-          <input id="userDisplayName" placeholder="Display name" />
-          <select id="userRole">
+          <input id="userFormEmail" type="email" placeholder="Email" />
+          <input id="userFormPassword" type="password" placeholder="Password (min 6 chars, uppercase, symbol)" />
+          <input id="userFormDisplayName" placeholder="Display name" />
+          <select id="userFormRole">
             <option value="user">User</option>
             <option value="admin">Admin</option>
           </select>
           <div class="row">
             <label style="font-size:13px;display:inline-flex;align-items:center;gap:6px;cursor:pointer;">
-              <input type="checkbox" id="userActive" checked style="width:auto;margin:0;" /> Active
+              <input type="checkbox" id="userFormActive" checked style="width:auto;margin:0;" /> Active
             </label>
             <label style="font-size:13px;display:inline-flex;align-items:center;gap:6px;cursor:pointer;">
-              <input type="checkbox" id="userApproved" checked style="width:auto;margin:0;" /> Approved
+              <input type="checkbox" id="userFormApproved" checked style="width:auto;margin:0;" /> Approved
             </label>
             <label style="font-size:13px;display:inline-flex;align-items:center;gap:6px;cursor:pointer;">
-              <input type="checkbox" id="userMustChange" style="width:auto;margin:0;" /> Force password change on login
+              <input type="checkbox" id="userFormMustChange" style="width:auto;margin:0;" /> Force password change on login
             </label>
           </div>
           <button onclick="saveUser()">Save</button>
@@ -3124,26 +3149,70 @@ async function loadPending() {
   const items = await res.json();
   const box = document.getElementById('pendingList');
   box.innerHTML = '';
-  if (!items.length) box.innerHTML = '<div class="empty">No pending users.</div>';
-  for (const user of items) {
-    const el = document.createElement('div');
-    el.className = 'item';
-    el.innerHTML = '<div><div>' + escapeHtml(user.email) + '</div><div class="meta">' + escapeHtml(user.display_name || '') + '</div></div><button onclick="approveUser(' + user.id + ', true)">Approve</button><button class="secondary" onclick="approveUser(' + user.id + ', false)" style="margin-top:8px;">Reject</button>';
-    box.appendChild(el);
+  const badge = document.getElementById('pendingBadge');
+  if (!items.length) {
+    box.innerHTML = '<div class="empty">No pending users.</div>';
+    badge.classList.add('hidden');
+  } else {
+    badge.classList.remove('hidden');
+    badge.textContent = String(items.length);
+    for (const user of items) {
+      const el = document.createElement('div');
+      el.className = 'admin-user-row';
+      el.innerHTML = '<div style="flex:1;min-width:0;"><div style="font-weight:500;">' + escapeHtml(user.email) + '</div><div class="admin-user-meta">' + escapeHtml(user.display_name || '') + '</div></div><div class="admin-user-actions"><button onclick="approveUser(' + user.id + ', true)">Approve</button><button class="secondary" onclick="approveUser(' + user.id + ', false)">Reject</button></div>';
+      box.appendChild(el);
+    }
   }
 }
+
+let allUsers = [];
 async function loadUsers() {
   const res = await fetch(API + '/auth/users', { headers: authHeaders() });
   if (!res.ok) return;
-  const items = await res.json();
+  allUsers = await res.json();
+  renderUsers(allUsers);
+  document.getElementById('userCount').textContent = String(allUsers.length);
+}
+
+function renderUsers(items) {
   const box = document.getElementById('userList');
   box.innerHTML = '';
-  for (const user of items) {
+  const query = (document.getElementById('adminUserSearch')?.value || '').toLowerCase();
+  const filtered = items.filter(u => (u.email || '').toLowerCase().includes(query) || (u.display_name || '').toLowerCase().includes(query));
+  document.getElementById('userCount').textContent = filtered.length + ' / ' + items.length;
+  for (const user of filtered) {
     const el = document.createElement('div');
-    el.className = 'item';
-    el.innerHTML = '<div><div>' + escapeHtml(user.email) + '</div><div class="meta">' + escapeHtml(user.display_name || '') + ' • ' + user.role + ' • ' + (user.is_active ? 'active' : 'inactive') + ' • ' + (user.is_approved ? 'approved' : 'pending') + '</div></div><div class="row" style="margin-top:8px;gap:8px;"><button class="secondary" onclick="editUser(' + user.id + ')" style="width:auto;padding:6px 10px;font-size:12px;">Edit</button><button class="secondary" onclick="resetUserPassword(' + user.id + ')" style="width:auto;padding:6px 10px;font-size:12px;">Reset Password</button><button class="danger" onclick="deleteUser(' + user.id + ')" style="width:auto;padding:6px 10px;font-size:12px;">Delete</button></div>';
+    el.className = 'admin-user-row';
+    const statusClass = user.is_active ? 'active-badge' : 'inactive-badge';
+    const statusText = user.is_active ? 'active' : 'inactive';
+    const approveText = user.is_approved ? 'approved' : 'pending';
+    el.innerHTML = '<div style="flex:1;min-width:0;"><div style="font-weight:500;">' + escapeHtml(user.email) + '</div><div class="admin-user-meta">' + escapeHtml(user.display_name || '') + ' • ' + user.role + ' • <span class="pill-badge ' + statusClass + '">' + statusText + '</span>' + (user.is_approved ? '' : ' • <span class="pill-badge pending-badge">pending</span>') + '</div></div><div class="admin-user-actions"><button class="secondary" onclick="editUser(' + user.id + ')">Edit</button><button class="secondary" onclick="resetUserPassword(' + user.id + ')">Reset Password</button><button class="danger" onclick="deleteUser(' + user.id + ')">Delete</button></div>';
     box.appendChild(el);
   }
+}
+
+function filterUsers() {
+  renderUsers(allUsers);
+}
+
+async function loadAdminStats() {
+  const [usersRes, pendingRes] = await Promise.all([
+    fetch(API + '/auth/users', { headers: authHeaders() }),
+    fetch(API + '/auth/users/pending', { headers: authHeaders() })
+  ]);
+  const users = usersRes.ok ? await usersRes.json() : [];
+  const pending = pendingRes.ok ? await pendingRes.json() : [];
+  allUsers = users;
+  const total = users.length;
+  const pendingCount = pending.length;
+  const activeCount = users.filter(u => u.is_active).length;
+  const inactiveCount = total - activeCount;
+  document.getElementById('statTotal').textContent = String(total);
+  document.getElementById('statPending').textContent = String(pendingCount);
+  document.getElementById('statActive').textContent = String(activeCount);
+  document.getElementById('statInactive').textContent = String(inactiveCount);
+  renderUsers(users);
+  loadPending();
 }
 async function approveUser(id, active) {
   const res = await fetch(API + '/auth/users/approve', { method:'POST', headers: authHeaders(), body: JSON.stringify({user_id: id, is_active: active}) });
@@ -3156,13 +3225,13 @@ let editingUserId = null;
 function openUserForm() {
   editingUserId = null;
   document.getElementById('userFormTitle').textContent = 'New user';
-  document.getElementById('userEmail').value = '';
-  document.getElementById('userPassword').value = '';
-  document.getElementById('userDisplayName').value = '';
-  document.getElementById('userRole').value = 'user';
-  document.getElementById('userActive').checked = true;
-  document.getElementById('userApproved').checked = true;
-  document.getElementById('userMustChange').checked = false;
+  document.getElementById('userFormEmail').value = '';
+  document.getElementById('userFormPassword').value = '';
+  document.getElementById('userFormDisplayName').value = '';
+  document.getElementById('userFormRole').value = 'user';
+  document.getElementById('userFormActive').checked = true;
+  document.getElementById('userFormApproved').checked = true;
+  document.getElementById('userFormMustChange').checked = false;
   document.getElementById('userForm').classList.remove('hidden');
 }
 function closeUserForm() {
@@ -3175,25 +3244,25 @@ async function editUser(id) {
   const user = await res.json();
   editingUserId = id;
   document.getElementById('userFormTitle').textContent = 'Edit user';
-  document.getElementById('userEmail').value = user.email || '';
-  document.getElementById('userPassword').value = '';
-  document.getElementById('userDisplayName').value = user.display_name || '';
-  document.getElementById('userRole').value = user.role || 'user';
-  document.getElementById('userActive').checked = user.is_active;
-  document.getElementById('userApproved').checked = user.is_approved;
-  document.getElementById('userMustChange').checked = user.must_change_password;
+  document.getElementById('userFormEmail').value = user.email || '';
+  document.getElementById('userFormPassword').value = '';
+  document.getElementById('userFormDisplayName').value = user.display_name || '';
+  document.getElementById('userFormRole').value = user.role || 'user';
+  document.getElementById('userFormActive').checked = user.is_active;
+  document.getElementById('userFormApproved').checked = user.is_approved;
+  document.getElementById('userFormMustChange').checked = user.must_change_password;
   document.getElementById('userForm').classList.remove('hidden');
 }
 async function saveUser() {
   const payload = {
-    email: document.getElementById('userEmail').value.trim(),
-    display_name: document.getElementById('userDisplayName').value.trim(),
-    role: document.getElementById('userRole').value,
-    is_active: document.getElementById('userActive').checked,
-    is_approved: document.getElementById('userApproved').checked,
-    must_change_password: document.getElementById('userMustChange').checked
+    email: document.getElementById('userFormEmail').value.trim(),
+    display_name: document.getElementById('userFormDisplayName').value.trim(),
+    role: document.getElementById('userFormRole').value,
+    is_active: document.getElementById('userFormActive').checked,
+    is_approved: document.getElementById('userFormApproved').checked,
+    must_change_password: document.getElementById('userFormMustChange').checked
   };
-  const pw = document.getElementById('userPassword').value;
+  const pw = document.getElementById('userFormPassword').value;
   if (pw) payload.password = pw;
   if (!payload.email) return alert('Email is required');
   if (!editingUserId && !pw) return alert('Password is required for new users');
