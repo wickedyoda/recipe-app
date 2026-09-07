@@ -65,7 +65,8 @@
     <button data-tab="tabGroceries" onclick="switchTab('tabGroceries')" class="nav-btn-small" title="Grocery lists">🛒</button>
     <button data-tab="tabCookbooks" onclick="switchTab('tabCookbooks')" class="nav-btn-small" title="Cookbooks">📚</button>
     <button data-tab="tabHouseholds" onclick="switchTab('tabHouseholds')" class="nav-btn-small" title="Households">👨‍👩‍👧‍👨</button>
-    <button id="adminTabBtnTop" data-tab="tabAdmin" onclick="switchTab('tabAdmin')" class="nav-btn-small hidden" title="Admin">👤</button>
+    <button data-tab="tabProfile" onclick="switchTab('tabProfile')" class="nav-btn-small" title="Profile">👤</button>
+    <button id="adminTabBtnTop" data-tab="tabAdmin" onclick="switchTab('tabAdmin')" class="nav-btn-small hidden" title="Admin">🛡️</button>
     <button class="secondary small" id="menuBtn" onclick="toggleDropdown()" style="display:none;padding:2px 6px;font-size:11px;">☰</button>
   </div>
   <!-- Dropdown menu positioned at top-right -->
@@ -78,7 +79,8 @@
     <button onclick="switchTab('tabCookbooks');closeDropdown()" class="dropdown-item">📚 Cookbooks</button>
     <button onclick="switchTab('tabHouseholds');closeDropdown()" class="dropdown-item">👨‍👩‍👧‍👦 Households</button>
     <button onclick="switchTab('tabProfile');closeDropdown()" class="dropdown-item">👤 Profile</button>
-    <button id="adminDropdownBtn" onclick="openAdminTab();toggleDropdown()" class="dropdown-item admin-only">👤 Admin</button>
+    <div class="dropdown-divider"></div>
+    <button id="adminDropdownBtn" onclick="openAdminTab();toggleDropdown()" class="dropdown-item admin-only">🛡️ Admin</button>
     <div class="dropdown-divider"></div>
     <button onclick="logout()" class="dropdown-item logout">Logout</button>
   </div>
