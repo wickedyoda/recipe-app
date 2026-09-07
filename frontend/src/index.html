@@ -38,8 +38,8 @@
 <div id="topBar" class="hidden" style="display:flex;align-items:center;justify-content:space-between;padding:6px 8px;border-bottom:1px solid var(--border-light);margin-bottom:8px;">
   <div style="display:flex;align-items:center;gap:6px;">
     <button id="backBtn" onclick="_handleBack()" class="hidden secondary small" style="padding:2px 6px;font-size:12px;line-height:1;display:none;">←</button>
-    <span id="userEmailRow" style="font-size:11px;color:#555;margin:0;display:flex;flex-direction:column;align-items:flex-start;gap:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px;">
-      <span id="userEmail" style="font-size:11px;font-weight:500;color:#3a2e23;"></span>
+    <span id="userEmailRow" style="font-size:11px;color:var(--text-muted);margin:0;display:flex;flex-direction:column;align-items:flex-start;gap:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px;">
+      <span id="userEmail" style="font-size:11px;font-weight:500;color:var(--text-muted);"></span>
       <span id="userEmailBadge" class="hidden" style="font-size:8px;color:#996600;background:#fff3cd;padding:0 3px;border-radius:4px;">READ-ONLY</span>
     </span>
   </div>
@@ -114,7 +114,7 @@
       <input id="regPassword" type="password" placeholder="Password" />
       <input id="regName" type="text" placeholder="Display name" />
       <button onclick="register()">Register</button>
-      <p id="registerStatus" style="font-size:13px;color:#555;margin-top:8px;"></p>
+      <p id="registerStatus" style="font-size:13px;color:var(--text-muted);margin-top:8px;"></p>
       <button class="secondary" onclick="showLogin()">Back to login</button>
     </div>
 
@@ -130,25 +130,25 @@
       <div id="tabImport" class="tab hidden">
         <div class="card">
           <h2 style="margin-top:0;">Add recipe</h2>
-          <p style="font-size:13px;color:#555;margin:0 0 8px;">Paste a TikTok, YouTube, Facebook, or Reels URL. The video will be examined, the recipe extracted, and automatically added to your recipe book.</p>
+          <p style="font-size:13px;color:var(--text-muted);margin:0 0 8px;">Paste a TikTok, YouTube, Facebook, or Reels URL. The video will be examined, the recipe extracted, and automatically added to your recipe book.</p>
           <input id="recipeUrl" placeholder="TikTok / YouTube / Facebook / Reels URL" />
           <button onclick="extractRecipe()">Extract recipe from video</button>
           <div style="margin-top:12px; padding-top:12px; border-top:1px solid #eee;">
-            <p style="font-size:13px;color:#555;margin-top:0;margin-bottom:8px;">Or upload a file directly (video, image, PDF, doc, txt — max 10MB):</p>
+            <p style="font-size:13px;color:var(--text-muted);margin-top:0;margin-bottom:8px;">Or upload a file directly (video, image, PDF, doc, txt — max 10MB):</p>
             <input id="recipeFile" type="file" accept="video/*,.jpg,.jpeg,.png,.pdf,.doc,.docx,.txt,.md,.csv" />
             <button onclick="extractRecipeFromUpload()">Extract recipe from file</button>
           </div>
           <!-- Progress + Continue section (shared by URL and file extraction) -->
           <div id="importProgressSection" style="display:none; margin-top:16px; padding:12px; background:#f8f9fa; border-radius:8px;">
-            <p id="importProgressLabel" style="font-size:13px;color:#555;margin:0 0 8px;">Processing...</p>
+            <p id="importProgressLabel" style="font-size:13px;color:var(--text-muted);margin:0 0 8px;">Processing...</p>
             <div style="width:100%; height:8px; background:#e9ecef; border-radius:4px; overflow:hidden;">
               <div id="importProgressBar" style="width:0%; height:100%; background:#007bff; transition:width 0.3s;"></div>
             </div>
-            <p id="importProgressStatus" style="font-size:13px;color:#555;margin:8px 0 0;">Examining video and extracting recipe... 0%</p>
+            <p id="importProgressStatus" style="font-size:13px;color:var(--text-muted);margin:8px 0 0;">Examining video and extracting recipe... 0%</p>
             <button id="importContinueBtn" onclick="continueToRecipe()" style="display:none; margin-top:8px; width:100%;">Continue to recipe</button>
           </div>
-          <p id="recipeStatus" style="font-size:13px;color:#555;margin-top:8px;"></p>
-          <p id="recipeUploadStatus" style="font-size:13px;color:#555;margin-top:8px;"></p>
+          <p id="recipeStatus" style="font-size:13px;color:var(--text-muted);margin-top:8px;"></p>
+          <p id="recipeUploadStatus" style="font-size:13px;color:var(--text-muted);margin-top:8px;"></p>
         </div>
       </div>
       </div>
@@ -252,7 +252,7 @@
             <h2 style="margin:0;font-size:18px;" id="detailTitle"></h2>
             <div id="detailRating" style="display:flex;align-items:center;gap:4px;margin:4px 0 8px;">
               <span id="detailStarRating" style="font-size:18px;color:#ffd43b;cursor:pointer;" onclick="rateCurrentRecipe()"></span>
-              <span id="detailRatingCount" style="font-size:12px;color:#888;"></span>
+              <span id="detailRatingCount" style="font-size:12px;color:var(--text-muted);"></span>
             </div>
             <div class="row" style="gap:4px;flex-wrap:wrap;">
               <button class="secondary small" onclick="closeRecipeDetail()" style="padding:4px 8px;font-size:11px;">Close</button>
@@ -415,7 +415,7 @@
           </div>
           <button onclick="addGroceryItem()">Add item</button>
           <button class="secondary" onclick="clearCompletedGroceries()" style="width:auto;padding:8px 10px;font-size:13px;">Clear completed</button>
-          <h3 style="margin-top:12px;font-size:15px;color:#444;">Items</h3>
+          <h3 style="margin-top:12px;font-size:15px;color:var(--text-primary);">Items</h3>
           <div id="groceryItems"></div>
           <div id="grocerySharePanel" class="share-modal hidden">
             <div class="share-card">
@@ -517,7 +517,7 @@
           </div>
           <div id="dbHealthContent" style="margin-top:12px;"></div>
           <div id="dbDiagContent" style="margin-top:12px;"></div>
-          <p id="dbDiagStatus" style="font-size:12px;color:#555;margin-top:8px;"></p>
+          <p id="dbDiagStatus" style="font-size:12px;color:var(--text-muted);margin-top:8px;"></p>
         </div>
       </div>
 
@@ -556,7 +556,7 @@
           <div id="settingsContent"></div>
           <button onclick="addHost()">Add host</button>
           <button onclick="backupDatabase()" class="secondary" style="margin-left:8px;">Backup database</button>
-          <p id="settingsStatus" style="font-size:12px;color:#555;margin-top:8px;"></p>
+          <p id="settingsStatus" style="font-size:12px;color:var(--text-muted);margin-top:8px;"></p>
         </div>
       </div>
       <div id="tabPublicRecipe" class="tab hidden">
@@ -1259,7 +1259,7 @@ async function loadDbHealth() {
   const contentEl = document.getElementById('dbHealthContent');
   const statusEl = document.getElementById('dbDiagStatus');
   statusEl.textContent = '';
-  contentEl.innerHTML = '<span style=\"color:#555;\">Loading database health...</span>';
+  contentEl.innerHTML = '<span style=\"color:var(--text-muted);\">Loading database health...</span>';
   try {
     const res = await fetch(API + '/settings/db-health', { headers: authHeaders() });
     if (!res.ok) throw new Error('HTTP ' + res.status);
@@ -1289,7 +1289,7 @@ async function runDbDiag() {
   const healthEl = document.getElementById('dbHealthContent');
   const statusEl = document.getElementById('dbDiagStatus');
   statusEl.textContent = '';
-  healthEl.innerHTML = '<span style=\"color:#555;\">Running diagnostics...</span>';
+  healthEl.innerHTML = '<span style=\"color:var(--text-muted);\">Running diagnostics...</span>';
   contentEl.innerHTML = '';
   try {
     const res = await fetch(API + '/settings/db-diag', { headers: authHeaders() });
@@ -1323,7 +1323,7 @@ async function runDbDiag() {
 }
 async function runDbRepair() {
   const statusEl = document.getElementById('dbDiagStatus');
-  statusEl.innerHTML = '<span style=\"color:#555;\">Running repairs...</span>';
+  statusEl.innerHTML = '<span style=\"color:var(--text-muted);\">Running repairs...</span>';
   try {
     const res = await fetch(API + '/settings/db-repair', { method: 'POST', headers: authHeaders() });
     if (!res.ok) throw new Error('HTTP ' + res.status);
@@ -2222,7 +2222,7 @@ async function openRecipeDetail(id) {
   const steps = (r.instructions || '').split('\n').filter(Boolean);
   stepBox.innerHTML = steps.map((_, i) => {
     const photos = stepPhotos.filter(sp => sp.step_index === i).map(sp => '<img src="/media/static/' + escapeHtml(sp.path) + '" style="max-height:80px;border-radius:8px;margin-right:8px;" onerror="this.onerror=null;this.src=String.fromCharCode(47,115,114,99,47,105,99,111,110,115,47,112,108,97,99,101,104,111,108,100,101,114,46,112,110,103);" />').join('');
-    return photos ? '<div style="margin-top:8px;font-size:12px;color:#555;">Step ' + (i + 1) + ' photos</div><div class="carousel-container">' + photos + '</div>' : '';
+    return photos ? '<div style="margin-top:8px;font-size:12px;color:var(--text-muted);">Step ' + (i + 1) + ' photos</div><div class="carousel-container">' + photos + '</div>' : '';
   }).join('');
   // Recipe media gallery (images, PDFs, documents)
   const mediaBox = document.getElementById('recipeMediaGallery');
@@ -2805,18 +2805,18 @@ function renderPickerRecipes() {
     list.innerHTML = '<h4 style="font-size:12px;color:var(--text-muted);margin:0 4px 8px 4px;">Recent recipes</h4>' + recent5.map(r => {
       const img = (r.photos && r.photos.length > 0) ? '/media/static/' + r.photos[0] : (r.source_path && /\.(jpg|jpeg|png|webp|gif|bmp)$/i.test(r.source_path) ? '/media/static/' + r.source_path : '');
       const imgTag = img ? '<img src="' + img + '" style="width:40px;height:40px;object-fit:cover;border-radius:6px;"  onerror="this.onerror=null;this.src=String.fromCharCode(47,115,114,99,47,105,99,111,110,115,47,112,108,97,99,101,104,111,108,100,101,114,46,112,110,103);" />' : '<span style="width:40px;height:40px;border-radius:6px;background:#eee;display:inline-block;flex-shrink:0;"></span>';
-      return '<div onclick="pickRecipe(' + r.id + ')" class="picker-item">' + imgTag + '<div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:500;">' + escapeHtml(r.title) + '</div><div class="meta" style="font-size:11px;color:#999;">' + escapeHtml(r.category || '') + '</div></div></div>';
+      return '<div onclick="pickRecipe(' + r.id + ')" class="picker-item">' + imgTag + '<div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:500;">' + escapeHtml(r.title) + '</div><div class="meta" style="font-size:11px;color:var(--text-muted);">' + escapeHtml(r.category || '') + '</div></div></div>';
     }).join('');
     if (recipes.length > 5) {
-      list.innerHTML += '<div style="padding:6px 8px;font-size:11px;color:#999;text-align:right;">+ ' + (recipes.length - 5) + ' more...</div>';
+      list.innerHTML += '<div style="padding:6px 8px;font-size:11px;color:var(--text-muted);text-align:right;">+ ' + (recipes.length - 5) + ' more...</div>';
     }
   } else if (!filtered.length) {
-    list.innerHTML = '<div style="padding:16px;text-align:center;color:#999;font-size:13px;">No recipes found</div>';
+    list.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-muted);font-size:13px;">No recipes found</div>';
   } else {
     list.innerHTML = filtered.map(r => {
       const img = (r.photos && r.photos.length > 0) ? '/media/static/' + r.photos[0] : (r.source_path && /\.(jpg|jpeg|png|webp|gif|bmp)$/i.test(r.source_path) ? '/media/static/' + r.source_path : '');
       const imgTag = img ? '<img src="' + img + '" style="width:40px;height:40px;object-fit:cover;border-radius:6px;"  onerror="this.onerror=null;this.src=String.fromCharCode(47,115,114,99,47,105,99,111,110,115,47,112,108,97,99,101,104,111,108,100,101,114,46,112,110,103);" />' : '<span style="width:40px;height:40px;border-radius:6px;background:#eee;display:inline-block;flex-shrink:0;"></span>';
-      return '<div onclick="pickRecipe(' + r.id + ')" class="picker-item">' + imgTag + '<div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:500;">' + escapeHtml(r.title) + '</div><div class="meta" style="font-size:11px;color:#999;">' + escapeHtml(r.category || '') + '</div></div></div>';
+      return '<div onclick="pickRecipe(' + r.id + ')" class="picker-item">' + imgTag + '<div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:500;">' + escapeHtml(r.title) + '</div><div class="meta" style="font-size:11px;color:var(--text-muted);">' + escapeHtml(r.category || '') + '</div></div></div>';
     }).join('');
   }
 }
@@ -3572,13 +3572,13 @@ let _bookCurrentPage = 0;
 async function renderCookbooks() {
   const list = document.getElementById('cookbookList');
   if (!list) return;
-  list.innerHTML = '<div style="font-size:13px;color:#888;padding:8px;text-align:center;">Loading cookbooks...</div>';
+  list.innerHTML = '<div style="font-size:13px;color:var(--text-muted);padding:8px;text-align:center;">Loading cookbooks...</div>';
   try {
     const res = await fetch(API + '/cookbooks/', { headers: authHeaders() });
-    if (!res.ok) { list.innerHTML = '<p style="padding:12px;color:#999;text-align:center;">Failed to load cookbooks.</p>'; return; }
+    if (!res.ok) { list.innerHTML = '<p style="padding:12px;color:var(--text-muted);text-align:center;">Failed to load cookbooks.</p>'; return; }
     const cookbooks = await res.json();
   if (!cookbooks.length) {
-    list.innerHTML = '<p style="padding:12px;color:#777;text-align:center;">No cookbooks yet. Click “New cookbook” to create one.</p>';
+    list.innerHTML = '<p style="padding:12px;color:var(--text-muted);text-align:center;">No cookbooks yet. Click “New cookbook” to create one.</p>';
     return;
   }
   list.innerHTML = cookbooks.map(cb => `
@@ -3588,11 +3588,11 @@ async function renderCookbooks() {
         <button class="secondary small" onclick="event.stopPropagation();openCookbookForm(${cb.id});" style="padding:4px 8px;font-size:12px;">Edit</button>
         <button class="danger small" onclick="event.stopPropagation();deleteCookbook(${cb.id});" style="padding:4px 8px;font-size:12px;">✕</button>
       </div>
-      <p style="font-size:13px;color:#666;margin:4px 0;">${escapeHtml(cb.description || 'No description')}</p>
+      <p style="font-size:13px;color:var(--text-muted);margin:4px 0;">${escapeHtml(cb.description || 'No description')}</p>
     </div>
   `).join('');
   } catch (err) {
-    list.innerHTML = '<p style="padding:12px;color:#999;text-align:center;">Error loading cookbooks.</p>';
+    list.innerHTML = '<p style="padding:12px;color:var(--text-muted);text-align:center;">Error loading cookbooks.</p>';
   }
 }
 function openCookbookForm(id) {
@@ -3658,7 +3658,7 @@ async function openCookbookView(id) {
 function renderCookbookPage() {
   const list = document.getElementById('cookbookRecipeList');
   if (!_bookRecipes.length) {
-    list.innerHTML = '<p style="padding:12px;color:#999;text-align:center;">No recipes in this cookbook.</p>';
+    list.innerHTML = '<p style="padding:12px;color:var(--text-muted);text-align:center;">No recipes in this cookbook.</p>';
     return;
   }
   const pageSize = 1;
@@ -3671,9 +3671,9 @@ function renderCookbookPage() {
   html += '<div class="book-page" id="bookPage">';
   html += current.map(r => `
     <div class="card" style="margin-bottom:0;text-align:center;cursor:pointer;" onclick="switchTab('tabRecipes');setTimeout(()=>openRecipeDetail(${r.id}),10);">
-      ${r.photos && r.photos.length ? '<img src="/media/static/' + escapeHtml(r.photos[0]) + '" style="max-width:100%;max-height:200px;object-fit:cover;border-radius:8px;" />' : '<div style="width:100%;height:160px;background:#eee;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#999;">No photo</div>'}
+      ${r.photos && r.photos.length ? '<img src="/media/static/' + escapeHtml(r.photos[0]) + '" style="max-width:100%;max-height:200px;object-fit:cover;border-radius:8px;" />' : '<div style="width:100%;height:160px;background:#eee;border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);">No photo</div>'}
       <h3 style="margin:8px 0 4px;font-size:18px;">${escapeHtml(r.title)}</h3>
-      <p style="font-size:13px;color:#666;">${escapeHtml(r.description || '')}</p>
+      <p style="font-size:13px;color:var(--text-muted);">${escapeHtml(r.description || '')}</p>
     </div>
   `).join('');
   html += '</div>';
@@ -3685,7 +3685,7 @@ function renderCookbookPage() {
   const nextStyle = _bookCurrentPage >= totalPages - 1 ? 'opacity:0.4;cursor:not-allowed;' : '';
   html += '<div class="book-nav" style="display:flex;justify-content:space-between;align-items:center;padding:16px 0;">';
   html += '<button class="secondary" ' + prevDisabled + ' onclick="prevPage()" style="padding:8px 16px;font-size:14px;border-radius:8px;' + prevStyle + '">← Prev</button>';
-  html += '<span style="font-size:13px;color:#666;">Page ' + (_bookCurrentPage + 1) + ' of ' + totalPages + '</span>';
+  html += '<span style="font-size:13px;color:var(--text-muted);">Page ' + (_bookCurrentPage + 1) + ' of ' + totalPages + '</span>';
   html += '<button class="secondary" ' + nextDisabled + ' onclick="nextPage()" style="padding:8px 16px;font-size:14px;border-radius:8px;' + nextStyle + '">Next →</button>';
   html += '</div>';
   list.innerHTML = html;
@@ -3767,9 +3767,9 @@ async function loadPublicRecipe(token) {
   const r = await res.json();
   document.getElementById('publicRecipeTitle').textContent = r.title;
   let html = '';
-  if (r.description) html += '<p style="font-size:14px;color:#666;margin-bottom:12px;">' + escapeHtml(r.description) + '</p>';
+  if (r.description) html += '<p style="font-size:14px;color:var(--text-muted);margin-bottom:12px;">' + escapeHtml(r.description) + '</p>';
   if (r.servings || r.prep_time_minutes || r.cook_time_minutes) {
-    html += '<div style="display:flex;gap:12px;font-size:13px;color:#555;margin-bottom:12px;">';
+    html += '<div style="display:flex;gap:12px;font-size:13px;color:var(--text-muted);margin-bottom:12px;">';
     if (r.servings) html += '<span>👥 ' + r.servings + '</span>';
     if (r.prep_time_minutes) html += '<span>⏱️ Prep: ' + r.prep_time_minutes + 'm</span>';
     if (r.cook_time_minutes) html += '<span>⏱️ Cook: ' + r.cook_time_minutes + 'm</span>';
@@ -3789,7 +3789,7 @@ async function loadPublicRecipe(token) {
   if (r.rating !== null && r.rating !== undefined) {
     const stars = '★'.repeat(Math.round(r.rating)) + '☆'.repeat(5 - Math.round(r.rating));
     document.getElementById('publicRecipeRating').innerHTML =
-      '<div style="display:flex;align-items:center;gap:8px;"><span style="font-size:18px;color:#d97706;">' + stars + '</span><span style="font-weight:600;">' + r.rating.toFixed(1) + '</span><span style="font-size:12px;color:#777;">(' + (r.rating_count || 0) + ' ratings)</span></div>';
+      '<div style="display:flex;align-items:center;gap:8px;"><span style="font-size:18px;color:#d97706;">' + stars + '</span><span style="font-weight:600;">' + r.rating.toFixed(1) + '</span><span style="font-size:12px;color:var(--text-muted);">(' + (r.rating_count || 0) + ' ratings)</span></div>';
     document.getElementById('publicRecipeRating').style.display = 'block';
   }
 }
@@ -4146,6 +4146,27 @@ async function loadPrivacy() {
       el.textContent = 'Privacy policy not available.';
     }
   } catch(e) { el.textContent = 'Failed to load privacy policy.'; }
+}
+</script>
+
+<!-- Submit logs footer -->
+<div id="submitLogsFooter" style="position:fixed;bottom:0;left:0;right:0;background:var(--card-bg);border-top:1px solid var(--border-light);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;z-index:900;">
+  <span style="font-size:12px;color:var(--text-muted);">Need help? Submit app logs for support.</span>
+  <button class="secondary small" onclick="submitAppLogs()" style="padding:4px 10px;font-size:12px;">📤 Submit Logs</button>
+</div>
+
+<script>
+async function submitAppLogs() {
+  if (!confirm('Send the last 2 hours of app logs to support (alerts@tyates.one)?')) return;
+  const btn = event.target;
+  btn.textContent = 'Sending...'; btn.disabled = true;
+  try {
+    const res = await fetch(API + '/logs/submit', { method: 'POST', headers: authHeaders() });
+    const data = await res.json();
+    if (res.ok) { alert('Logs submitted successfully.'); }
+    else { alert('Failed: ' + (data.detail || 'unknown')); }
+  } catch(err) { alert('Error: ' + err.message); }
+  btn.textContent = '📤 Submit Logs'; btn.disabled = false;
 }
 </script>
 </body>
