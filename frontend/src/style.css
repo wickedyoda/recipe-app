@@ -633,6 +633,18 @@
   [data-theme="dark"] .pill-badge.active-badge { background: #064e3b; color: #a7f3d0; }
   [data-theme="dark"] .pill-badge.inactive-badge { background: #450a0a; color: #fecaca; }
   [data-theme="dark"] .pill-badge.pending-badge { background: #451a03; color: #fde68a; }
+  /* Dark mode contrast overrides for hardcoded light-theme text colors */
+  [data-theme="dark"] #userEmail { color: #f3f3f3 !important; }
+  [data-theme="dark"] #userEmailRow { color: #c8a78a !important; }
+  [data-theme="dark"] #userEmailBadge { color: #fde68a !important; background: #451a03 !important; }
+  [data-theme="dark"] .dropdown-item { color: #f3f3f3 !important; }
+  [data-theme="dark"] .dropdown-item:hover { background: rgba(255,255,255,0.08) !important; }
+  [data-theme="dark"] .dropdown-item.logout { color: #fca5a5 !important; }
+  [data-theme="dark"] .dropdown-divider { background: #3a3a45 !important; }
+  [data-theme="dark"] #topBar { border-bottom-color: #3a3a45 !important; }
+  [data-theme="dark"] .meta { color: #c8a78a !important; }
+  [data-theme="dark"] .empty { color: #c8a78a !important; }
+  [data-theme="dark"] .admin-user-meta { color: #c8a78a !important; }
   @media (min-width: 520px) {
     .admin-stats { grid-template-columns: repeat(4, 1fr); }
     .admin-user-row { flex-direction: row; align-items: center; }
