@@ -116,8 +116,8 @@
   button.secondary { background: #f3f0e8; color: var(--orange-dark); }
   button.danger { background: #ef4444; color: #fff; }
   button.small { width: auto; padding: 4px 8px; font-size: 11px; border-radius: 8px; }
-  [data-theme="dark"] button { background: var(--orange); color: #0b0c0f; }
-  [data-theme="dark"] button.secondary { background: #2a2d35; color: #c8a78a; }
+  [data-theme="dark"] button { background: #8b5cf6; color: #0b0c0f; }
+  [data-theme="dark"] button.secondary { background: #2a2d35; color: #ddd6fe; }
   [data-theme="dark"] button.danger { background: #fca5a5; color: #0b0c0f; }
   [data-theme="contrast"] button { background: var(--orange); color: #fff; border: 2px solid #000; }
   [data-theme="contrast"] button.secondary { background: #fff; color: #000; border: 2px solid #000; }
