@@ -5,6 +5,7 @@ from backend.routers import cookbooks as cookbooks_router
 from backend.routers import docs as docs_router
 from backend.routers import grocery as grocery_router
 from backend.routers import households as households_router
+from backend.routers import logs as logs_router
 from backend.routers import mealplans as mealplans_router
 from backend.routers import media as media_router
 from backend.routers import notes as notes_router
@@ -25,4 +26,5 @@ router.include_router(mealplans_router.router)
 router.include_router(grocery_router.router)
 router.include_router(settings_router.router)
 router.include_router(households_router.router)
+router.include_router(logs_router.router)
 router.include_router(recipe_media_router.router)
