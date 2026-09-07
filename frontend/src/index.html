@@ -28,7 +28,7 @@
   <style id="inline-theme-fallback">
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html { font-size: 16px; }
-  body { background: #fff7f0; color: #3a2e23; font-family: 'Inter', system-ui, sans-serif; }
+  body { background: #0b0c0f; color: #f3f3f3; font-family: 'Inter', system-ui, sans-serif; }
   </style>
   <link rel="stylesheet" href="/src/style.css">
 </head>
@@ -1046,7 +1046,7 @@ async function loadProfile() {
   if (document.getElementById('avatarPicker')) document.getElementById('avatarPicker').classList.add('hidden');
   // Sync theme selector with current theme
   const themeSelect = document.getElementById('themeSelect');
-  if (themeSelect) themeSelect.value = localStorage.getItem('theme') || 'light';
+  if (themeSelect) themeSelect.value = localStorage.getItem('theme') || 'dark';
 }
 
 async function editProfileField(field) {
@@ -3480,9 +3480,9 @@ function checkAllIngredients() {
 function uncheckAllIngredients() {
   document.querySelectorAll('#detailBody input[type="checkbox"]').forEach(cb => { cb.checked = false; toggleIngredientCheck(cb); });
 }
-const THEMES = ['light', 'dark', 'dawn', 'cozy', 'contrast'];
+const THEMES = ['purple', 'light', 'dark', 'dawn', 'cozy', 'contrast'];
 function toggleTheme() {
-  const current = localStorage.getItem('theme') || 'light';
+  const current = localStorage.getItem('theme') || 'purple';
   const idx = THEMES.indexOf(current);
   const next = THEMES[(idx + 1) % THEMES.length];
   localStorage.setItem('theme', next);
