@@ -259,7 +259,7 @@ jobs:
 
       - name: Validate frontend JavaScript
         run: |
-          sed -n '/<script>/,/<\/script>/p' frontend/src/index.html | sed '1d;$d' > /tmp/recipe-app.js
+          awk '/<script>/{in_script=1; next} in_script && /<\/script>/{exit} in_script' frontend/src/index.html > /tmp/recipe-app.js
           node --check /tmp/recipe-app.js
 
   guard:
