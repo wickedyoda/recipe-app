@@ -174,7 +174,7 @@ jobs:
           extra_args: --only-verified
 
       - name: Build backend image for scan
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: ./Dockerfile.backend
@@ -191,7 +191,7 @@ jobs:
           exit-code: "0"
 
       - name: Build frontend image for scan
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: ./Dockerfile.frontend
