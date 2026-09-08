@@ -720,6 +720,16 @@
         </div>
         <div id="changelogContent" style="padding:12px;font-size:13px;line-height:1.6;max-height:400px;overflow-y:auto;"></div>
       </div>
+      <!-- Submit Logs -->
+      <div class="card">
+        <div class="top" style="display:flex;align-items:center;justify-content:space-between;">
+          <h3 style="margin:0;font-size:16px;">Support</h3>
+        </div>
+        <div style="padding:16px;text-align:center;">
+          <p style="font-size:13px;color:var(--text-muted);margin:0 0 12px;">Need help? Submit the last 2 hours of app logs to support (alerts@tyates.one).</p>
+          <button class="secondary" onclick="submitAppLogs()" style="padding:8px 16px;font-size:13px;">📤 Submit Logs</button>
+        </div>
+      </div>
       <!-- About / Legal / Footer Buttons -->
       <div style="padding:8px 12px;border-top:1px solid var(--border-light);">
         <div style="display:flex;justify-content:center;gap:8px;">
@@ -4150,11 +4160,6 @@ async function loadPrivacy() {
 </script>
 
 <!-- Submit logs footer -->
-<div id="submitLogsFooter" style="position:fixed;bottom:0;left:0;right:0;background:var(--card-bg);border-top:1px solid var(--border-light);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;z-index:900;">
-  <span style="font-size:12px;color:var(--text-muted);">Need help? Submit app logs for support.</span>
-  <button class="secondary small" onclick="submitAppLogs()" style="padding:4px 10px;font-size:12px;">📤 Submit Logs</button>
-</div>
-
 <script>
 async function submitAppLogs() {
   if (!confirm('Send the last 2 hours of app logs to support (alerts@tyates.one)?')) return;
