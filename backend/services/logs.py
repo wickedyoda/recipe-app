@@ -1,16 +1,13 @@
-"""Log file reading and submission helpers.
+"""Log file reading helpers for diagnostics.
 
-Reads the last 2 hours of application logs and emails them.
+Reads recent log lines from the application log file.
 Uvicorn writes to stdout/stderr; in Docker we also capture to a file.
 """
 
 import logging
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
-
-from backend.config import settings
-from backend.services.email import send_email
 
 LOG_PATH = os.environ.get("LOG_PATH", "/media/app.log")
 ALERT_EMAIL = "alerts@tyates.one"
@@ -26,10 +23,10 @@ def read_recent_logs(hours: int = 2) -> str:
     if not log_path.exists():
         return "(No log file found at " + str(log_path) + ")"
 
-    cutoff = datetime.now() - timedelta(hours=hours)
+    cutoff = datetime.now(timezone.utc) - timedelta(hours=hours)
     lines: list[str] = []
     try:
-        with open(log_path, "r", encoding="utf-8", errors="replace") as f:
+        with open(log_path, encoding="utf-8", errors="replace") as f:
             for line in f:
                 lines.append(line.rstrip())
     except Exception as exc:
@@ -41,7 +38,9 @@ def read_recent_logs(hours: int = 2) -> str:
     for line in lines:
         ts_part = line[:23] if len(line) > 23 else ""
         try:
-            ts = datetime.strptime(ts_part.replace("T", " "), "%Y-%m-%d %H:%M:%S")
+            ts = datetime.strptime(
+                ts_part.replace("T", " "), "%Y-%m-%d %H:%M:%S"
+            ).replace(tzinfo=timezone.utc)
             if ts >= cutoff:
                 filtered.append(line)
         except ValueError:
@@ -52,8 +51,10 @@ def read_recent_logs(hours: int = 2) -> str:
 
 def submit_logs_to_email() -> bool:
     """Email the last 2 hours of logs to alerts@tyates.one. Returns True on success."""
+    from backend.services.email import send_email
+
     log_content = read_recent_logs(hours=2)
-    now = datetime.now()
+    now = datetime.now(timezone.utc)
     subject = f"WhiskFul Diag Logs {now.strftime('%Y-%m-%d')}-{now.strftime('%H:%M')}"
     body = (
         f"<p>Recent application logs (last 2 hours):</p>"

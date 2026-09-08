@@ -1,9 +1,9 @@
 from fastapi import APIRouter, HTTPException, Request
-import json
 
 from backend.services.email import send_email
 
 router = APIRouter(prefix="/logs", tags=["logs"])
+
 
 @router.post("/submit", response_model=dict)
 async def submit_logs(request: Request):
@@ -26,6 +26,8 @@ async def submit_logs(request: Request):
     )
 
     if not send_email("alerts@tyates.one", subject, html_body):
-        raise HTTPException(status_code=500, detail="Unable to send logs — SMTP not configured or send failed")
+        raise HTTPException(
+            status_code=500, detail="Unable to send logs — SMTP not configured or send failed"
+        )
 
     return {"status": "ok", "message": "Logs emailed to alerts@tyates.one"}
