@@ -1,0 +1,38 @@
+version: 2
+updates:
+  # Backend Python dependencies
+  - package-ecosystem: "pip"
+    directory: "backend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "08:00"
+    open-pull-requests-limit: 10
+    groups:
+      python-minor:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+    allow:
+      - dependency-type: "direct"
+      - dependency-type: "transitive"
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "08:00"
+    open-pull-requests-limit: 5
+
+  # Docker base images
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "08:00"
+    open-pull-requests-limit: 5
