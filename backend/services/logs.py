@@ -71,8 +71,7 @@ def _send_support_email(to: str, subject: str, body: str, html: bool = True) -> 
     msg["To"] = to
     msg.attach(MIMEText(body, "html" if html else "plain"))
     try:
-        with smtplib.SMTP(SUPPORT_SMTP_HOST, SUPPORT_SMTP_PORT) as server:
-            server.starttls()
+        with smtplib.SMTP_SSL(SUPPORT_SMTP_HOST, SUPPORT_SMTP_PORT) as server:
             server.login(SUPPORT_EMAIL_USER, SUPPORT_EMAIL_PASS)
             server.sendmail(SUPPORT_EMAIL_USER, [to], msg.as_string())
         return True
