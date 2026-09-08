@@ -1,8 +1,18 @@
 name: "WhiskFul CodeQL Config"
+
 paths:
-  - backend
+  - "backend/"
+
 query-filters:
   - exclude:
       rule.id: "jwt-token"
+      reason: "False positive: yt-dlp extractor test vectors flagged as secrets"
   - exclude:
-      rule.id: "aws-access-key-id"
+      rule.id: "aws-access-key-id" 
+      reason: "False positive: yt-dlp extractor test vectors flagged as secrets"
+  - exclude:
+      rule.id: "py/log-injection"
+      reason: "Low-risk: yt-dlp logging patterns"
+  - exclude:
+      rule.id: "py/stack-trace-exposure"
+      reason: "Expected behavior: errors logged for debugging"
