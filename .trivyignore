@@ -1,25 +1,8 @@
 # .trivyignore - Trivy scan exceptions
-# These alerts are either false positives or from base image OS packages
-# that cannot be patched without breaking Python 3.14/uvicorn compatibility
+# Only true false positives that cannot be fixed in code
 
-# === Trivy secret scan false positives ===
+# Trivy secret scan false positives
 # yt-dlp extractor test vectors flagged as AWS keys and JWTs
 # These are hardcoded test data in yt-dlp's test suite, not real credentials
 jwt-token
 aws-access-key-id
-
-# === OS package CVEs from python:3.14-slim-bookworm ===
-# These are in the Debian base image and cannot be patched via requirements.txt
-# Fixed by upgrading to a newer bookworm snapshot (not yet available for python:3.14)
-# Debian bookworm base CVEs - tracked in base image upgrade
-CVE-2025-1377
-CVE-2023-45919
-CVE-2024-0636
-CVE-2023-8372
-CVE-2022-43001
-CVE-2022-43002
-CVE-2024-25260
-CVE-2025-47273
-CVE-2024-1734
-CVE-2024-1234
-CVE-2024-33663
