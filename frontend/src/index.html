@@ -4157,10 +4157,6 @@ async function loadPrivacy() {
     }
   } catch(e) { el.textContent = 'Failed to load privacy policy.'; }
 }
-</script>
-
-<!-- Submit logs footer -->
-<script>
 async function submitAppLogs() {
   if (!confirm('Send the last 2 hours of app logs to support (alerts@tyates.one)?')) return;
   const btn = event.target;
