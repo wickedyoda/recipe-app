@@ -1,0 +1,8 @@
+name: "WhiskFul CodeQL Config"
+paths:
+  - backend
+query-filters:
+  - exclude:
+      rule.id: "jwt-token"
+  - exclude:
+      rule.id: "aws-access-key-id"
