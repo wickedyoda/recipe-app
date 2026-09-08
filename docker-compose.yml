@@ -37,11 +37,11 @@ services:
       ALLOWED_HOSTS: ${ALLOWED_HOSTS:-localhost,127.0.0.1,backend,*.ts.net}
       WHISPER_MODEL: ${WHISPER_MODEL:-tiny}
       PUBLIC_URL: ${PUBLIC_URL:-}
-      SMTP_HOST: ${SMTP_HOST:-}
-      SMTP_PORT: ${SMTP_PORT:-587}
-      SMTP_USERNAME: ${SMTP_USERNAME:-}
+      SMTP_HOST: ${SMTP_HOST:-smtp.migadu.com}
+      SMTP_PORT: ${SMTP_PORT:-465}
+      SMTP_USERNAME: ${SMTP_USERNAME:-recipes@tyates.one}
       SMTP_PASSWORD: ${SMTP_PASSWORD:-}
-      SMTP_FROM_EMAIL: ${SMTP_FROM_EMAIL:-}
+      SMTP_FROM_EMAIL: ${SMTP_FROM_EMAIL:-recipes@tyates.one}
       SMTP_USE_TLS: ${SMTP_USE_TLS:-true}
       RECIPE_EMAIL_PASS: ${RECIPE_EMAIL_PASS:-}
       DEFAULT_ADMIN_EMAIL: ${DEFAULT_ADMIN_EMAIL:-admin@example.com}
