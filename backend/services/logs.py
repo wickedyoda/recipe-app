@@ -13,11 +13,6 @@ from backend.config import settings
 from backend.services.email import send_email
 
 LOG_PATH = os.environ.get("LOG_PATH", "/media/app.log")
-SUPPORT_EMAIL_USER = "recipes@tyates.one"
-SUPPORT_EMAIL_PASS = os.environ.get("RECIPE_EMAIL_PASS", "")
-SUPPORT_SMTP_HOST = "smtp.migadu.com"
-SUPPORT_SMTP_PORT = 465
-SUPPORT_SMTP_TLS = True
 ALERT_EMAIL = "alerts@tyates.one"
 
 
@@ -44,39 +39,15 @@ def read_recent_logs(hours: int = 2) -> str:
     # Best-effort time filter on timestamps that look like ISO
     filtered: list[str] = []
     for line in lines:
-        # Match common timestamp prefixes: 2026-09-06 20:55:41,INFO or 2026-09-06T20:55:41
         ts_part = line[:23] if len(line) > 23 else ""
         try:
             ts = datetime.strptime(ts_part.replace("T", " "), "%Y-%m-%d %H:%M:%S")
             if ts >= cutoff:
                 filtered.append(line)
         except ValueError:
-            # If we can't parse, include it (likely a multi-line continuation)
             filtered.append(line)
 
     return "\n".join(filtered[-2000:]) if filtered else "(No recent log entries)"
-
-
-def _send_support_email(to: str, subject: str, body: str, html: bool = True) -> bool:
-    """Send an email directly to the support mailbox using SMTP over TLS port 465."""
-    import smtplib
-    from email.mime.multipart import MIMEMultipart
-    from email.mime.text import MIMEText
-
-    if not SUPPORT_EMAIL_USER or not SUPPORT_EMAIL_PASS:
-        return False
-    msg = MIMEMultipart("alternative")
-    msg["Subject"] = subject
-    msg["From"] = SUPPORT_EMAIL_USER
-    msg["To"] = to
-    msg.attach(MIMEText(body, "html" if html else "plain"))
-    try:
-        with smtplib.SMTP_SSL(SUPPORT_SMTP_HOST, SUPPORT_SMTP_PORT) as server:
-            server.login(SUPPORT_EMAIL_USER, SUPPORT_EMAIL_PASS)
-            server.sendmail(SUPPORT_EMAIL_USER, [to], msg.as_string())
-        return True
-    except Exception:
-        return False
 
 
 def submit_logs_to_email() -> bool:
@@ -88,4 +59,4 @@ def submit_logs_to_email() -> bool:
         f"<p>Recent application logs (last 2 hours):</p>"
         f"<pre style='font-family:monospace;font-size:12px;background:#f5f5f5;padding:12px;border-radius:4px;'>{log_content}</pre>"
     )
-    return _send_support_email(ALERT_EMAIL, subject, body)
+    return send_email(ALERT_EMAIL, subject, body)
